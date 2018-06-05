@@ -2,4 +2,4 @@
 
 # Contents
 
-+ pitch: Idea pitch materials
++ **pitch**: Idea pitch materials

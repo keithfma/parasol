@@ -40,6 +40,12 @@ Need a multi-objective path finding algorithm, with adjustable weights. Should
 be as fast as possible, ideally able to recompute on the fly as the user
 adjusts the weights slider.
 
++ https://pittsmartliving.org/2018/05/01/navigating-an-urban-environment-beyond-the-shortest-path/
++ https://www.researchgate.net/profile/Monsak_Socharoentum/publication/304256678_Multi-Modal_Transportation_with_Multi-Criteria_Walking_MMT-MCW_Personalized_Route_Recommender/links/58061d1008aeb85ac85f1511/Multi-Modal-Transportation-with-Multi-Criteria-Walking-MMT-MCW-Personalized-Route-Recommender.pdf
++ https://ieeexplore.ieee.org/document/7637096/
++ https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=20&cad=rja&uact=8&ved=0ahUKEwjUktXMur3bAhVOXq0KHeSjDlI4ChAWCF0wCQ&url=https%3A%2F%2Fscholarworks.umass.edu%2Fcgi%2Fviewcontent.cgi%3Ffilename%3D0%26article%3D2059%26context%3Ddissertations_2%26type%3Dadditional&usg=AOvVaw2eaOc84eYM_HDBMCeiM7Id
++ https://en.wikipedia.org/wiki/Route_assignment
+
 
 ### Current leaf status
 

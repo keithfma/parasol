@@ -1,0 +1,12 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las"
+        },
+        {
+            "type": "writers.las", 
+            "forward": "all", 
+            "compression": "none"
+        }
+    ]
+}

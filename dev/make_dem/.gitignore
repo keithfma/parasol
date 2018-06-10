@@ -1,3 +1,5 @@
 *.las
 *.laz
 .*.swp
+*.tif
+*.xml

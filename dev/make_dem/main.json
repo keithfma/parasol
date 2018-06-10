@@ -8,6 +8,16 @@
             "out_srs": "EPSG:32619"
         },
         {
+            "type": "filters.outlier",
+            "method": "statistical",
+            "mean_k": 12,
+            "multiplier": 2.2
+        },
+        {
+            "type":"filters.range",
+            "limits":"Classification![7:7]"
+        },
+        {
             "type": "writers.las", 
             "scale_x": "auto",
             "scale_y": "auto",

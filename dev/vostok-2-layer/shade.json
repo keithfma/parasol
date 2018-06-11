@@ -1,0 +1,15 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "norm.laz"
+        },  
+        {
+            "type": "writers.text",
+            "format": "csv",
+            "order": "X,Y,Z,NormalX,NormalY,NormalZ", 
+            "keep_unspecified": "false", 
+            "filename": "shade.csv"
+        }
+    ]
+}

@@ -29,17 +29,16 @@
             "limits":"Classification![7:7]"
         },
         {
-            "type": "filters.normal",
-            "knn": 8 
-        },
-        {
-            "type":"writers.bpf",
-            "filename":"norm.bpf", 
-            "output_dims":"X,Y,Z,NormalX,NormalY,NormalZ,ReturnNumber,NumberOfReturns", 
-            "scale_x": "auto", 
-            "scale_y": "auto", 
+            "type": "writers.las", 
+            "filename": "norm.laz",
+            "a_srs": "EPSG:32619", 
+            "scale_x": "auto",
+            "scale_y": "auto",
             "scale_z": "auto",
-            "coord_id": "auto"
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+            "compression": "laszip"
         }
     ]
 }

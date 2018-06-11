@@ -1,4 +1,6 @@
 *.laz
+*.tif
+*.xyz
 *.csv
 .*.swp
 *.bpf

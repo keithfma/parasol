@@ -1,9 +1,13 @@
 {
     "pipeline": [
         {
-            "type": "readers.bpf",
-            "filename": "norm.bpf"
+            "type": "readers.las",
+            "filename": "norm.laz"
         },  
+        {
+            "type": "filters.normal",
+            "knn": 8 
+        },
         {
             "type": "filters.pmf" 
         },

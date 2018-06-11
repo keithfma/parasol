@@ -1,0 +1,20 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.text",
+            "filename": "output.xyz",
+            "header": "X Y Z NormalX NormalY NormalZ Solar"
+        },
+        {
+            "type": "filters.reprojection",
+            "in_srs": "EPSG:32619",
+            "out_srs": "EPSG:32619"
+        },
+        {
+            "type": "writers.gdal", 
+            "filename": "output.tif", 
+            "resolution": 1.0, 
+            "dimension": "Solar" 
+        }
+    ]
+}

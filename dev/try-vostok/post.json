@@ -1,0 +1,26 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.text",
+            "filename": "output.xyz",
+            "header": "X Y Z NormalX NormalY NormalZ Solar"
+        },
+        {
+            "type": "filters.reprojection",
+            "in_srs": "EPSG:32619",
+            "out_srs": "EPSG:32619"
+        },
+        {
+            "type": "writers.las", 
+            "filename": "output.laz",
+            "scale_x": "auto",
+            "scale_y": "auto",
+            "scale_z": "auto",
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+            "forward": "header", 
+            "compression": "laszip"
+        }
+    ]
+}

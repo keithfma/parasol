@@ -33,9 +33,13 @@
             "knn": 8 
         },
         {
-            "type":"writers.las",
-            "filename":"norm.laz",
-            "extra_dims": "all"
+            "type":"writers.bpf",
+            "filename":"norm.bpf", 
+            "output_dims":"X,Y,Z,NormalX,NormalY,NormalZ,ReturnNumber,NumberOfReturns", 
+            "scale_x": "auto", 
+            "scale_y": "auto", 
+            "scale_z": "auto",
+            "coord_id": "auto"
         }
     ]
 }

@@ -1,8 +1,8 @@
 {
     "pipeline": [
         {
-            "type": "readers.las",
-            "filename": "norm.laz"
+            "type": "readers.bpf",
+            "filename": "norm.bpf"
         },  
         {
             "type": "writers.text",

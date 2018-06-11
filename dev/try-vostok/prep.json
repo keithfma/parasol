@@ -1,0 +1,29 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "input.laz"
+        },
+        {
+            "type": "filters.reprojection",
+            "out_srs": "EPSG:32619"
+        },
+        {
+            "type":"filters.voxelgrid",
+            "leaf_x": 2.0,
+            "leaf_y": 2.0, 
+            "leaf_z": 2.0 
+        },
+        {
+            "type":"filters.normal",
+            "knn":8
+        },
+        {
+            "type": "writers.text",
+            "format": "csv",
+            "order": "X,Y,Z,NormalX,NormalY,NormalZ", 
+            "keep_unspecified": "false", 
+            "filename": "prepared.csv"
+        }
+    ]
+}

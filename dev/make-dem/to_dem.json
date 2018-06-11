@@ -1,0 +1,13 @@
+{
+    "pipeline": [
+        "out.laz",
+        {
+            "type": "writers.gdal", 
+            "filename":"out.tif",
+            "gdaldriver":"GTiff",
+            "output_type":"idw",
+            "resolution":"2.0",
+            "window_size": 0
+        }
+    ]
+}

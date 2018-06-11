@@ -5,10 +5,6 @@
             "filename": "input.laz"
         },  
         {
-            "type": "filters.crop",
-            "bounds": "( [-71.2771291,-71.27433599999999],[42.3171413,42.31989568])"
-        },
-        {
             "type": "filters.reprojection",
             "out_srs": "EPSG:32619"
         },

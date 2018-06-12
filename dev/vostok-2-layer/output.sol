@@ -11,4 +11,4 @@ grnd.xyz
 60
 1
 output.xyz
-1
+0

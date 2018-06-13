@@ -1,0 +1,8 @@
+*.laz
+*.xyz
+*.csv
+*.vostokmeta
+*.tif
+*.gxw
+history/*
+*.xml

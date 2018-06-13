@@ -5,5 +5,9 @@ setup(
     version='0.0.0',
     description='Parasol - Minimal Viable Product Edition',
     packages=find_packages(),
-    include_package_data=True
+    include_package_data=True,
+    install_requires=[
+        'wget',
+        'requests',
+        ]
     )

@@ -1,1 +1,2 @@
 include parasol_mvp/lidar.json
+include parasol_mvp/osm.json

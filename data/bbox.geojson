@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bbox",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4269" } },
+"features": [
+{ "type": "Feature", "properties": { "MINX": -71.2689928, "MINY": 42.2012819, "MAXX": -70.9392534, "MAXY": 42.4853539, "CNTX": -71.1041231, "CNTY": 42.3433179, "AREA": 0.093669730836802953, "PERIM": 1.2276228, "HEIGHT": 0.284072, "WIDTH": 0.32973940000000823 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -71.2689928, 42.2012819 ], [ -71.2689928, 42.4853539 ], [ -70.9392534, 42.4853539 ], [ -70.9392534, 42.2012819 ], [ -71.2689928, 42.2012819 ] ] ] } }
+]
+}

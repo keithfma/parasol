@@ -1,0 +1,3 @@
+SELECT osm_id, id FROM ways_vertices_pgr
+    WHERE osm_id IN (61350413, 61441749, 61479912, 61493634, 1718017636, 2481136250)
+    ORDER BY osm_id;

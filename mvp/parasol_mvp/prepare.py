@@ -45,6 +45,18 @@ def get_lidar():
             wget.download(url, out=file_name)
 
 
+def lidar_preprocess(input_file):
+    """
+    Preprocess lidar data (downsample, filter outliers, decompose ground/canopy) 
+    
+    Arguments:
+        input_file: string, path to input LAZ file containing raw LiDAR data
+    
+    Returns: Nothing, results are saved to disk
+    """
+    raise NotImplementedError
+
+
 def get_osm():
     """
     Download OpenStreetMaps data for the Parasol study area

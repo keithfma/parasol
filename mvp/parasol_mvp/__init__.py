@@ -1,1 +1,2 @@
-from parasol_mvp.fetch_data import get_lidar, get_osm
+from parasol_mvp.prepare import lidar_fetch, lidar_preprocess, osm_fetch
+

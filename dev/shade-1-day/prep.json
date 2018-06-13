@@ -9,12 +9,6 @@
             "out_srs": "EPSG:32619"
         },
         {
-            "type":"filters.voxelgrid",
-            "leaf_x": 1.0,
-            "leaf_y": 1.0, 
-            "leaf_z": 1.0 
-        },
-        {
             "type": "filters.outlier",
             "method": "statistical",
             "mean_k": 12,

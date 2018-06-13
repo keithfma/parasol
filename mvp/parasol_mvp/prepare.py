@@ -22,7 +22,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_lidar():
+# LiDAR ----------------------------------------------------------------------
+
+
+def lidar_fetch():
     """
     Download LiDAR tiles for the Parasol study area
     """
@@ -52,12 +55,18 @@ def lidar_preprocess(input_file):
     Arguments:
         input_file: string, path to input LAZ file containing raw LiDAR data
     
-    Returns: Nothing, results are saved to disk
+    Returns: Nothing, results are saved to disk, specifically:
+        *_clean.laz:
+        *_bot.laz, *_bot.tif:
+        *_top.laz, *_top.tif:
     """
     raise NotImplementedError
 
 
-def get_osm():
+# OSM ------------------------------------------------------------------------
+
+
+def osm_fetch():
     """
     Download OpenStreetMaps data for the Parasol study area
     """
@@ -75,14 +84,6 @@ def get_osm():
     file_name = os.path.join(PARASOL_OSM, 'all.osm')
     bbox_str = '{lon_min},{lat_min},{lon_max},{lat_max}'.format(**bbox)
     url = f'http://www.overpass-api.de/api/xapi?*[bbox={bbox_str}][@meta]'
-    print(url)
+    logger.info(f'Downloading OSM data from: {url}')
     wget.download(url, out=file_name)
 
-
-    # BBOX="-122.8,45.4,-122.5,45.6"
-    # wget --progress=dot:mega -O "sampledata.osm" "http://www.overpass-api.de/api/xapi?*[bbox=${BBOX}][@meta]"
-
-
-# DEBUG - DELETE WHEN COMPLETED
-if __name__ == '__main__':
-    get_osm()

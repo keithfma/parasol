@@ -3,26 +3,26 @@
 #   comment/uncomment and run a step at a time
 # #
 
-# echo "START PREP"
-# pdal pipeline prep.json
-# echo "END PREP"
-# 
-# echo "START SHADE"
-# pdal pipeline shade.json &
-# shade_pid=$!
-# 
-# echo "START GRND"
-# pdal pipeline grnd.json &
-# grnd_pid=$!
-# 
-# wait $shade_pid
-# tail -n +2 shade.csv > shade.xyz
-# sed -i 's/,/ /g' shade.xyz
-# 
-# wait $grnd_pid
-# tail -n +2 grnd.csv > grnd.xyz
-# sed -i 's/,/ /g' grnd.xyz
-# echo "END SHADE & GRND"
+echo "START PREP"
+pdal pipeline prep.json
+echo "END PREP"
+
+echo "START SHADE"
+pdal pipeline shade.json &
+shade_pid=$!
+
+echo "START GRND"
+pdal pipeline grnd.json &
+grnd_pid=$!
+
+wait $shade_pid
+tail -n +2 shade.csv > shade.xyz
+sed -i 's/,/ /g' shade.xyz
+
+wait $grnd_pid
+tail -n +2 grnd.csv > grnd.xyz
+sed -i 's/,/ /g' grnd.xyz
+echo "END SHADE & GRND"
 
 voxel_size=1.0
 latitude=42.31854518

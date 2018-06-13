@@ -13,7 +13,7 @@
         {
             "type": "writers.gdal", 
             "filename": "output.tif", 
-            "resolution": 1.0, 
+            "resolution": 2.0, 
             "dimension": "Solar" 
         }
     ]

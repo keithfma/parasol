@@ -9,5 +9,6 @@ setup(
     install_requires=[
         'wget',
         'requests',
+        'pdal',
         ]
     )

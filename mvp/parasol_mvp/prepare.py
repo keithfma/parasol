@@ -8,12 +8,15 @@ import os
 import logging
 import wget
 import requests
+import pdal
 
 
 # constants
 PARASOL_HOME = os.path.expanduser(os.path.join('~', '.parasol_mvp'))
 PARASOL_LIDAR = os.path.join(PARASOL_HOME, 'lidar')
 PARASOL_OSM = os.path.join(PARASOL_HOME, 'osm')
+PARASOL_PROJ_SRS = "EPSG:32619" 
+PARASOL_GEOG_SRS = "EPSG:4269" 
 LIDAR_URLS_FILE = resource_filename('parasol_mvp', 'lidar.json')
 OSM_BBOX_FILE = resource_filename('parasol_mvp', 'osm.json')
 
@@ -48,6 +51,15 @@ def lidar_fetch():
             wget.download(url, out=file_name)
 
 
+def lidar_preprocess_all():
+    """
+    Loop over all available lidar files, run preprocessing pipelines as needed
+    """
+    # DEBUG: hard-code one
+    raw_files = ['/home/keith/.parasol_mvp/lidar/20131208_usgspostsandy_19TCG270920.laz']
+    raise NotImplementedError
+
+
 def lidar_preprocess(input_file):
     """
     Preprocess lidar data (downsample, filter outliers, decompose ground/canopy) 
@@ -60,7 +72,58 @@ def lidar_preprocess(input_file):
         *_bot.laz, *_bot.tif:
         *_top.laz, *_top.tif:
     """
-    raise NotImplementedError
+    # generate filenames for steps along pre-processing pipeline
+    input_base, input_ext = os.path.splitext(input_file)
+    clean_file = f'{base}_clean.laz'
+
+    # clean input file, if needed
+    if os.path.isfile(clean_file):
+        logger.info(f'Clean file {clean_file} exists, skipping')
+    else:
+        clean_pipeline_def = {
+            "pipeline": [
+                {
+                    "type": "readers.las",
+                    "filename": input_file,
+                },  
+                {
+                    "type": "filters.reprojection",
+                    "out_srs": PARASOL_PROJ_SRS,
+                },
+                {
+                    "type":"filters.voxelgrid",
+                    "leaf_x": 1.0,
+                    "leaf_y": 1.0,
+                    "leaf_z": 1.0,
+                },
+                {
+                    "type": "filters.outlier",
+                    "method": "statistical",
+                    "mean_k": 12,
+                    "multiplier": 2.2
+                },
+                {
+                    "type":"filters.range",
+                    "limits":"Classification![7:7]"
+                },
+                {
+                    "type": "writers.las", 
+                    "filename": clean_file,
+                    "a_srs": "EPSG:32619", 
+                    "scale_x": "auto",
+                    "scale_y": "auto",
+                    "scale_z": "auto",
+                    "offset_x": "auto",
+                    "offset_y": "auto",
+                    "offset_z": "auto",
+                    "compression": "laszip"
+                }
+            ]
+        }
+        clean_pipeline = pdal.Pipeline(json.dumps(clean_pipeline_def))
+        clean_pipeline.validate()
+        clean_pipeline.loglevel = 8 #really noisy
+        pipeline.execute()
 
 
 # OSM ------------------------------------------------------------------------

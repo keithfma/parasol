@@ -1,0 +1,27 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "bot.laz"
+        },  
+        {
+            "type": "filters.pmf"
+        },
+        {
+            "type":"filters.range",
+            "limits":"Classification[2:2]"
+        },
+        {
+            "type": "writers.las", 
+            "filename": "grnd.laz",
+            "forward": "all",
+            "scale_x": "auto",
+            "scale_y": "auto",
+            "scale_z": "auto",
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+            "compression": "laszip"
+        }
+    ]
+}

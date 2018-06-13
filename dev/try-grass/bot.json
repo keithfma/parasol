@@ -1,0 +1,24 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "clean.laz"
+        },  
+        {
+          "type":"filters.returns",
+          "groups":"last,only"
+        },
+        {
+            "type": "writers.las", 
+            "filename": "bot.laz",
+            "forward": "all",
+            "scale_x": "auto",
+            "scale_y": "auto",
+            "scale_z": "auto",
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+            "compression": "laszip"
+        }
+    ]
+}

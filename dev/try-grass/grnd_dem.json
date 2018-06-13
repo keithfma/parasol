@@ -1,0 +1,16 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "grnd.laz"
+        },
+        {
+            "type": "writers.gdal", 
+            "filename": "grnd.tif", 
+            "resolution": 1.0, 
+            "window_size": 100.0,
+            "output_type": "idw", 
+            "dimension": "Z" 
+        }
+    ]
+}

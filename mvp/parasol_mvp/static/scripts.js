@@ -1,32 +1,41 @@
 // SEE: https://sandbox.idre.ucla.edu/sandbox/general/zoomable-image-with-gdal-and-leaflet
+// SEE: http://bl.ocks.org/bentrm/5aaedf8f2bd9361e280d
 
 // init - run on page load
 $(document).ready(function() {
     
-//     var map = L.map('parasol-map').setView([51.505, -0.09], 13);
-
-//     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-//         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-//         maxZoom: 18,
-//         id: 'mapbox.streets',
-//         accessToken: 'pk.eyJ1Ijoia2VpdGhmbWEiLCJhIjoiY2ppZWloODY3MGtoZDNrcndrejgwNDRsZCJ9.LY7xuFqBMX-B6DEoy75sLQ',
-//     }).addTo(pmap);
-
+    // init the map object
     var map = L.map('parasol-map', {
-        maxZoom: 0,
-        minZoom: 6,
-        crs: L.CRS.Simple
-    }).setView([40.75, -74.18], 0);
+        center: [42.3481931, -71.0639548],
+        zoom: 13
+    });
 
-    var imageUrl = 'http://www.lib.utexas.edu/maps/historical/newark_nj_1922.jpg',
-        imageBounds = [[40.712216, -74.22655], [40.773941, -74.12544]];
-    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    // we add some test layers here
+    var osmAttrib = 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
 
+    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: osmAttrib
+    }).addTo(map); // this will be our active base layer on startup
 
-    //var imageUrl = 'top.png';
-    //var imageBounds = [[42.3343660, -71.0825971], [42.3620201, -71.0453125]];
-    //L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    // an image overlay that will be added to the overlays of a layer switcher
+    var image = L.imageOverlay(
+        '/img/top.png',
+        [[42.3343660, -71.0825971], [42.3620201, -71.0453125]], {
+        opacity: .8
+    }).addTo(map);
 
-    console.log(map);
+    // init a map scale
+    L.control.scale().addTo(map);
+
+    // // listen to click events to show a popup window
+    // // the content of the popup is plain html
+    // // this is a nice example how function chaining is possible with Leaflet
+    // map.on('click', function(e) {
+    // var popup = L.popup()
+    //     .setLatLng(e.latlng)
+    //     .setContent('<p>Hello, world!</p>')
+    //     .openOn(map);
+    // });
 
 });

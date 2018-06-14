@@ -4,6 +4,8 @@ Flask server for Parasol API/UI
 
 import flask
 import argparse
+import os
+from pkg_resources import resource_filename
 
 
 # constants
@@ -20,6 +22,11 @@ app = flask.Flask('parasol_mvp')
 def main():
     """Main Parasol user interface"""
     return flask.render_template('index.html')
+
+@app.route('/img/<img_name>', methods=['GET'])
+def img_file(img_name):
+    filename = resource_filename('parasol_mvp', os.path.join('static', img_name))
+    return flask.send_file(filename, mimetype='image/png')
 
 
 # command line ---------------------------------------------------------------

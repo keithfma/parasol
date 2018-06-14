@@ -67,7 +67,6 @@ def lidar_preprocess_all():
     raw_files = glob.glob(os.path.join(PARASOL_LIDAR_RAW, '*.laz'))
     for raw_file in raw_files:
         lidar_preprocess(raw_file)
-        break # DEBUG: stop after first file
 
 
 def lidar_preprocess(input_file):
@@ -164,6 +163,7 @@ def lidar_preprocess(input_file):
                     "type": "writers.gdal", 
                     "filename": top_dem_file,
                     "resolution": 1.0, 
+                    "window_size": 100.0,
                     "output_type": "idw", 
                     "dimension": "Z" 
                 }
@@ -249,6 +249,7 @@ def lidar_preprocess(input_file):
                     "type": "writers.gdal", 
                     "filename": bottom_dem_file,
                     "resolution": 1.0, 
+                    "window_size": 100.0,
                     "output_type": "idw", 
                     "dimension": "Z" 
                 }

@@ -249,7 +249,7 @@ def lidar_preprocess(input_file):
                     "type": "writers.gdal", 
                     "filename": bottom_dem_file,
                     "resolution": 1.0, 
-                    "window_size": 100.0,
+                    "window_size": 200.0,
                     "output_type": "idw", 
                     "dimension": "Z" 
                 }

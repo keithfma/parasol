@@ -9,6 +9,11 @@ setup(
     install_requires=[
         'wget',
         'requests',
-        'pdal',
-        ]
+        'flask',
+        ],
+    entry_points={
+        'console_scripts': [
+            'parasol-mvp=parasol_mvp.server:cli'
+            ]
+        }
     )

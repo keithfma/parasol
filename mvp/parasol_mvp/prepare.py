@@ -1,5 +1,5 @@
 """
-Utilities for retrieving data for parasol app
+Utilities for preparing (retrieving, preprocessing) data for parasol app
 """
 
 from pkg_resources import resource_filename
@@ -19,9 +19,10 @@ PARASOL_HOME = os.path.expanduser(os.path.join('~', '.parasol_mvp'))
 PARASOL_LIDAR = os.path.join(PARASOL_HOME, 'lidar')
 PARASOL_LIDAR_RAW = os.path.join(PARASOL_LIDAR, 'raw')
 PARASOL_LIDAR_CLEAN = os.path.join(PARASOL_LIDAR, 'clean')
-PARASOL_LIDAR_GRND = os.path.join(PARASOL_LIDAR, 'grnd')
 PARASOL_LIDAR_TOP = os.path.join(PARASOL_LIDAR, 'top')
+PARASOL_LIDAR_TOP_DEM = os.path.join(PARASOL_LIDAR, 'top_dem')
 PARASOL_LIDAR_BOTTOM = os.path.join(PARASOL_LIDAR, 'bottom')
+PARASOL_LIDAR_BOTTOM_DEM = os.path.join(PARASOL_LIDAR, 'bottom_dem')
 PARASOL_OSM = os.path.join(PARASOL_HOME, 'osm')
 PARASOL_PROJ_SRS = "EPSG:32619" 
 PARASOL_GEOG_SRS = "EPSG:4269" 
@@ -66,7 +67,7 @@ def lidar_preprocess_all():
     raw_files = glob.glob(os.path.join(PARASOL_LIDAR_RAW, '*.laz'))
     for raw_file in raw_files:
         lidar_preprocess(raw_file)
-        # break # DEBUG: stop after first file
+        break # DEBUG: stop after first file
 
 
 def lidar_preprocess(input_file):
@@ -77,42 +78,40 @@ def lidar_preprocess(input_file):
         input_file: string, path to input LAZ file containing raw LiDAR data
     
     Returns: Nothing, results are saved to disk, specifically:
-        *_clean.laz:
-        *_grnd.laz:
         *_bot.laz, *_bot.tif:
         *_top.laz, *_top.tif:
     """
     # generate filenames for steps along pre-processing pipeline
     input_folder, input_name = os.path.split(input_file)
     input_base, input_ext = os.path.splitext(input_name)
-    clean_file = os.path.join(PARASOL_LIDAR_CLEAN, f'{input_base}_clean.laz')
-    grnd_file = os.path.join(PARASOL_LIDAR_GRND, f'{input_base}_grnd.laz')
+    top_file        = os.path.join(PARASOL_LIDAR_TOP, f'{input_base}_top.laz')
+    top_dem_file    = os.path.join(PARASOL_LIDAR_TOP_DEM, f'{input_base}_top.tif')
+    bottom_file     = os.path.join(PARASOL_LIDAR_BOTTOM, f'{input_base}_bottom.laz')
+    bottom_dem_file = os.path.join(PARASOL_LIDAR_BOTTOM_DEM, f'{input_base}_bottom.tif')
     
     # create output folders, if needed
-    if not os.path.isdir(PARASOL_LIDAR_CLEAN):
-        logger.info(f'Created directory {PARASOL_LIDAR_CLEAN}')
-        os.makedirs(PARASOL_LIDAR_CLEAN)
-    if not os.path.isdir(PARASOL_LIDAR_GRND):
-        logger.info(f'Created directory {PARASOL_LIDAR_GRND}')
-        os.makedirs(PARASOL_LIDAR_GRND)
-    if not os.path.isdir(PARASOL_LIDAR_TOP):
-        logger.info(f'Created directory {PARASOL_LIDAR_TOP}')
-        os.makedirs(PARASOL_LIDAR_TOP)
-    if not os.path.isdir(PARASOL_LIDAR_BOT):
-        logger.info(f'Created directory {PARASOL_LIDAR_BOT}')
-        os.makedirs(PARASOL_LIDAR_BOT)
+    dir_names = [PARASOL_LIDAR_TOP, PARASOL_LIDAR_TOP_DEM,
+                 PARASOL_LIDAR_BOTTOM, PARASOL_LIDAR_BOTTOM_DEM]
+    for dir_name in dir_names:
+        if not os.path.isdir(dir_name):
+            logger.info(f'Created directory {dir_name}')
+            os.makedirs(dir_name)
 
-    # clean input file, if needed
-    if os.path.isfile(clean_file):
-        logger.info(f'Clean file {clean_file} exists, skipping')
+    # extract top surface points, if needed
+    if os.path.isfile(top_file):
+        logger.info(f'Top surface points file {top_file} exists, skipping')
     else:
-        logger.info(f'Cleaning raw LiDAR file: {input_file} -> {clean_file}')
-        clean_pipeline_json = json.dumps({
+        logger.info(f'Extracting top surface points: {input_file} -> {top_file}')
+        top_pipeline = json.dumps({
             "pipeline": [
                 {
                     "type": "readers.las",
                     "filename": input_file,
                 },  
+                {
+                    "type":"filters.returns",
+                    "groups":"first,only"
+                },
                 {
                     "type": "filters.reprojection",
                     "out_srs": PARASOL_PROJ_SRS,
@@ -135,38 +134,7 @@ def lidar_preprocess(input_file):
                 },
                 {
                     "type": "writers.las", 
-                    "filename": clean_file,
-                    "a_srs": "EPSG:32619", 
-                    "scale_x": "auto",
-                    "scale_y": "auto",
-                    "scale_z": "auto",
-                    "offset_x": "auto",
-                    "offset_y": "auto",
-                    "offset_z": "auto",
-                    "compression": "laszip"
-                }
-            ]
-        })
-        subprocess.run(
-            ['pdal', 'pipeline', '--stdin'], input=clean_pipeline_json, encoding='utf-8')
-
-    # classify ground points, if needed
-    if os.path.isfile(grnd_file):
-        logger.info(f'Classified ground points file {grnd_file} exists, skipping')
-    else:
-        logger.info(f'Classifying ground points: {clean_file} -> {grnd_file}')
-        grnd_pipeline_json = json.dumps({
-            "pipeline": [
-                {
-                    "type": "readers.las",
-                    "filename": clean_file,
-                },  
-                {
-                    "type": "filters.pmf"
-                },
-                {
-                    "type": "writers.las", 
-                    "filename": grnd_file,
+                    "filename": top_file,
                     "forward": "all",
                     "scale_x": "auto",
                     "scale_y": "auto",
@@ -179,13 +147,35 @@ def lidar_preprocess(input_file):
             ]
         })
         subprocess.run(
-            ['pdal', 'pipeline', '--stdin'], input=grnd_pipeline_json, encoding='utf-8')
+            ['pdal', 'pipeline', '--stdin'], input=top_pipeline, encoding='utf-8')
+    
+    # generate top raster
+    if os.path.isfile(top_dem_file):
+        logger.info(f'Top surface file {top_dem_file} exists, skipping')
+    else:
+        logger.info(f'Building top surface: {top_file} -> {top_dem_file}')
+        top_dem_pipeline = json.dumps({
+            "pipeline": [
+                {
+                    "type": "readers.las",
+                    "filename": top_file,
+                },
+                {
+                    "type": "writers.gdal", 
+                    "filename": top_dem_file,
+                    "resolution": 1.0, 
+                    "output_type": "idw", 
+                    "dimension": "Z" 
+                }
+            ]
+        })
+        subprocess.run(
+            ['pdal', 'pipeline', '--stdin', '--nostream'], input=top_dem_pipeline, encoding='utf-8')
 
-    # TODO: generate upper DEM
-    # ...note that IDW interpolation to fill holes is slow
 
-    # TODO: generate lower DEM
-    # ...note that IDW interpolation to fill holes is slow
+    # extract bottom surface points, if needed
+    if os.path.isfile(bottom_file):
+        logger.info(f'Bottom surface points file {bottom_file} exists, skipping')
 
 
 # OSM ------------------------------------------------------------------------

@@ -4,16 +4,21 @@ h1 {
 
 #parasol-map {
     height: 700px;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .slidecontainer {
-    width: 100%;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .slider {
     -webkit-appearance: none;
-    width: 100%;
     height: 25px;
+    width: 100%;
     background: #d3d3d3;
     outline: none;
     opacity: 0.7;

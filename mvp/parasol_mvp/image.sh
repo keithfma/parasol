@@ -1,4 +1,6 @@
 #!/bin/bash
+# Generate PNGs from original rad files...
+# #
 
 src_file=~/.parasol_mvp/lidar/merge/top_merge.tif
 tmp_file=delete_me.tif

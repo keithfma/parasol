@@ -9,11 +9,16 @@ import logging
 import wget
 import requests
 import pdal
+import glob
+import io
+import subprocess
 
 
 # constants
 PARASOL_HOME = os.path.expanduser(os.path.join('~', '.parasol_mvp'))
 PARASOL_LIDAR = os.path.join(PARASOL_HOME, 'lidar')
+PARASOL_LIDAR_RAW = os.path.join(PARASOL_LIDAR, 'raw')
+PARASOL_LIDAR_CLEAN = os.path.join(PARASOL_LIDAR, 'clean')
 PARASOL_OSM = os.path.join(PARASOL_HOME, 'osm')
 PARASOL_PROJ_SRS = "EPSG:32619" 
 PARASOL_GEOG_SRS = "EPSG:4269" 
@@ -37,13 +42,13 @@ def lidar_fetch():
         lidar_urls = json.load(fp)
 
     # create output folder if needed
-    if not os.path.isdir(PARASOL_LIDAR):
-        logger.info(f'Created directory {PARASOL_LIDAR}')
-        os.makedirs(PARASOL_LIDAR)
+    if not os.path.isdir(PARASOL_LIDAR_RAW):
+        logger.info(f'Created directory {PARASOL_LIDAR_RAW}')
+        os.makedirs(PARASOL_LIDAR_RAW)
    
     # download all tiles, skip if they exist 
     for url in lidar_urls:
-        file_name = os.path.join(PARASOL_LIDAR, os.path.basename(url))
+        file_name = os.path.join(PARASOL_LIDAR_RAW, os.path.basename(url))
         if os.path.isfile(file_name):
             logging.info(f'LiDAR file {file_name} exists, skipping download')
         else:
@@ -55,9 +60,10 @@ def lidar_preprocess_all():
     """
     Loop over all available lidar files, run preprocessing pipelines as needed
     """
-    # DEBUG: hard-code one
-    raw_files = ['/home/keith/.parasol_mvp/lidar/20131208_usgspostsandy_19TCG270920.laz']
-    raise NotImplementedError
+    raw_files = glob.glob(os.path.join(PARASOL_LIDAR_RAW, '*.laz'))
+    for raw_file in raw_files:
+        lidar_preprocess(raw_file)
+        break # DEBUG: stop after first file
 
 
 def lidar_preprocess(input_file):
@@ -73,14 +79,21 @@ def lidar_preprocess(input_file):
         *_top.laz, *_top.tif:
     """
     # generate filenames for steps along pre-processing pipeline
-    input_base, input_ext = os.path.splitext(input_file)
-    clean_file = f'{base}_clean.laz'
+    input_folder, input_name = os.path.split(input_file)
+    input_base, input_ext = os.path.splitext(input_name)
+    clean_file = os.path.join(PARASOL_LIDAR_CLEAN, f'{input_base}_clean.laz')
+    
+    # create output folders, if needed
+    if not os.path.isdir(PARASOL_LIDAR_CLEAN):
+        logger.info(f'Created directory {PARASOL_LIDAR_CLEAN}')
+        os.makedirs(PARASOL_LIDAR_CLEAN)
 
     # clean input file, if needed
     if os.path.isfile(clean_file):
         logger.info(f'Clean file {clean_file} exists, skipping')
     else:
-        clean_pipeline_def = {
+        logger.info(f'Cleaning raw LiDAR file: {input_file} -> {clean_file}')
+        clean_pipeline_json = json.dumps({
             "pipeline": [
                 {
                     "type": "readers.las",
@@ -119,11 +132,9 @@ def lidar_preprocess(input_file):
                     "compression": "laszip"
                 }
             ]
-        }
-        clean_pipeline = pdal.Pipeline(json.dumps(clean_pipeline_def))
-        clean_pipeline.validate()
-        clean_pipeline.loglevel = 8 #really noisy
-        pipeline.execute()
+        })
+        subprocess.run(
+            ['pdal', 'pipeline', '--stdin'], input=clean_pipeline_json, encoding='utf-8')
 
 
 # OSM ------------------------------------------------------------------------

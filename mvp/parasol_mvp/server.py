@@ -25,7 +25,7 @@ def main():
 
 @app.route('/img/<img_name>', methods=['GET'])
 def img_file(img_name):
-    filename = resource_filename('parasol_mvp', os.path.join('static', img_name))
+    filename = resource_filename('parasol_mvp', os.path.join('static', 'img', img_name))
     return flask.send_file(filename, mimetype='image/png')
 
 

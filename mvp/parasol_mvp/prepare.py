@@ -172,11 +172,92 @@ def lidar_preprocess(input_file):
         subprocess.run(
             ['pdal', 'pipeline', '--stdin', '--nostream'], input=top_dem_pipeline, encoding='utf-8')
 
+    # TODO: nearest neighbor interp?
+
 
     # extract bottom surface points, if needed
     if os.path.isfile(bottom_file):
         logger.info(f'Bottom surface points file {bottom_file} exists, skipping')
+    else:
+        logger.info(f'Extracting bottom surface points: {input_file} -> {bottom_file}')
+        bottom_pipeline = json.dumps({
+            "pipeline": [
+                {
+                    "type": "readers.las",
+                    "filename": input_file,
+                },  
+                {
+                    "type":"filters.returns",
+                    "groups":"last,only"
+                },
+                {
+                    "type": "filters.reprojection",
+                    "out_srs": PARASOL_PROJ_SRS,
+                },
+                {
+                    "type":"filters.voxelgrid",
+                    "leaf_x": 1.0,
+                    "leaf_y": 1.0,
+                    "leaf_z": 1.0,
+                },
+                {
+                    "type": "filters.outlier",
+                    "method": "statistical",
+                    "mean_k": 12,
+                    "multiplier": 2.2
+                },
+                {
+                    "type":"filters.range",
+                    "limits":"Classification![7:7]"
+                },
+                {
+                    "type": "filters.pmf"
+                },
+                {
+                    "type":"filters.range",
+                    "limits":"Classification[2:2]"
+                },
+                {
+                    "type": "writers.las", 
+                    "filename": bottom_file,
+                    "forward": "all",
+                    "scale_x": "auto",
+                    "scale_y": "auto",
+                    "scale_z": "auto",
+                    "offset_x": "auto",
+                    "offset_y": "auto",
+                    "offset_z": "auto",
+                    "compression": "laszip"
+                }
+            ]
+        })
+        subprocess.run(
+            ['pdal', 'pipeline', '--stdin'], input=bottom_pipeline, encoding='utf-8')
 
+    # generate bottom raster, if needed
+    if os.path.isfile(bottom_dem_file):
+        logger.info(f'Bottom surface file {bottom_dem_file} exists, skipping')
+    else:
+        logger.info(f'Building bottom surface: {bottom_file} -> {bottom_dem_file}')
+        bottom_dem_pipeline = json.dumps({
+            "pipeline": [
+                {
+                    "type": "readers.las",
+                    "filename": bottom_file,
+                },
+                {
+                    "type": "writers.gdal", 
+                    "filename": bottom_dem_file,
+                    "resolution": 1.0, 
+                    "output_type": "idw", 
+                    "dimension": "Z" 
+                }
+            ]
+        })
+        subprocess.run(
+            ['pdal', 'pipeline', '--stdin', '--nostream'], input=bottom_dem_pipeline, encoding='utf-8')
+
+    # TODO: nearest neighbor interp?
 
 # OSM ------------------------------------------------------------------------
 

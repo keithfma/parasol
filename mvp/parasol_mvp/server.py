@@ -6,7 +6,13 @@ import flask
 import argparse
 
 
+# constants
+
+# create app
 app = flask.Flask('parasol_mvp')
+
+
+# endpoints ------------------------------------------------------------------
 
 
 @app.route('/', methods=["GET"])
@@ -14,6 +20,9 @@ app = flask.Flask('parasol_mvp')
 def main():
     """Main Parasol user interface"""
     return flask.render_template('index.html')
+
+
+# command line ---------------------------------------------------------------
 
 
 def cli():

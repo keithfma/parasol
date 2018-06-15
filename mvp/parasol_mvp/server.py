@@ -70,12 +70,8 @@ def route():
     cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                 (start_id, end_id))
     geojson = cur.fetchone()[0]
-    
-    # DEBUG
-    print(start_id, end_id)
-    print(geojson)
 
-    return flask.Response(status=501)
+    return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
 # command line ---------------------------------------------------------------

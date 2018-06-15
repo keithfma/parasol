@@ -5,10 +5,10 @@
 var shadeBbox = [[42.3343660, -71.0825971], [42.3620201, -71.0453125]];
 var shadeLayer;
 var shadeUrls = [];
-var lon0;
-var lat0;
-var lon1;
-var lat1;
+var startLatlng;
+var startMarker;
+var endLatlng;
+var endMarker;
 
 
 // init - run on page load
@@ -65,14 +65,20 @@ $(document).ready(function() {
         console.log('Updated shade map to idx: ' + shadeIdx.toString() + ", url: " + shadeUrls[shadeIdx]); 
     };
 
-    // // listen to click events to show a popup window
-    // // the content of the popup is plain html
-    // // this is a nice example how function chaining is possible with Leaflet
-    // map.on('click', function(e) {
-    // var popup = L.popup()
-    //     .setLatLng(e.latlng)
-    //     .setContent('<p>Hello, world!</p>')
-    //     .openOn(map);
-    // });
+    // update start location (left click)
+    map.on('click', function(e) {
+        startLatlng = e.latlng;
+        if (startMarker) startMarker.remove();
+        startMarker = L.marker(startLatlng);
+        startMarker.addTo(map);
+    });
+
+    // update end location (right click)
+    map.on('contextmenu', function(e) {
+        endLatlng = e.latlng;
+        if (endMarker) endMarker.remove();
+        endMarker = L.marker(endLatlng);
+        endMarker.addTo(map);
+    });
 
 });

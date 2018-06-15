@@ -10,15 +10,16 @@ h1 {
 }
 
 .slidecontainer {
-    width: 75%;
+    width: 80%;
     margin-left: auto;
     margin-right: auto;
 }
 
 .slider {
+    display: inline-block;
     -webkit-appearance: none;
     height: 25px;
-    width: 100%;
+    width: 80%;
     background: #d3d3d3;
     outline: none;
     opacity: 0.7;
@@ -45,3 +46,10 @@ h1 {
     background: #4CAF50;
     cursor: pointer;
 }
+
+.play {
+    display: inline-block;
+    height: 25px;
+    margin-top: auto;
+    margin-bottom: auto;
+} 

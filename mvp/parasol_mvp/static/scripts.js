@@ -11,6 +11,7 @@ var end;
 var startMarker;
 var endMarker;
 var route;
+var animation;
 
 // get route and update map
 function updateRoute() {
@@ -31,6 +32,28 @@ function updateRoute() {
         }
     });
 };
+
+
+function updateShade() {
+    var shadeIdx = parseInt($('#timeSlider')[0].value);
+    if (shadeLayer) shadeLayer.remove();
+    shadeLayer = L.imageOverlay(shadeUrls[shadeIdx], shadeBbox, {opacity: .9})
+    shadeLayer.addTo(map);
+    console.log('Updated shade map to idx: ' + shadeIdx.toString() + ", url: " + shadeUrls[shadeIdx]); 
+};
+
+
+function togglePlay() {
+    if (animation) {
+        clearInterval(animation);    
+    } else {
+        animation = setInterval(function() {
+            var slider = $('#timeSlider')[0];
+            slider.value = (parseInt(slider.value) + 1).toString()
+            updateShade(); 
+        }, 1000);
+    }
+}
 
 
 // init - run on page load
@@ -78,13 +101,10 @@ $(document).ready(function() {
     L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map);
 
     // add event listener for slider
-    slider.onchange= function() {
-        var shadeIdx = parseInt($('#timeSlider')[0].value);
-        if (shadeLayer) shadeLayer.remove();
-        shadeLayer = L.imageOverlay(shadeUrls[shadeIdx], shadeBbox, {opacity: .9})
-        shadeLayer.addTo(map);
-        console.log('Updated shade map to idx: ' + shadeIdx.toString() + ", url: " + shadeUrls[shadeIdx]); 
-    };
+    slider.onchange = updateShade;
+
+    // add listener for animate button
+    $('#play')[0].onclick = togglePlay;
 
     // update start location (left click)
     // TODO: make it an umbrella

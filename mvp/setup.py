@@ -10,6 +10,7 @@ setup(
         'wget',
         'requests',
         'flask',
+        'psycopg2',
         ],
     entry_points={
         'console_scripts': [

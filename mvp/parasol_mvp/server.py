@@ -6,9 +6,12 @@ import flask
 import argparse
 import os
 from pkg_resources import resource_filename
+import psycopg2
 
 
 # constants
+PSQL_DB = 'parasol_mvp'
+PSQL_USER = 'keith'
 
 # create app
 app = flask.Flask('parasol_mvp')
@@ -42,11 +45,29 @@ def route():
 
     Returns: optimal route as geoJSON
     """
+    # parse endpoints
     lat0 = float(flask.request.args.get('lat0'))
     lon0 = float(flask.request.args.get('lon0'))
     lat1 = float(flask.request.args.get('lat1'))
     lon1 = float(flask.request.args.get('lon1'))
-    print(lat0, lon0, lat1, lon1)
+   
+    # connect to Postgresql database 
+    conn = psycopg2.connect(f"dbname={PSQL_DB} user={PSQL_USER}")
+    cur = conn.cursor()
+
+    # find start vertex
+    cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
+                (lon0, lat0))
+    start_id = cur.fetchone()[0]
+
+    # find end vertex
+    cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
+                (lon1, lat1))
+    end_id = cur.fetchone()[0]
+    
+    # DEBUG
+    print(start_id, end_id)
+
     return flask.Response(status=501)
 
 

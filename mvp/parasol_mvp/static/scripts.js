@@ -2,6 +2,7 @@
 // SEE: http://bl.ocks.org/bentrm/5aaedf8f2bd9361e280d
 
 // script globals
+var map;
 var shadeBbox = [[42.3343660, -71.0825971], [42.3620201, -71.0453125]];
 var shadeLayer;
 var shadeUrls = [];
@@ -9,6 +10,7 @@ var start;
 var end;
 var startMarker;
 var endMarker;
+var route;
 
 // get route and update map
 function updateRoute() {
@@ -23,6 +25,9 @@ function updateRoute() {
         },
         success: function(result) {
             console.log('Successfully fetched route, result:', result);
+            if (route) route.remove();
+            route = L.geoJSON(result);
+            route.addTo(map);
         }
     });
 };
@@ -44,12 +49,12 @@ $(document).ready(function() {
     
     // update slider properties
     var slider = $('#timeSlider')[0];
-    slider.min = "0";
-    slider.max = shadeUrls.length.toString();
+    slider.min = "15";
+    slider.max = "80"; // shadeUrls.length.toString();
     slider.value = initShadeIdx;
 
     // init the map object
-    var map = L.map('parasol-map', {
+    map = L.map('parasol-map', {
         center: [42.3481931, -71.0639548],
         zoom: 15
     });
@@ -61,9 +66,8 @@ $(document).ready(function() {
         attribution: osmAttrib
     }).addTo(map); // this will be our active base layer on startup
 
-    // add initial shade map
+    // // add initial shade map
     shadeLayer = L.imageOverlay(shadeUrls[initShadeIdx], shadeBbox, {opacity: .9})
-    shadeLayer.addTo(map);
 
     // init a map scale
     L.control.scale().addTo(map);
@@ -76,7 +80,7 @@ $(document).ready(function() {
     // add event listener for slider
     slider.onchange= function() {
         var shadeIdx = parseInt($('#timeSlider')[0].value);
-        shadeLayer.remove();
+        if (shadeLayer) shadeLayer.remove();
         shadeLayer = L.imageOverlay(shadeUrls[shadeIdx], shadeBbox, {opacity: .9})
         shadeLayer.addTo(map);
         console.log('Updated shade map to idx: ' + shadeIdx.toString() + ", url: " + shadeUrls[shadeIdx]); 

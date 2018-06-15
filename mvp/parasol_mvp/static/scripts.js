@@ -43,19 +43,6 @@ function updateShade() {
 };
 
 
-function togglePlay() {
-    if (animation) {
-        clearInterval(animation);    
-    } else {
-        animation = setInterval(function() {
-            var slider = $('#timeSlider')[0];
-            slider.value = (parseInt(slider.value) + 1).toString()
-            updateShade(); 
-        }, 1000);
-    }
-}
-
-
 // init - run on page load
 $(document).ready(function() {
     
@@ -102,9 +89,6 @@ $(document).ready(function() {
 
     // add event listener for slider
     slider.onchange = updateShade;
-
-    // add listener for animate button
-    $('#play')[0].onclick = togglePlay;
 
     // update start location (left click)
     // TODO: make it an umbrella

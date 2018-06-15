@@ -16,10 +16,9 @@ h1 {
 }
 
 .slider {
-    display: inline-block;
     -webkit-appearance: none;
     height: 25px;
-    width: 80%;
+    width: 100%;
     background: #d3d3d3;
     outline: none;
     opacity: 0.7;
@@ -46,10 +45,3 @@ h1 {
     background: #4CAF50;
     cursor: pointer;
 }
-
-.play {
-    display: inline-block;
-    height: 25px;
-    margin-top: auto;
-    margin-bottom: auto;
-} 

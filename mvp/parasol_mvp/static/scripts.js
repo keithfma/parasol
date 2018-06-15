@@ -76,16 +76,8 @@ $(document).ready(function() {
         attribution: osmAttrib
     }).addTo(map); // this will be our active base layer on startup
 
-    // // add initial shade map
-    shadeLayer = L.imageOverlay(shadeUrls[initShadeIdx], shadeBbox, {opacity: .9})
-
     // init a map scale
     L.control.scale().addTo(map);
-
-    // init a simple layer switcher with overlays an mutual exclusive base layers
-    var baseLayers = {"Map": osm}
-    var overlays = {"Shade": shadeLayer};
-    L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map);
 
     // add event listener for slider
     slider.onchange = updateShade;

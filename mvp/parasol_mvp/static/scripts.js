@@ -12,7 +12,19 @@ var endMarker;
 
 // get route and update map
 function updateRoute() {
-    console.log('Route start: ', start, 'Route end:', end);
+    if (!start || !end) return; // abort if don't have two endpoints
+    $.ajax({
+        url: '/route',
+        method: 'GET',
+        data: {lat0: start.lat, lon0: start.lon, lat1: end.lat, lon1: end.lon},
+        dataType: 'json',
+        error: function(result) {
+            console.log('Failed to fetch route, result:', result);
+        },
+        success: function(result) {
+            console.log('Successfully fetched route, result:', result);
+        }
+    });
 };
 
 

@@ -5,10 +5,15 @@
 var shadeBbox = [[42.3343660, -71.0825971], [42.3620201, -71.0453125]];
 var shadeLayer;
 var shadeUrls = [];
-var startLatlng;
+var start;
+var end;
 var startMarker;
-var endLatlng;
 var endMarker;
+
+// get route and update map
+function updateRoute() {
+    console.log('Route start: ', start, 'Route end:', end);
+};
 
 
 // init - run on page load
@@ -66,19 +71,24 @@ $(document).ready(function() {
     };
 
     // update start location (left click)
+    // TODO: make it an umbrella
     map.on('click', function(e) {
-        startLatlng = e.latlng;
+        start = e.latlng;
         if (startMarker) startMarker.remove();
-        startMarker = L.marker(startLatlng);
+        startMarker = L.marker(start);
         startMarker.addTo(map);
+        updateRoute();
     });
 
     // update end location (right click)
+    // TODO: make it an umbrella
+    // TODO: apply different color
     map.on('contextmenu', function(e) {
-        endLatlng = e.latlng;
+        end = e.latlng;
         if (endMarker) endMarker.remove();
-        endMarker = L.marker(endLatlng);
+        endMarker = L.marker(end);
         endMarker.addTo(map);
+        updateRoute();
     });
 
 });

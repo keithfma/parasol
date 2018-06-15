@@ -16,4 +16,4 @@ CREATE EXTENSION pgrouting;
 SQL
 
 # ingest data (assumes it it downloaded)
-osm2pgrouting -f $OSMFILE -d $DBNAME --conf mapconfig_for_pedestrian.xml --clean
+osm2pgrouting -f $OSMFILE -d $DBNAME  --clean

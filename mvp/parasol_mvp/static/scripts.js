@@ -16,7 +16,7 @@ function updateRoute() {
     $.ajax({
         url: '/route',
         method: 'GET',
-        data: {lat0: start.lat, lon0: start.lon, lat1: end.lat, lon1: end.lon},
+        data: {lat0: start.lat, lon0: start.lng, lat1: end.lat, lon1: end.lng},
         dataType: 'json',
         error: function(result) {
             console.log('Failed to fetch route, result:', result);

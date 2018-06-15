@@ -42,6 +42,11 @@ def route():
 
     Returns: optimal route as geoJSON
     """
+    lat0 = float(flask.request.args.get('lat0'))
+    lon0 = float(flask.request.args.get('lon0'))
+    lat1 = float(flask.request.args.get('lat1'))
+    lon1 = float(flask.request.args.get('lon1'))
+    print(lat0, lon0, lat1, lon1)
     return flask.Response(status=501)
 
 

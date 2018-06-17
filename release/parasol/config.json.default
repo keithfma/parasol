@@ -1,0 +1,7 @@
+{
+    "LIDAR_DB": "parasol_lidar",
+    "PSQL_USER": null,
+    "PSQL_PASS": null,
+    "PSQL_HOST": "localhost",
+    "PSQL_PORT": 5432
+}  

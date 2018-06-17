@@ -43,24 +43,22 @@ def create_db(clobber=False):
     return cur 
 
 
-# def lidar_fetch():
-#     """
-#     Download LiDAR tiles for the Parasol study area
-#     """
-#     # get tile urls
-#     with open(LIDAR_URLS_FILE, 'r') as fp:
-#         lidar_urls = json.load(fp)
-# 
-#     # create output folder if needed
-#     if not os.path.isdir(PARASOL_LIDAR_RAW):
-#         logger.info(f'Created directory {PARASOL_LIDAR_RAW}')
-#         os.makedirs(PARASOL_LIDAR_RAW)
-#    
-#     # download all tiles, skip if they exist 
-#     for url in lidar_urls:
-#         file_name = os.path.join(PARASOL_LIDAR_RAW, os.path.basename(url))
-#         if os.path.isfile(file_name):
-#             logging.info(f'LiDAR file {file_name} exists, skipping download')
-#         else:
-#             logging.info(f'Downloading LiDAR file {url}')
-#             wget.download(url, out=file_name)
+def ingest_laz(laz_file, clobber=False):
+    """
+    Import points from LAZ file to LiDAR database
+
+    Uses PDAL to split the input into patches and upload patches to the
+    database server. Checks metadata to avoid duplication
+    
+    Arguments:
+        laz_file: string, path to source file in LAZ format
+        clobber: set True to delete existing points from this file and re-import
+    
+    Returns: ?
+    """
+    raise NotImplementedError
+
+# TODO: label upper surface points
+# TODO: label ground points
+
+

@@ -45,10 +45,11 @@ def create_db(clobber=False):
         cur = conn.cursor()
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pointcloud;')
+        cur.execute('CREATE EXTENSION pointcloud_postgis;')
         cur.execute(f'CREATE TABLE {LIDAR_TABLE} (id SERIAL PRIMARY KEY, pa PCPATCH(1));')
 
 
-def import(laz_file, clobber=False):
+def ingest(laz_file, clobber=False):
     """
     Import points from LAZ file to LiDAR database
 
@@ -92,9 +93,22 @@ def retrieve(minx, maxx, miny, maxy):
         minx, maxx: floats, x-limits for bounding box 
         miny, maxy: floats, y-limits for bounding box 
 
-    Returns: ?
+    Returns: list of numpy arrays (per patch), one point per row with named columns
     """
-    raise NotImplementedError
+    pipeline = pdal.Pipeline(json.dumps({
+        "pipeline":[
+            {
+                "type": "readers.pgpointcloud",
+                "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
+                "table": LIDAR_TABLE,
+                "column": "pa",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({minx}, {maxx}, {miny}, {maxy}, {LIDAR_SRID}))",
+            }
+          ]
+        }))
+    pipeline.validate()
+    pipeline.execute()
+    return pipeline.arrays
 
 
 

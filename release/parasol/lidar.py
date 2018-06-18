@@ -66,18 +66,11 @@ def ingest(laz_file, clobber=False):
     
     Returns: Nothing
     """
-    # TODO: label upper surface points
-    # TODO: label ground points
     pipeline = pdal.Pipeline(json.dumps({
         "pipeline": [
             {
                 "type": "readers.las",
                 "filename": laz_file,
-            }, {
-                "type": "filters.outlier",
-                "method": "statistical",
-                "mean_k": 12,
-                "multiplier": 2.2,
             }, {
                 "type": "filters.chipper",
                 "capacity": 400,

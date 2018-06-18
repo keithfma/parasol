@@ -5,6 +5,7 @@ LiDAR data handlers
 import psycopg2 as pg 
 import subprocess
 import json
+import pdal
 
 from parasol import LIDAR_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
@@ -56,7 +57,25 @@ def ingest_laz(laz_file, clobber=False):
     
     Returns: ?
     """
-    raise NotImplementedError
+    pipeline = pdal.Pipeline(json.dumps({
+        "pipeline": [
+            {
+                "type": "readers.las",
+                "filename": laz_file,
+            }, {
+                "type": "writers.las",
+                "filename": "delete_me.laz",
+                "forward": "all",
+                "compression": "laszip",
+            }
+        ]
+    }))
+    pipeline.validate() 
+    pipeline.execute()
+
+    return pipeline # DEBUG
+    
+    
 
 # TODO: label upper surface points
 # TODO: label ground points

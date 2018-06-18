@@ -33,6 +33,7 @@ def create_db(clobber=False):
 
     Return: Nothing
     """
+    # TODO: add indexes as needed
     # connect to default database
     with connect_db('postgres') as conn:
         conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
@@ -53,8 +54,11 @@ def ingest(laz_file, clobber=False):
     """
     Import points from LAZ file to LiDAR database
 
-    Uses PDAL to split the input into patches and upload patches to the
-    database server. Checks metadata to avoid duplication
+    Uses PDAL to preprocess, split the input into patches, and upload patches to the
+    database server. Preprocessing includes outlier detection / removal, ...
+
+    Beware: no check to avoid duplication, it is up to the user to take care to
+        upload data only once
     
     Arguments:
         laz_file: string, path to source file in LAZ format
@@ -70,6 +74,11 @@ def ingest(laz_file, clobber=False):
                 "type": "readers.las",
                 "filename": laz_file,
             }, {
+                "type": "filters.outlier",
+                "method": "statistical",
+                "mean_k": 12,
+                "multiplier": 2.2,
+            }, {
                 "type": "filters.chipper",
                 "capacity": 400,
             }, {
@@ -83,19 +92,22 @@ def ingest(laz_file, clobber=False):
     }))
     pipeline.validate() 
     pipeline.execute()
-   
+
  
-def retrieve(minx, maxx, miny, maxy):
+def retrieve(minx, maxx, miny, maxy, plasio_file=None):
     """
     Retrieve all points within a bounding box
     
     Arguments:
         minx, maxx: floats, x-limits for bounding box 
         miny, maxy: floats, y-limits for bounding box 
+        plasio_file: optional, provide a string to save results as a
+            plas.io-friendly LAZ file. If enabled, no array is returned
 
-    Returns: list of numpy arrays (per patch), one point per row with named columns
+    Returns: list of numpy arrays per patch, one point per row, named columns
     """
-    pipeline = pdal.Pipeline(json.dumps({
+    # build pipeline definition
+    pipeline_dict = {
         "pipeline":[
             {
                 "type": "readers.pgpointcloud",
@@ -105,10 +117,25 @@ def retrieve(minx, maxx, miny, maxy):
                 "where": f"PC_Intersects(pa, ST_MakeEnvelope({minx}, {maxx}, {miny}, {maxy}, {LIDAR_SRID}))",
             }
           ]
-        }))
+        }
+    if plasio_file: 
+        # optionally write to plasio-friendly LAZ file
+        pipeline_dict['pipeline'].extend([
+            {
+                "type": "filters.reprojection",
+                "out_srs": "EPSG:32619",
+            }, {
+                "type": "writers.las",
+                "forward": "all",
+                "compression": "laszip",
+                "filename": plasio_file,
+            }])
+    # create and execute pipeline
+    pipeline = pdal.Pipeline(json.dumps(pipeline_dict))
     pipeline.validate()
     pipeline.execute()
-    return pipeline.arrays
-
+    # return array, if requested
+    if not plasio_file: 
+        return pipeline.arrays
 
 

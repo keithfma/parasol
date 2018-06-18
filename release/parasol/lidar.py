@@ -48,7 +48,7 @@ def create_db(clobber=False):
         cur.execute(f'CREATE TABLE {LIDAR_TABLE} (id SERIAL PRIMARY KEY, pa PCPATCH(1));')
 
 
-def ingest_laz(laz_file, clobber=False):
+def import(laz_file, clobber=False):
     """
     Import points from LAZ file to LiDAR database
 
@@ -59,8 +59,10 @@ def ingest_laz(laz_file, clobber=False):
         laz_file: string, path to source file in LAZ format
         clobber: set True to delete existing points from this file and re-import
     
-    Returns: ?
+    Returns: Nothing
     """
+    # TODO: label upper surface points
+    # TODO: label ground points
     pipeline = pdal.Pipeline(json.dumps({
         "pipeline": [
             {
@@ -80,12 +82,19 @@ def ingest_laz(laz_file, clobber=False):
     }))
     pipeline.validate() 
     pipeline.execute()
-
-    return pipeline # DEBUG
+   
+ 
+def retrieve(minx, maxx, miny, maxy):
+    """
+    Retrieve all points within a bounding box
     
-    
+    Arguments:
+        minx, maxx: floats, x-limits for bounding box 
+        miny, maxy: floats, y-limits for bounding box 
 
-# TODO: label upper surface points
-# TODO: label ground points
+    Returns: ?
+    """
+    raise NotImplementedError
+
 
 

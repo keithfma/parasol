@@ -11,6 +11,8 @@ setup(
         'requests',
         'flask',
         'psycopg2',
+        'numpy',
+        'scipy',
         ],
     entry_points={
         'console_scripts': [

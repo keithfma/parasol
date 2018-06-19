@@ -9,6 +9,10 @@ import pdal
 import argparse
 from glob import glob
 import logging
+import numpy as np
+from scipy.spatial import cKDTree as kdtree
+import math
+
 from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
@@ -91,7 +95,7 @@ def ingest(laz_file):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
-                 "srid": LIDAR_PRJ_SRID,
+                "srid": LIDAR_PRJ_SRID,
                 "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
                 "scale_x": 0.01, # precision in meters
                 "scale_y": 0.01,
@@ -106,13 +110,13 @@ def ingest(laz_file):
     pipeline.execute()
     logger.info(f'Completed ingest: {laz_file}')
 
- 
-def retrieve(bbox=None, plasio_file=None):
+
+def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
     """
     Retrieve all points within a bounding box
     
     Arguments:
-        bbox: [[minx, maxx], [miny, maxy]]: floats, limits for bounding box 
+        xmin, xmax, ymin, ymax: floats, limits for bounding box 
         plasio_file: optional, provide a string to save results as a
             plas.io-friendly LAZ file. If enabled, no array is returned
 
@@ -126,14 +130,11 @@ def retrieve(bbox=None, plasio_file=None):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "column": "pa",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {LIDAR_PRJ_SRID}))",
             }
           ]
-        }
+}
 
-    if bbox:
-        pipeline_dict['pipeline'][0]['where'] = (
-            f"PC_Intersects(pa, ST_MakeEnvelope({bbox[0][0]}, {bbox[0][1]}, "
-            "{bbox[1][0]}, {bbox[1][1]}, {LIDAR_PRJ_SRID}))")
 
     if plasio_file: 
         # optionally write to plasio-friendly LAZ file
@@ -144,34 +145,43 @@ def retrieve(bbox=None, plasio_file=None):
                 "compression": "laszip",
                 "filename": plasio_file,
             }])
+
     # create and execute pipeline
     pipeline = pdal.Pipeline(json.dumps(pipeline_dict))
     pipeline.validate()
     pipeline.execute()
+
     # return array, if requested
     if not plasio_file: 
         return pipeline.arrays
 
 
-def grid_points(bbox=None):
+def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     """
     Grid scattered points using kNN median filter
 
     Arguments:
-        bbox: [[minx, maxx], [miny, maxy]]: floats, limits for bounding box 
+        xmin, xmax, ymin, ymax: floats, limits for bounding box 
+        grnd: set True to compute surface from ground returns, False to compute
+            surface from (first) non-ground returns
     
     Returns: ?
     """
     # constants
     RESOLUTION = 1 # meters
 
-    # TODO: build output grid spanning bbox
+    # build output grid spanning bbox
+    x_vec = np.arange(math.ceil(xmin), math.floor(xmax), RESOLUTION)   
+    y_vec = np.arange(math.ceil(ymin), math.floor(ymax), RESOLUTION)   
+    x_grd, y_grd = np.meshgrid(x_vec, y_vec)
+
     # TODO: retrieve data
     # TODO: construct KDTree
     # TODO: find NN for all grid points
     # TODO: compute local medians
     # TODO: format output (x vector, y vector, z grid)
-    raise NotImplementedError
+
+    return x_grd, y_grd # DEBUG
 
 
 # command line utilities -----------------------------------------------------

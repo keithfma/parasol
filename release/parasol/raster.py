@@ -7,6 +7,8 @@ import psycopg2 as pg
 import numpy as np
 import math
 from scipy.spatial import cKDTree
+from osgeo import gdal, osr
+
 
 from parasol import lidar
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, LIDAR_PRJ_SRID
@@ -133,7 +135,7 @@ def to_geotiff(file_name, x_vec, y_vec, z_grd):
     outRaster = driver.Create(file_name, cols, rows, 1, gdal.GDT_Float32)
     outRaster.SetGeoTransform((x_vec[0], RESOLUTION, 0, y_vec[0], 0, -RESOLUTION))
     outband = outRaster.GetRasterBand(1)
-    outband.WriteArray(array)
+    outband.WriteArray(z_grd)
     outRasterSRS = osr.SpatialReference()
     outRasterSRS.ImportFromEPSG(LIDAR_PRJ_SRID)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())

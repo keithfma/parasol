@@ -9,10 +9,14 @@ import math
 from scipy.spatial import cKDTree
 
 from parasol import lidar
-from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
+from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, LIDAR_PRJ_SRID
 
 
 logger = logging.getLogger(__name__)
+
+
+# constants
+RESOLUTION = 1 # meters
 
 
 def connect_db(dbname=RASTER_DB):
@@ -66,8 +70,6 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     
     Returns: ?
     """
-    # constants
-    RESOLUTION = 1 # meters
 
     # build output grid spanning bbox
     x_vec = np.arange(math.ceil(xmin), math.floor(xmax), RESOLUTION)   
@@ -113,3 +115,28 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
 
     return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
+
+
+def to_geotiff(file_name, x_vec, y_vec, z_grd):
+    """
+    Write input array as GeoTiff raster
+    
+    Arguments:
+        file_name:
+        x_vec, y_vec:
+        z_grd: 
+
+    Returns: Nothing, writes result to file
+    """
+    rows, cols = z_grd.shape
+    driver = gdal.GetDriverByName('GTiff')
+    outRaster = driver.Create(file_name, cols, rows, 1, gdal.GDT_Float32)
+    outRaster.SetGeoTransform((x_vec[0], RESOLUTION, 0, y_vec[0], 0, -RESOLUTION))
+    outband = outRaster.GetRasterBand(1)
+    outband.WriteArray(array)
+    outRasterSRS = osr.SpatialReference()
+    outRasterSRS.ImportFromEPSG(LIDAR_PRJ_SRID)
+    outRaster.SetProjection(outRasterSRS.ExportToWkt())
+    outband.FlushCache()
+
+

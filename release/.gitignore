@@ -1,0 +1,5 @@
+*.egg-info
+.*.swp
+**/__pycache__/*
+parasol/config.json
+*.laz

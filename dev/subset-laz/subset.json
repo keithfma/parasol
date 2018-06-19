@@ -1,0 +1,16 @@
+{
+  "pipeline": [
+    {
+        "type": "readers.las",
+        "filename": "../../data/noaa_lidar/dist/20131208_usgspostsandy_19TCG150860.laz"
+    },{
+        "type": "filters.crop",
+        "bounds":"([-71.244972, -71.24310586], [42.3042767, 42.305661740000005])"
+    },{
+        "type":"writers.las",
+        "filename":"subset.laz", 
+        "forward": "all", 
+        "compression": "laszip"
+    }
+  ]
+}

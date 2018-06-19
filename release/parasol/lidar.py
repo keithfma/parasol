@@ -16,6 +16,9 @@ import math
 from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
+# DEBUG ONLY
+from matplotlib import pyplot as plt
+
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +200,9 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     # compute local medians
     z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
     
-    # TODO: DEBUG: make a quick plot of the results
+    # DEBUG: make a quick plot of the results
+    plt.imshow(z_grd, cmap='hot', interpolation='nearest')
+    plt.show()
 
     return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
 

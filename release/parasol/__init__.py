@@ -22,4 +22,4 @@ PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
 PSQL_PORT = config['PSQL_PORT']
 
-from parasol import lidar
+from parasol import lidar, raster

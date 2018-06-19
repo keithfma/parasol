@@ -214,14 +214,14 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     nn_dist, nn_idx = tree.query(xy_grd, k=10)
 
     # compute local medians
-    z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
+    # z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
+    z_grd = np.mean(zz[nn_idx], axis=1).reshape(x_grd.shape)
     
     # DEBUG: make a quick plot of the results
     plt.imshow(z_grd, cmap='hot', interpolation='nearest')
     plt.show()
 
-    #return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
-    return pts, mask  # TODO: decide what outputs I need
+    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
 
 
 

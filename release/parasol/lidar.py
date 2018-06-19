@@ -206,24 +206,21 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
         xy[idx, 1] = pt[1]
         zz[idx] = pt[2]
 
-    # # construct KDTree
-    # tree = cKDTree(xy) 
+    # construct KDTree
+    tree = cKDTree(xy) 
 
-    # # find NN for all grid points
-    # xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
-    # nn_dist, nn_idx = tree.query(xy_grd, k=10)
+    # find NN for all grid points
+    xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
+    nn_dist, nn_idx = tree.query(xy_grd, k=16)
 
-    # # compute local medians
-    # # z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
-    # z_grd = np.mean(zz[nn_idx], axis=1).reshape(x_grd.shape)
-    # 
-    # # DEBUG: make a quick plot of the results
-    # plt.imshow(z_grd, cmap='hot', interpolation='nearest')
-    # plt.show()
+    # compute local medians
+    z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
+    
+    # DEBUG: make a quick plot of the results
+    plt.imshow(z_grd, cmap='hot', interpolation='nearest')
+    plt.show()
 
-    # return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
-
-    return xy, zz, x_grd, y_grd
+    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
 
 
 

@@ -27,10 +27,7 @@ maxy = 4696499.905
 minx = 334499.6937
 miny = 4694999.905       
 # parasol.lidar.ingest(tile_file)
-xy, zz, x_grd, y_grd = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=False)
-# bot = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=True)
+# top = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=False)
+bot = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=True)
 
-# try scipy interpolation
-# zi = scipy.interpolate.griddata(xy, zz, np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))]), method='nearest')
-# plt.imshow(zi.reshape(x_grd.shape), cmap='hot', interpolation='nearest') ; plt.show()   
 

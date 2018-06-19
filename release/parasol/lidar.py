@@ -91,8 +91,14 @@ def ingest(laz_file):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
-                "srid": LIDAR_PRJ_SRID,
+                 "srid": LIDAR_PRJ_SRID,
                 "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
+                "scale_x": 0.01, # precision in meters
+                "scale_y": 0.01,
+                "scale_z": 0.01, 
+                "offset_x": 0, # TODO: select a smarter value
+                "offset_y": 0,
+                "offset_z": 0,
             }
         ]
     }))

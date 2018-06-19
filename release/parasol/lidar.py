@@ -92,6 +92,7 @@ def ingest(laz_file):
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
                 "srid": LIDAR_PRJ_SRID,
+                "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
             }
         ]
     }))
@@ -100,13 +101,12 @@ def ingest(laz_file):
     logger.info(f'Completed ingest: {laz_file}')
 
  
-def retrieve(minx, maxx, miny, maxy, plasio_file=None):
+def retrieve(bbox=None, plasio_file=None):
     """
     Retrieve all points within a bounding box
     
     Arguments:
-        minx, maxx: floats, x-limits for bounding box 
-        miny, maxy: floats, y-limits for bounding box 
+        bbox: [[minx, maxx], [miny, maxy]]: floats, limits for bounding box 
         plasio_file: optional, provide a string to save results as a
             plas.io-friendly LAZ file. If enabled, no array is returned
 
@@ -120,10 +120,15 @@ def retrieve(minx, maxx, miny, maxy, plasio_file=None):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "column": "pa",
-                "where": f"PC_Intersects(pa, ST_MakeEnvelope({minx}, {maxx}, {miny}, {maxy}, {LIDAR_PRJ_SRID}))",
             }
           ]
         }
+
+    if bbox:
+        pipeline_dict['pipeline'][0]['where'] = (
+            f"PC_Intersects(pa, ST_MakeEnvelope({bbox[0][0]}, {bbox[0][1]}, "
+            "{bbox[1][0]}, {bbox[1][1]}, {LIDAR_PRJ_SRID}))")
+
     if plasio_file: 
         # optionally write to plasio-friendly LAZ file
         pipeline_dict['pipeline'].extend([

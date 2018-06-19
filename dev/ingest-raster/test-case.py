@@ -13,7 +13,7 @@ from osgeo import osr
 
 logging.basicConfig(level=logging.INFO)
 
-# # create a test raster, as a numpy array
+# # # create a test raster, as a numpy array
 # maxx = 335999.6937      
 # maxy = 4696499.905      
 # minx = 334499.6937
@@ -42,7 +42,9 @@ logging.basicConfig(level=logging.INFO)
 
 # # write to a geotiff
 # # see: https://pcjericks.github.io/py-gdalogr-cookbook/raster_layers.html#create-raster-from-array
-def array2raster(newRasterfn,rasterOrigin,pixelWidth,pixelHeight,array):
+
+
+def array2raster(newRasterfn, rasterOrigin, pixelWidth, pixelHeight, array):
 
     cols = array.shape[1]
     rows = array.shape[0]
@@ -50,36 +52,28 @@ def array2raster(newRasterfn,rasterOrigin,pixelWidth,pixelHeight,array):
     originY = rasterOrigin[1]
 
     driver = gdal.GetDriverByName('GTiff')
-    outRaster = driver.Create(newRasterfn, cols, rows, 1, gdal.GDT_Byte)
+    # outRaster = driver.Create(newRasterfn, cols, rows, 1, gdal.GDT_Byte)
+    outRaster = driver.Create(newRasterfn, cols, rows, 1, gdal.GDT_Float32)
     outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
     outband = outRaster.GetRasterBand(1)
     outband.WriteArray(array)
     outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromEPSG(4326)
+    outRasterSRS.ImportFromEPSG(parasol.LIDAR_PRJ_SRID)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
     outband.FlushCache()
 
 
-def main(newRasterfn,rasterOrigin,pixelWidth,pixelHeight,array):
+def main(newRasterfn, rasterOrigin, pixelWidth, pixelHeight, array):
     reversed_arr = array[::-1] # reverse array so the tif looks like the array
-    array2raster(newRasterfn,rasterOrigin,pixelWidth,pixelHeight,reversed_arr) # convert array to raster
+    array2raster(newRasterfn, rasterOrigin, pixelWidth, pixelHeight, reversed_arr) # convert array to raster
 
 
-rasterOrigin = (-123.25745,45.43013)
-pixelWidth = 10
-pixelHeight = 10
+rasterOrigin = (min(xvec), min(yvec))
+pixelWidth = 1
+pixelHeight = 1
 newRasterfn = 'test.tif'
-array = np.array([[ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                  [ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
-                  [ 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-                  [ 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
-                  [ 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-                  [ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
-                  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                  [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
-main(newRasterfn,rasterOrigin,pixelWidth,pixelHeight,array)
+main(newRasterfn, rasterOrigin, pixelWidth, pixelHeight, zgrd)
+
 
 # # create and populate database
 # parasol.raster.create_db(clobber=True)

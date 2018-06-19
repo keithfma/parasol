@@ -9,15 +9,9 @@ import pdal
 import argparse
 from glob import glob
 import logging
-import numpy as np
-from scipy.spatial import cKDTree
-import math
 
 from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
-
-# DEBUG ONLY
-from matplotlib import pyplot as plt
 
 
 logger = logging.getLogger(__name__)

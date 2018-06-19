@@ -4,6 +4,10 @@ Raster data handlers
 
 import logging
 import psycopg2 as pg
+import numpy as np
+import math
+from scipy.spatial import cKDTree
+
 from parasol import lidar
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
@@ -107,9 +111,5 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
 
     # compute local medians
     z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
-    
-    # DEBUG: make a quick plot of the results
-    plt.imshow(z_grd, cmap='hot', interpolation='nearest')
-    plt.show()
 
     return x_vec, y_vec, z_grd  # TODO: decide what outputs I need

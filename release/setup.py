@@ -14,7 +14,8 @@ setup(
         ],
     entry_points={
         'console_scripts': [
-            'parasol-server=parasol.server:cli'
+            'parasol-server=parasol.server:cli',
+            'parasol-init-lidar=parasol.lidar:initialize_cli',
             ]
         }
     )

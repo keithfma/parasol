@@ -8,10 +8,13 @@ import numpy as np
 import math
 from scipy.spatial import cKDTree
 from osgeo import gdal, osr
+import subprocess
 
 
 from parasol import lidar
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, LIDAR_PRJ_SRID
+# TODO: need separate DB for top, bottom, shade rasters
+# TODO: should I project or just stay in geographic coords?
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +73,9 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
         grnd: set True to compute surface from ground returns, False to compute
             surface from (first) non-ground returns
     
-    Returns: ?
+    Returns: x_vec, y_vec, z_grd
+        x_vec, y_vec: numpy 1D arrays, x and y coordinate axes
+        z_grd: numpy 2D array, elevation grid 
     """
 
     # build output grid spanning bbox
@@ -119,20 +124,20 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
 
 
-def to_geotiff(file_name, x_vec, y_vec, z_grd):
+def create_geotiff(filename, x_vec, y_vec, z_grd):
     """
     Write input array as GeoTiff raster
     
     Arguments:
-        file_name:
-        x_vec, y_vec:
-        z_grd: 
+        filename: string, path to write GeoTiff file
+        x_vec, y_vec: numpy 1D arrays, x and y coordinate axes
+        z_grd: numpy 2D array, elevation grid 
 
     Returns: Nothing, writes result to file
     """
     rows, cols = z_grd.shape
     driver = gdal.GetDriverByName('GTiff')
-    outRaster = driver.Create(file_name, cols, rows, 1, gdal.GDT_Float32)
+    outRaster = driver.Create(filename, cols, rows, 1, gdal.GDT_Float32)
     outRaster.SetGeoTransform((x_vec[0], RESOLUTION, 0, y_vec[0], 0, -RESOLUTION))
     outband = outRaster.GetRasterBand(1)
     outband.WriteArray(z_grd)
@@ -141,4 +146,31 @@ def to_geotiff(file_name, x_vec, y_vec, z_grd):
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
     outband.FlushCache()
 
+
+def upload_geotiff(filename, clobber=False):
+    """
+    Upload GeoTiff file to database
+
+    Command-line tool 'rastertopsql' used to generate SQL commands
+
+    Arguments:
+        filename: string, GeoTiff file to upload
+        clobber: set True to drop existing table and create a new one, or False
+            to append to the existing table
+    
+    Returns: Nothing
+    """
+    # generate sql commands
+    if clobber:
+        cmd = f'raster2pgsql -d -C -r -s {LIDAR_PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
+    else:
+        cmd = f'raster2pgsql -a -C -r -s {LIDAR_PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+    out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
+    sql = out.stdout.decode('utf-8')
+
+    # execute sql commands
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute(sql)
+        cur.close()
 

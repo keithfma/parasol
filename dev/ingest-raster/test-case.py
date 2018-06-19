@@ -24,20 +24,9 @@ logging.basicConfig(level=logging.INFO)
 # # plt.show()
 
 # # write to a geotiff
-# parasol.raster.to_geotiff('test.tif', xvec, yvec, zgrd)
+# parasol.raster.create_geotiff('test.tif', xvec, yvec, zgrd)
 
 # create and populate database
 parasol.raster.create_db(clobber=True)
-
-# read in first file (includes -d and -t options)
-cmd = f'raster2pgsql -d -C -r -s {parasol.LIDAR_PRJ_SRID} -b 1 -t auto test.tif {parasol.RASTER_DB}'
-out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
-sql = out.stdout.decode('utf-8')
-
-with parasol.raster.connect_db() as conn:
-    cur = conn.cursor()
-    cur.execute(sql)
-    cur.close()
-
-# read in another (well, the same one again)
-
+parasol.raster.upload_geotiff('test.tif', clobber=True)
+parasol.raster.upload_geotiff('test.tif', clobber=False) # fails due to constraints, which is good!

@@ -175,3 +175,36 @@ def upload_geotiff(filename, clobber=False):
         cur.execute(sql)
         cur.close()
 
+
+def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
+    """
+    Return list of bounding boxes for tiles within the specified range
+    
+    Arguments:
+        x_min, x_max, y_min, y_max: floats, limits for the full region-of-interest
+        x_tile, y_tile: floats, desired dimensions for generated tiles, note that
+            the actual dimensions are adjusted to evenly divide the ROI
+    
+    Returns: list of bounding boxes, formatted as [[x0, x1], [y0, y1]]
+    """
+    # modify tile dimensions to a nice multiple of the bounding box
+    x_rng = x_max - x_min
+    x_num_tiles = x_rng // x_tile
+    x_tile = x_rng / x_num_tiles 
+
+    y_rng = y_max - y_min
+    y_num_tiles = y_rng // y_tile
+    y_tile = y_rng / y_num_tiles 
+
+    # generate tile bboxes
+    tiles = []
+    for ii in range(x_num_tiles):
+        for jj in range(y_num_tiles):
+            x0 = x_min + ii*x_tile
+            x1 = x0 + x_tile
+            y0 = y_min + jj*y_tile
+            y1 = y0 + y_tile
+            tiles.append([[x0, x1], [y0, y1]])
+
+    return tiles
+

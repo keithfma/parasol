@@ -153,6 +153,27 @@ def retrieve(bbox=None, plasio_file=None):
         return pipeline.arrays
 
 
+def grid_points(bbox=None):
+    """
+    Grid scattered points using kNN median filter
+
+    Arguments:
+        bbox: [[minx, maxx], [miny, maxy]]: floats, limits for bounding box 
+    
+    Returns: ?
+    """
+    # constants
+    RESOLUTION = 1 # meters
+
+    # TODO: build output grid spanning bbox
+    # TODO: retrieve data
+    # TODO: construct KDTree
+    # TODO: find NN for all grid points
+    # TODO: compute local medians
+    # TODO: format output (x vector, y vector, z grid)
+    raise NotImplementedError
+
+
 # command line utilities -----------------------------------------------------
 
 

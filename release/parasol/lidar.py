@@ -10,7 +10,7 @@ import argparse
 from glob import glob
 import logging
 import numpy as np
-from scipy.spatial import cKDTree as kdtree
+from scipy.spatial import cKDTree
 import math
 
 from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
@@ -151,7 +151,9 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
     pipeline.execute()
     # return array, if requested
     if not plasio_file: 
-        return pipeline.arrays
+        if not len(pipeline.arrays) == 1:
+            raise ValueError('Assumption violated')
+        return pipeline.arrays[0]
 
 
 def grid_points(xmin, xmax, ymin, ymax, grnd=False):
@@ -173,13 +175,32 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     y_vec = np.arange(math.ceil(ymin), math.floor(ymax), RESOLUTION)   
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
-    # TODO: retrieve data
-    # TODO: construct KDTree
-    # TODO: find NN for all grid points
-    # TODO: compute local medians
-    # TODO: format output (x vector, y vector, z grid)
+    # retrieve data
+    pts = retrieve(xmin, ymin, xmax, ymax)
 
-    return x_grd, y_grd # DEBUG
+    # extract [x, y] and z arrays
+    npts = len(pts)
+    xy = np.zeros((npts, 2))
+    zz = np.zeros(npts)
+    for idx, pt in enumerate(pts):
+        xy[idx, 0] = pt[0]
+        xy[idx, 1] = pt[1]
+        zz[idx] = pt[2]
+
+    # construct KDTree
+    tree = cKDTree(xy) 
+
+    # find NN for all grid points
+    xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
+    nn_dist, nn_idx = tree.query(xy_grd, k=10)
+
+    # compute local medians
+    z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
+    
+    # TODO: DEBUG: make a quick plot of the results
+
+    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
+
 
 
 # command line utilities -----------------------------------------------------

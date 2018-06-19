@@ -64,6 +64,7 @@ def create_db(clobber=False):
     logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
+# TODO: add a "pad_width" to allow for better edge treatment
 def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     """
     Grid scattered points using kNN median filter

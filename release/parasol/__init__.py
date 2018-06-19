@@ -14,7 +14,8 @@ with open(CONFIG_FILE, 'r') as fp:
 
 # unpack config constants
 LIDAR_DB = config['LIDAR_DB']
-LIDAR_SRID = config['LIDAR_SRID']
+LIDAR_GEO_SRID = config['LIDAR_GEO_SRID']
+LIDAR_PRJ_SRID = config['LIDAR_PRJ_SRID']
 LIDAR_TABLE = config['LIDAR_TABLE']
 PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']

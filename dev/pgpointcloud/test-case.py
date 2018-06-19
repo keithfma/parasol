@@ -7,6 +7,12 @@ parasol.lidar.create_db(True)
 
 # ingest tiny dataset, save results to viewable file
 sample_file = 'subset.laz'
+maxx = 315118.39                                                                                                                                                                                
+minx = 315000                                                                                                                                                                                   
+maxy = 4686154.02                                                                                                                                                                               
+miny = 4686000                                                                                                                                                                                
+
 parasol.lidar.ingest(sample_file)
-parasol.lidar.retrieve(-71.244972, -71.24310586, 42.3042767, 42.305661740000005, 'result.laz')
+pts = parasol.lidar.retrieve(minx, maxx, miny, maxy, 'result.laz')
+
 

@@ -1,6 +1,7 @@
 {
     "LIDAR_DB": "parasol_lidar",
-    "LIDAR_SRID": 4326,
+    "LIDAR_GEO_SRID": 4326,
+    "LIDAR_PRJ_SRID": 32619,
     "LIDAR_TABLE": "delete_me",
     "PSQL_USER": null,
     "PSQL_PASS": null,

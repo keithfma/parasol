@@ -7,7 +7,8 @@ import subprocess
 import json
 import pdal
 
-from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_SRID, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
+from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
+    PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
 
 def connect_db(dbname=LIDAR_DB):
@@ -54,8 +55,9 @@ def ingest(laz_file, clobber=False):
     """
     Import points from LAZ file to LiDAR database
 
-    Uses PDAL to preprocess, split the input into patches, and upload patches to the
-    database server. Preprocessing includes outlier detection / removal, ...
+    Uses PDAL to split the input into patches and upload patches to the
+    database server. Points from NOAA are pre-classified, so additional
+    pre-processing is not needed.
 
     Beware: no check to avoid duplication, it is up to the user to take care to
         upload data only once
@@ -72,6 +74,9 @@ def ingest(laz_file, clobber=False):
                 "type": "readers.las",
                 "filename": laz_file,
             }, {
+                "type": "filters.reprojection",
+                "out_srs": f"EPSG:{LIDAR_PRJ_SRID}",
+            }, {
                 "type": "filters.chipper",
                 "capacity": 400,
             }, {
@@ -79,7 +84,7 @@ def ingest(laz_file, clobber=False):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
-                "srid": LIDAR_SRID,
+                "srid": LIDAR_PRJ_SRID,
             }
         ]
     }))
@@ -107,7 +112,7 @@ def retrieve(minx, maxx, miny, maxy, plasio_file=None):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "column": "pa",
-                "where": f"PC_Intersects(pa, ST_MakeEnvelope({minx}, {maxx}, {miny}, {maxy}, {LIDAR_SRID}))",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({minx}, {maxx}, {miny}, {maxy}, {LIDAR_PRJ_SRID}))",
             }
           ]
         }
@@ -115,9 +120,6 @@ def retrieve(minx, maxx, miny, maxy, plasio_file=None):
         # optionally write to plasio-friendly LAZ file
         pipeline_dict['pipeline'].extend([
             {
-                "type": "filters.reprojection",
-                "out_srs": "EPSG:32619",
-            }, {
                 "type": "writers.las",
                 "forward": "all",
                 "compression": "laszip",

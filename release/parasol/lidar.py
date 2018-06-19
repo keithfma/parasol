@@ -10,7 +10,7 @@ import argparse
 from glob import glob
 import logging
 
-from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
+from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
 
@@ -83,7 +83,7 @@ def ingest(laz_file):
                 "filename": laz_file,
             }, {
                 "type": "filters.reprojection",
-                "out_srs": f"EPSG:{LIDAR_PRJ_SRID}",
+                "out_srs": f"EPSG:{PRJ_SRID}",
             }, {
                 "type": "filters.chipper",
                 "capacity": 400,
@@ -92,7 +92,7 @@ def ingest(laz_file):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
-                "srid": LIDAR_PRJ_SRID,
+                "srid": PRJ_SRID,
                 "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
                 "scale_x": 0.01, # precision in meters
                 "scale_y": 0.01,
@@ -131,7 +131,7 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
           ]
         }
     pipeline_dict['pipeline'][0]['where'] = (
-        f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {LIDAR_PRJ_SRID}))")
+        f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {PRJ_SRID}))")
 
     if plasio_file: 
         # optionally write to plasio-friendly LAZ file

@@ -12,7 +12,7 @@ import subprocess
 
 
 from parasol import lidar
-from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, LIDAR_PRJ_SRID
+from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, PRJ_SRID
 # TODO: need separate DB for top, bottom, shade rasters
 # TODO: should I project or just stay in geographic coords?
 
@@ -142,7 +142,7 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     outband = outRaster.GetRasterBand(1)
     outband.WriteArray(z_grd)
     outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromEPSG(LIDAR_PRJ_SRID)
+    outRasterSRS.ImportFromEPSG(PRJ_SRID)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
     outband.FlushCache()
 
@@ -162,9 +162,9 @@ def upload_geotiff(filename, clobber=False):
     """
     # generate sql commands
     if clobber:
-        cmd = f'raster2pgsql -d -C -r -s {LIDAR_PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -d -C -r -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
     else:
-        cmd = f'raster2pgsql -a -C -r -s {LIDAR_PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -a -C -r -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
 

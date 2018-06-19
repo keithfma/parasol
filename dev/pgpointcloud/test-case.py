@@ -17,7 +17,8 @@ miny = 4686000
 # pts = parasol.lidar.retrieve()
 
 # experiment with gridding
-out = parasol.lidar.grid_points(minx, maxx, miny, maxy)
+top = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=False)
+bot = parasol.lidar.grid_points(minx, maxx, miny, maxy, grnd=True)
 
 
 # # read whole current dataset

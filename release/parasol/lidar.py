@@ -181,6 +181,22 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     # retrieve data
     pts = retrieve(xmin, ymin, xmax, ymax)
 
+    # filter for ground returns
+    mask = np.zeros(len(pts)) 
+    if grnd:
+        # extract ground points
+        for idx, pt in enumerate(pts):
+            if pt[3] == pt[4]  and pt[5] == 2:
+                # last or only return, classified as "ground"
+                mask[idx] = 1
+    else:
+        # extract upper surface points
+        for idx, pt in enumerate(pts):
+            if (pt[3] == 1 or pt[4] == 1) and pt[5] == 1:
+                # first or only return, classified as "default"
+                mask[idx] = 1
+    pts = np.extract(mask, pts)
+
     # extract [x, y] and z arrays
     npts = len(pts)
     xy = np.zeros((npts, 2))
@@ -204,7 +220,8 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     plt.imshow(z_grd, cmap='hot', interpolation='nearest')
     plt.show()
 
-    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
+    #return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
+    return pts, mask  # TODO: decide what outputs I need
 
 
 

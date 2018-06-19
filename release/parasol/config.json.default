@@ -3,6 +3,7 @@
     "LIDAR_GEO_SRID": 4326,
     "LIDAR_PRJ_SRID": 32619,
     "LIDAR_TABLE": "delete_me",
+    "RASTER_DB": "parasol_raster",
     "PSQL_USER": null,
     "PSQL_PASS": null,
     "PSQL_HOST": "localhost",

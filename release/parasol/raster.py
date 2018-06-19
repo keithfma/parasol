@@ -2,52 +2,53 @@
 Raster data handlers
 """
 
+import logging
+import psycopg2 as pg
 from parasol import lidar
+from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
 
 logger = logging.getLogger(__name__)
 
 
-# def connect_db(dbname=LIDAR_DB):
-#     """
-#     Return connection to lidar DB and return cursor
-# 
-#     Arguments:
-#         dbname: string, database name to connect to
-# 
-#     Returns: psycopg2 connection object
-#     """
-#     conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
-#         host=PSQL_HOST, port=PSQL_PORT)
-#     return conn
-#     
-# 
-# def create_db(clobber=False):
-#     """
-#     Create a new database and initialize for lidar point data
-# 
-#     Arguments:
-#         clobber: set True to delete and re-initialize an existing database
-# 
-#     Return: Nothing
-#     """
-#     # TODO: add indexes as needed
-#     # connect to default database
-#     with connect_db('postgres') as conn:
-#         conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
-#         cur = conn.cursor()
-#         if clobber:
-#             logger.info(f'Dropped existing database: {LIDAR_DB} @ {PSQL_HOST}:{PSQL_PORT}')
-#             cur.execute(f'DROP DATABASE IF EXISTS {LIDAR_DB}');
-#         cur.execute(f'CREATE DATABASE {LIDAR_DB};')
-#     # init new database
-#     with connect_db() as conn:
-#         cur = conn.cursor()
-#         cur.execute('CREATE EXTENSION postgis;')
-#         cur.execute('CREATE EXTENSION pointcloud;')
-#         cur.execute('CREATE EXTENSION pointcloud_postgis;')
-#         cur.execute(f'CREATE TABLE {LIDAR_TABLE} (id SERIAL PRIMARY KEY, pa PCPATCH(1));')
-#     logger.info(f'Created new database: {LIDAR_DB} @ {PSQL_HOST}:{PSQL_PORT}')
+def connect_db(dbname=RASTER_DB):
+    """
+    Return connection to raster DB and return cursor
+
+    Arguments:
+        dbname: string, database name to connect to
+
+    Returns: psycopg2 connection object
+    """
+    conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
+        host=PSQL_HOST, port=PSQL_PORT)
+    return conn
+    
+
+def create_db(clobber=False):
+    """
+    Create a new database and initialize for gridded raster data
+
+    Arguments:
+        clobber: set True to delete and re-initialize an existing database
+
+    Return: Nothing
+    """
+    # TODO: add indexes as needed
+    # connect to default database
+    with connect_db('postgres') as conn:
+        conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
+        cur = conn.cursor()
+        if clobber:
+            logger.info(f'Dropped existing database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
+            cur.execute(f'DROP DATABASE IF EXISTS {RASTER_DB}');
+        cur.execute(f'CREATE DATABASE {RASTER_DB};')
+    # init new database
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute('CREATE EXTENSION postgis;')
+        # TODO: create relevant tables, if needed
+    logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
 def grid_points(xmin, xmax, ymin, ymax, grnd=False):

@@ -31,16 +31,16 @@ logging.basicConfig(level=logging.INFO)
 # parasol.raster.upload_geotiff('test.tif', clobber=True)
 # parasol.raster.register_raster()
 
-# # create and populate database, tiled ------------------
-# x_min = 334499.6937
-# x_max = 335999.6937      
-# y_min = 4694999.905       
-# y_max = 4696499.905      
-# x_tile = 500
-# y_tile = 500
-# 
-# parasol.raster.create_db(clobber=True)
-# parasol.raster.new(x_min, x_max, y_min, y_max, x_tile, y_tile)
+# create and populate database, tiled ------------------
+x_min = 334499.6937
+x_max = 335999.6937      
+y_min = 4694999.905       
+y_max = 4696499.905      
+x_tile = 500
+y_tile = 500
+
+parasol.raster.create_db(clobber=True)
+parasol.raster.new(x_min, x_max, y_min, y_max, x_tile, y_tile)
 
 # retrieve part of the raster ingested above
 x_min = 334499.6937

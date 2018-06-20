@@ -4,6 +4,7 @@
     "PRJ_SRID": 32619,
     "LIDAR_TABLE": "delete_me",
     "RASTER_DB": "parasol_raster",
+    "ELEVATION_TABLE": "elevation",
     "BBOX_PRJ": [[334000, 336500], [4962500, 4695500]],
     "PSQL_USER": null,
     "PSQL_PASS": null,

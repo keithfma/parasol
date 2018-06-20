@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 
 from parasol import lidar
-from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, PRJ_SRID
+from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, PRJ_SRID, ELEVATION_TABLE
 # TODO: need separate DB for top, bottom, shade rasters
 # TODO: should I project or just stay in geographic coords?
 
@@ -54,21 +54,20 @@ def create_db(clobber=False):
     """
     # TODO: add indexes as needed
     # connect to default database
-    with connect_db('postgres') as conn:
+    with connect_db('postgres') as conn, conn.cursor() as cur:
         conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
-        cur = conn.cursor()
         if clobber:
             logger.info(f'Dropped existing database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
             cur.execute(f'DROP DATABASE IF EXISTS {RASTER_DB}');
         cur.execute(f'CREATE DATABASE {RASTER_DB};')
     # init new database
-    with connect_db() as conn:
-        cur = conn.cursor()
+    with connect_db() as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         # TODO: create relevant tables, if needed
     logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
+# TODO: add ground as band=2
 def grid_points(x_min, x_max, y_min, y_max, grnd=False):
     """
     Grid scattered points using kNN median filter
@@ -172,20 +171,19 @@ def upload_geotiff(filename, mode):
     """
     # generate sql commands
     if mode == 'create':
-        cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {ELEVATION_TABLE}'
     elif mode == 'add' or mode == 'finish':
-        cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {ELEVATION_TABLE}'
     else:
         raise ValueError('mode argument not recognized')
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
     if mode == 'finish':
-        sql += ("SELECT AddRasterConstraints('','parasol_raster','rast',"
+        sql += (f"SELECT AddRasterConstraints('','{ELEVATION_TABLE}','rast',"
                 "TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
     
     # execute sql commands
-    with connect_db() as conn:
-        cur = conn.cursor()
+    with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
         cur.close()
 
@@ -226,7 +224,6 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
     return tiles
 
 
-# TODO: write top, bot, and shade as bands, or in separate tables?
 def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
@@ -253,7 +250,6 @@ def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
             upload_geotiff(fp.name, modes[ii])
 
 
-# TODO: figure out how the table get's name
 def retrieve(x_min, x_max, y_min, y_max, plot=False):
     """
     Retrieve subset of raster from database
@@ -270,7 +266,7 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
                 'GTiff'
         )
-        FROM parasol_raster;
+        FROM {ELEVATION_TABLE};
     """
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
@@ -283,6 +279,7 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
     ds = gdal.Open(vsipath)
     band = ds.GetRasterBand(1)
     arr = band.ReadAsArray()
+    # TODO: get coordinate vectors, use ds.GetGeoTransform, and go from there
     ds = band = None
     gdal.Unlink(vsipath)
     

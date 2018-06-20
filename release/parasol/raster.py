@@ -11,6 +11,8 @@ from osgeo import gdal, osr
 import subprocess
 from pdb import set_trace
 import tempfile
+import matplotlib
+from matplotlib import pyplot as plt
 
 
 from parasol import lidar
@@ -251,7 +253,8 @@ def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
             upload_geotiff(fp.name, modes[ii])
 
 
-def retrieve(x_min, x_max, y_min, y_max):
+# TODO: figure out how the table get's name
+def retrieve(x_min, x_max, y_min, y_max, plot=False):
     """
     Retrieve subset of raster from database
 
@@ -260,11 +263,43 @@ def retrieve(x_min, x_max, y_min, y_max):
 
     Returns: numpy array containing raster subset
     """
+    # retrieve raster data, returns in-memory representation of Geotiff
     sql = f"""
-    SELECT ST_AsText(ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}));
+    SELECT
+        ST_AsGDALRaster(
+            ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
+                'GTiff'
+        )
+        FROM parasol_raster;
     """
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
-        recs = cur.fetchall()
-    return recs
+        data = cur.fetchone()[0]
+
+    # read data to GDAL object
+    # See: https://gis.stackexchange.com/questions/130139/downloading-raster-data-into-python-from-postgis-using-psycopg2 
+    vsipath = '/vsimem/parasol' # must be in this root path
+    gdal.FileFromMemBuffer(vsipath, bytes(data))
+    ds = gdal.Open(vsipath)
+    band = ds.GetRasterBand(1)
+    arr = band.ReadAsArray()
+    ds = band = None
+    gdal.Unlink(vsipath)
+    
+    # replace NODATA with np.nan
+    dtype_max = np.finfo(arr.dtype).max
+    dtype_min = np.finfo(arr.dtype).min
+    arr[arr == dtype_max] = np.nan
+    arr[arr == dtype_min] = np.nan
+
+    if plot:
+        current_cmap = matplotlib.cm.get_cmap()
+        current_cmap.set_bad(color='red')   
+        plt.imshow(arr)
+        plt.show()
+
+
+    # done!
+    return arr
+
 

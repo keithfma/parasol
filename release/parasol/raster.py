@@ -164,17 +164,32 @@ def upload_geotiff(filename, clobber=False):
     """
     # generate sql commands
     if clobber:
+        # cmd = f'raster2pgsql -d -C -r -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
         cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
     else:
+        # cmd = f'raster2pgsql -a -C -r -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
         cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
+    
+    # DEBUG
+    with open('delete_me.sql', 'w') as fp:
+        fp.write(sql)
 
     # execute sql commands
     with connect_db() as conn:
         cur = conn.cursor()
         cur.execute(sql)
         cur.close()
+
+
+def register_raster():
+    """
+    SELECT AddRasterConstraints('myrasters'::name, 'rast'::name);
+    """
+    with connect_db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT AddRasterConstraints('','parasol_raster','rast',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
 
 
 def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):

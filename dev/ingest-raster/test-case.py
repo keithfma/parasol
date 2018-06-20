@@ -22,14 +22,14 @@ logging.basicConfig(level=logging.INFO)
 # xvec, yvec, zgrd = parasol.raster.grid_points(minx, maxx, miny, maxy)
 # # plt.imshow(zgrd, cmap='hot', interpolation='nearest')
 # # plt.show()
-
+# 
 # # write to a geotiff
 # parasol.raster.create_geotiff('test.tif', xvec, yvec, zgrd)
 
-# # create and populate database
-# parasol.raster.create_db(clobber=True)
-# parasol.raster.upload_geotiff('test.tif', clobber=True)
-# parasol.raster.upload_geotiff('test.tif', clobber=False) # fails due to constraints, which is good!
+# create and populate database
+parasol.raster.create_db(clobber=True)
+parasol.raster.upload_geotiff('test.tif', clobber=True)
+parasol.raster.register_raster()
 
 # # generate grid, tiled
 # maxx = 335999.6937      
@@ -69,13 +69,13 @@ logging.basicConfig(level=logging.INFO)
 # plt.show()
 
 
-# create and populate database, tiled
-x_min = 334499.6937
-x_max = 335999.6937      
-y_min = 4694999.905       
-y_max = 4696499.905      
-x_tile = 500
-y_tile = 500
-
-parasol.raster.create_db(clobber=True)
-parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=True)
+# # create and populate database, tiled
+# x_min = 334499.6937
+# x_max = 335999.6937      
+# y_min = 4694999.905       
+# y_max = 4696499.905      
+# x_tile = 500
+# y_tile = 500
+# 
+# parasol.raster.create_db(clobber=True)
+# parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=True)

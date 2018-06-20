@@ -40,5 +40,4 @@ x_tile = 500
 y_tile = 500
 
 parasol.raster.create_db(clobber=True)
-parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=True)
-parasol.raster.register_raster()
+parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile)

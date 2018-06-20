@@ -153,7 +153,7 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     outband.FlushCache()
 
 
-def upload_geotiff(filename, clobber=False):
+def upload_geotiff(filename, mode):
     """
     Upload GeoTiff file to database
 
@@ -161,25 +161,25 @@ def upload_geotiff(filename, clobber=False):
 
     Arguments:
         filename: string, GeoTiff file to upload
-        clobber: set True to drop existing table and create a new one, or False
-            to append to the existing table
+        mode: string, one of 'create', 'add', 'finish'. create mode initializes
+            the raster table and appends the raster, add mode appends the
+            raster, and finish mode appends the raster and sets the constraints.
     
     Returns: Nothing
     """
     # generate sql commands
-    if clobber:
-        # cmd = f'raster2pgsql -d -C -r -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
+    if mode == 'create':
         cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
-    else:
-        # cmd = f'raster2pgsql -a -C -r -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+    elif mode == 'add' or mode == 'finish':
         cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+    else:
+        raise ValueError('mode argument not recognized')
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
+    if mode == 'finish':
+        sql += ("SELECT AddRasterConstraints('','parasol_raster','rast',"
+                "TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
     
-    # DEBUG
-    with open('delete_me.sql', 'w') as fp:
-        fp.write(sql)
-
     # execute sql commands
     with connect_db() as conn:
         cur = conn.cursor()
@@ -233,7 +233,7 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
 
 # TODO: write top, bot, and shade as bands, or in separate tables?
-def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=False):
+def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
 
@@ -241,8 +241,6 @@ def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=False):
         x_min, x_max, y_min, y_max: floats, limits for the full region-of-interest
         x_tile, y_tile: floats, desired dimensions for generated tiles, note that
             the actual dimensions are adjusted to evenly divide the ROI
-        clobber: set True to drop existing table and create a new one, or False
-            to append to the existing table
     
     Returns: nothing
     """
@@ -251,12 +249,12 @@ def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=False):
     tiles = tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile)
     num_tiles = len(tiles)
 
+    modes = ['add'] * len(tiles)
+    modes[0] = 'create'
+    modes[-1] = 'finish'
     for ii, tile in enumerate(tiles):
-        print(f'Generating tile {ii+1} of {num_tiles}')
+        logger.info(f'Generating tile {ii+1} of {num_tiles}')
         x_vec, y_vec, z_grd = grid_points(**tile) # DEBUG: top only
-        print(f'X: [{x_vec[0]}, {x_vec[-1]}], Y: [{y_vec[0]}, {y_vec[-1]}]')
         create_geotiff(TIF_FILE, x_vec, y_vec, z_grd)
-        upload_geotiff(TIF_FILE, clobber=(clobber and ii==0))
-        print(f'Uploaded tile {ii+1} of {num_tiles}')
-
+        upload_geotiff(TIF_FILE, modes[ii])
 

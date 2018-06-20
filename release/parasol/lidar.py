@@ -9,15 +9,9 @@ import pdal
 import argparse
 from glob import glob
 import logging
-import numpy as np
-from scipy.spatial import cKDTree
-import math
 
-from parasol import LIDAR_DB, LIDAR_TABLE, LIDAR_GEO_SRID, LIDAR_PRJ_SRID, \
+from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
-
-# DEBUG ONLY
-from matplotlib import pyplot as plt
 
 
 logger = logging.getLogger(__name__)
@@ -89,7 +83,7 @@ def ingest(laz_file):
                 "filename": laz_file,
             }, {
                 "type": "filters.reprojection",
-                "out_srs": f"EPSG:{LIDAR_PRJ_SRID}",
+                "out_srs": f"EPSG:{PRJ_SRID}",
             }, {
                 "type": "filters.chipper",
                 "capacity": 400,
@@ -98,7 +92,7 @@ def ingest(laz_file):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "compression": "dimensional",
-                "srid": LIDAR_PRJ_SRID,
+                "srid": PRJ_SRID,
                 "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
                 "scale_x": 0.01, # precision in meters
                 "scale_y": 0.01,
@@ -137,7 +131,7 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
           ]
         }
     pipeline_dict['pipeline'][0]['where'] = (
-        f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {LIDAR_PRJ_SRID}))")
+        f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {PRJ_SRID}))")
 
     if plasio_file: 
         # optionally write to plasio-friendly LAZ file
@@ -157,71 +151,6 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
         if not len(pipeline.arrays) == 1:
             raise ValueError('Assumption violated')
         return pipeline.arrays[0]
-
-
-def grid_points(xmin, xmax, ymin, ymax, grnd=False):
-    """
-    Grid scattered points using kNN median filter
-
-    Arguments:
-        xmin, xmax, ymin, ymax: floats, limits for bounding box 
-        grnd: set True to compute surface from ground returns, False to compute
-            surface from (first) non-ground returns
-    
-    Returns: ?
-    """
-    # constants
-    RESOLUTION = 1 # meters
-
-    # build output grid spanning bbox
-    x_vec = np.arange(math.ceil(xmin), math.floor(xmax), RESOLUTION)   
-    y_vec = np.arange(math.ceil(ymin), math.floor(ymax), RESOLUTION)   
-    x_grd, y_grd = np.meshgrid(x_vec, y_vec)
-
-    # retrieve data
-    pts = retrieve(xmin, ymin, xmax, ymax)
-
-    # filter for ground returns
-    mask = np.zeros(len(pts)) 
-    if grnd:
-        # extract ground points
-        for idx, pt in enumerate(pts):
-            if pt[3] == pt[4]  and pt[5] == 2:
-                # last or only return, classified as "ground"
-                mask[idx] = 1
-    else:
-        # extract upper surface points
-        for idx, pt in enumerate(pts):
-            if (pt[3] == 1 or pt[4] == 1) and pt[5] == 1:
-                # first or only return, classified as "default"
-                mask[idx] = 1
-    pts = np.extract(mask, pts)
-
-    # extract [x, y] and z arrays
-    npts = len(pts)
-    xy = np.zeros((npts, 2))
-    zz = np.zeros(npts)
-    for idx, pt in enumerate(pts):
-        xy[idx, 0] = pt[0]
-        xy[idx, 1] = pt[1]
-        zz[idx] = pt[2]
-
-    # construct KDTree
-    tree = cKDTree(xy) 
-
-    # find NN for all grid points
-    xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
-    nn_dist, nn_idx = tree.query(xy_grd, k=16)
-
-    # compute local medians
-    z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
-    
-    # DEBUG: make a quick plot of the results
-    plt.imshow(z_grd, cmap='hot', interpolation='nearest')
-    plt.show()
-
-    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
-
 
 
 # command line utilities -----------------------------------------------------

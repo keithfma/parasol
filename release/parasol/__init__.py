@@ -14,12 +14,16 @@ with open(CONFIG_FILE, 'r') as fp:
 
 # unpack config constants
 LIDAR_DB = config['LIDAR_DB']
-LIDAR_GEO_SRID = config['LIDAR_GEO_SRID']
-LIDAR_PRJ_SRID = config['LIDAR_PRJ_SRID']
+GEO_SRID = config['GEO_SRID']
+PRJ_SRID = config['PRJ_SRID']
 LIDAR_TABLE = config['LIDAR_TABLE']
+RASTER_DB = config['RASTER_DB']
+SURFACE_TABLE = config['SURFACE_TABLE']
+GROUND_TABLE = config['GROUND_TABLE']
+BBOX_PRJ = config['BBOX_PRJ']
 PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
 PSQL_PORT = config['PSQL_PORT']
 
-from parasol import lidar
+from parasol import lidar, raster

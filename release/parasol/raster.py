@@ -137,6 +137,10 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
 
     Returns: Nothing, writes result to file
     """
+    # invert y-axis
+    y_vec = y_vec[::-1]
+    z_grd = z_grd[::-1,:]
+    # create file
     rows, cols = z_grd.shape
     driver = gdal.GetDriverByName('GTiff')
     outRaster = driver.Create(filename, cols, rows, 1, gdal.GDT_Float32)

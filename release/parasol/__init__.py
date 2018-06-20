@@ -2,6 +2,7 @@ import json
 from pkg_resources import resource_filename
 from shutil import copyfile
 import os
+import subprocess
 
 # load config dict
 CONFIG_FILE = resource_filename('parasol', 'config.json')
@@ -25,20 +26,30 @@ PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
 PSQL_PORT = config['PSQL_PORT']
+GRASS_GISBASE = os.path.expanduser(config["GRASS_GISBASE"])
+GRASS_GISRC = os.path.expanduser(config["GRASS_GISRC"])
+GRASS_GISRC_GISDBASE = os.path.expanduser(config["GRASS_GISRC_GISDBASE"])
+GRASS_GISRC_LOCATION_NAME = config["GRASS_GISRC_LOCATION_NAME"]
+GRASS_GISRC_MAPSET = config["GRASS_GISRC_MAPSET"]
 
 # setup environment variables for GRASS
-os.environ['GISBASE'] = os.path.expanduser(config['GRASS_GISBASE'])
-os.environ['GISRC'] = os.path.expanduser(config["GRASS_GISRC"])
+os.environ['GISBASE'] = GRASS_GISBASE
+os.environ['GISRC'] = GRASS_GISRC
 
 # create grass configuration directory, if needed
-if not os.path.isdir(os.path.dirname(os.environ['GISRC'])):
-    os.makedirs(os.path.dirname(os.environ['GISRC']))
+if not os.path.isdir(os.path.dirname(GRASS_GISRC)):
+    os.makedirs(os.path.dirname(GRASS_GISRC))
 
 # create grass configuration file
-with open(os.environ['GISRC'], 'w') as fp:
-    fp.write(f'GISDBASE: {os.path.expanduser(config["GRASS_GISRC_GISDBASE"])}\n')
-    fp.write(f'LOCATION_NAME: {config["GRASS_GISRC_LOCATION_NAME"]}\n')
-    fp.write(f'MAPSET: {config["GRASS_GISRC_MAPSET"]}\n')
+with open(GRASS_GISRC, 'w') as fp:
+    fp.write(f'GISDBASE: {GRASS_GISRC_GISDBASE}\n')
+    fp.write(f'LOCATION_NAME: {GRASS_GISRC_LOCATION_NAME}\n')
+    fp.write(f'MAPSET: {GRASS_GISRC_MAPSET}\n')
+    fp.write('GUI: wxpython\n')
+
+# create database, location, and mapset folders, if needed
+subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e',
+    f'{GRASS_GISRC_GISDBASE}/{GRASS_GISRC_LOCATION_NAME}/{GRASS_GISRC_MAPSET}'])
 
 # load submodules
 from parasol import lidar, raster

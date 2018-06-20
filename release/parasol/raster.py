@@ -10,6 +10,7 @@ from scipy.spatial import cKDTree
 from osgeo import gdal, osr
 import subprocess
 from pdb import set_trace
+import tempfile
 
 
 from parasol import lidar
@@ -187,15 +188,6 @@ def upload_geotiff(filename, mode):
         cur.close()
 
 
-def register_raster():
-    """
-    SELECT AddRasterConstraints('myrasters'::name, 'rast'::name);
-    """
-    with connect_db() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT AddRasterConstraints('','parasol_raster','rast',TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
-
-
 def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Return list of bounding boxes for tiles within the specified range
@@ -233,7 +225,7 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
 
 # TODO: write top, bot, and shade as bands, or in separate tables?
-def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile):
+def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
 
@@ -244,17 +236,28 @@ def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile):
     
     Returns: nothing
     """
-    TIF_FILE = 'delete_me.tif' # TODO: use tempfiles
-
     tiles = tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile)
     num_tiles = len(tiles)
 
     modes = ['add'] * len(tiles)
     modes[0] = 'create'
     modes[-1] = 'finish'
+
     for ii, tile in enumerate(tiles):
         logger.info(f'Generating tile {ii+1} of {num_tiles}')
         x_vec, y_vec, z_grd = grid_points(**tile) # DEBUG: top only
-        create_geotiff(TIF_FILE, x_vec, y_vec, z_grd)
-        upload_geotiff(TIF_FILE, modes[ii])
+        with tempfile.NamedTemporaryFile() as fp:
+            create_geotiff(fp.name, x_vec, y_vec, z_grd)
+            upload_geotiff(fp.name, modes[ii])
 
+
+def retrieve(x_min, x_max, y_min, y_max):
+    """
+    Retrieve subset of raster from database
+
+    Arguments:
+        x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
+
+    Returns: numpy array containing raster subset
+    """
+    raise NotImplementedError

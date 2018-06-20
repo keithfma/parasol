@@ -260,4 +260,11 @@ def retrieve(x_min, x_max, y_min, y_max):
 
     Returns: numpy array containing raster subset
     """
-    raise NotImplementedError
+    sql = f"""
+    SELECT ST_AsText(ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}));
+    """
+    with connect_db() as conn, conn.cursor() as cur:
+        cur.execute(sql)
+        recs = cur.fetchall()
+    return recs
+

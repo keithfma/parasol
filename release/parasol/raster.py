@@ -16,10 +16,8 @@ from matplotlib import pyplot as plt
 
 
 from parasol import lidar
-from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, PRJ_SRID, ELEVATION_TABLE
-# TODO: need separate DB for top, bottom, shade rasters
-# TODO: should I project or just stay in geographic coords?
-
+from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, \
+    PRJ_SRID, SURFACE_TABLE, GROUND_TABLE
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +61,9 @@ def create_db(clobber=False):
     # init new database
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
-        # TODO: create relevant tables, if needed
     logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
-# TODO: add ground as band=2
 def grid_points(x_min, x_max, y_min, y_max, grnd=False):
     """
     Grid scattered points using kNN median filter
@@ -155,7 +151,7 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     outband.FlushCache()
 
 
-def upload_geotiff(filename, mode):
+def upload_geotiff(filename, tablename, mode):
     """
     Upload GeoTiff file to database
 
@@ -163,6 +159,7 @@ def upload_geotiff(filename, mode):
 
     Arguments:
         filename: string, GeoTiff file to upload
+        tablename: string, target table in DB
         mode: string, one of 'create', 'add', 'finish'. create mode initializes
             the raster table and appends the raster, add mode appends the
             raster, and finish mode appends the raster and sets the constraints.
@@ -171,15 +168,15 @@ def upload_geotiff(filename, mode):
     """
     # generate sql commands
     if mode == 'create':
-        cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {ELEVATION_TABLE}'
+        cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {tablename}'
     elif mode == 'add' or mode == 'finish':
-        cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {ELEVATION_TABLE}'
+        cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {tablename}'
     else:
         raise ValueError('mode argument not recognized')
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
     if mode == 'finish':
-        sql += (f"SELECT AddRasterConstraints('','{ELEVATION_TABLE}','rast',"
+        sql += (f"SELECT AddRasterConstraints('','{tablename}','rast',"
                 "TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
     
     # execute sql commands
@@ -243,11 +240,16 @@ def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
     modes[-1] = 'finish'
 
     for ii, tile in enumerate(tiles):
-        logger.info(f'Generating tile {ii+1} of {num_tiles}')
-        x_vec, y_vec, z_grd = grid_points(**tile) # DEBUG: top only
+        logger.info(f'Generating tile {ii+1} of {num_tiles} - surface')
+        x_vec, y_vec, z_grd = grid_points(**tile)
         with tempfile.NamedTemporaryFile() as fp:
             create_geotiff(fp.name, x_vec, y_vec, z_grd)
-            upload_geotiff(fp.name, modes[ii])
+            upload_geotiff(fp.name, SURFACE_TABLE, modes[ii])
+        logger.info(f'Generating tile {ii+1} of {num_tiles} - ground')
+        x_vec, y_vec, z_grd = grid_points(**tile, grnd=True)
+        with tempfile.NamedTemporaryFile() as fp:
+            create_geotiff(fp.name, x_vec, y_vec, z_grd)
+            upload_geotiff(fp.name, GROUND_TABLE, modes[ii])
 
 
 def retrieve(x_min, x_max, y_min, y_max, plot=False):
@@ -256,9 +258,26 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
 
     Arguments:
         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
+        plot: set True to make a quick plot for debugging
 
-    Returns: numpy array containing raster subset
+    Returns: z_surf, z_grnd: numpy arrays containing raster subsets
     """
+    z_surf = _retrieve(x_min, x_max, y_min, y_max, SURFACE_TABLE)
+    z_grnd = _retrieve(x_min, x_max, y_min, y_max, GROUND_TABLE)
+
+    if plot:
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        current_cmap = matplotlib.cm.get_cmap()
+        current_cmap.set_bad(color='red')   
+        ax1.imshow(z_surf)
+        ax2.imshow(z_grnd)
+        plt.show()
+    
+    return z_surf, z_grnd
+
+
+def _retrieve(x_min, x_max, y_min, y_max, tablename):
+    """called by retrieve() with correct table name to access surf/grnd"""
     # retrieve raster data, returns in-memory representation of Geotiff
     sql = f"""
     SELECT
@@ -266,7 +285,7 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
                 'GTiff'
         )
-        FROM {ELEVATION_TABLE};
+        FROM {tablename};
     """
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
@@ -288,12 +307,6 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
     dtype_min = np.finfo(arr.dtype).min
     arr[arr == dtype_max] = np.nan
     arr[arr == dtype_min] = np.nan
-
-    if plot:
-        current_cmap = matplotlib.cm.get_cmap()
-        current_cmap.set_bad(color='red')   
-        plt.imshow(arr)
-        plt.show()
 
 
     # done!

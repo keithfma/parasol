@@ -212,3 +212,32 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
     return tiles
 
+
+# TODO: write top, bot, and shade as bands, or in separate tables?
+def upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=False):
+    """
+    Generate rasters and upload to database, tile-by-tile
+
+    Arguments:
+        x_min, x_max, y_min, y_max: floats, limits for the full region-of-interest
+        x_tile, y_tile: floats, desired dimensions for generated tiles, note that
+            the actual dimensions are adjusted to evenly divide the ROI
+        clobber: set True to drop existing table and create a new one, or False
+            to append to the existing table
+    
+    Returns: nothing
+    """
+    TIF_FILE = 'delete_me.tif' # TODO: use tempfiles
+
+    tiles = tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile)
+    num_tiles = len(tiles)
+
+    for ii, tile in enumerate(tiles):
+        print(f'Generating tile {ii+1} of {num_tiles}')
+        x_vec, y_vec, z_grd = grid_points(**tile) # DEBUG: top only
+        print(f'X: [{x_vec[0]}, {x_vec[-1]}], Y: [{y_vec[0]}, {y_vec[-1]}]')
+        create_geotiff(TIF_FILE, x_vec, y_vec, z_grd)
+        upload_geotiff(TIF_FILE, clobber=(clobber and ii==0))
+        print(f'Uploaded tile {ii+1} of {num_tiles}')
+
+

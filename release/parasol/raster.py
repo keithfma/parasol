@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # constants
 RESOLUTION = 1 # meters
-NPAD = 10 # pad width, as a multiple of RESOLUTION
+PAD = 10 # meters
 
 
 def connect_db(dbname=RASTER_DB):
@@ -80,15 +80,13 @@ def grid_points(x_min, x_max, y_min, y_max, grnd=False):
         z_grd: numpy 2D array, elevation grid 
     """
 
-    # build output grid spanning bbox, including a pad on all sides
-    x_vec = np.arange(math.ceil(x_min) - NPAD*RESOLUTION,
-                      math.floor(x_max) + NPAD*RESOLUTION, RESOLUTION)   
-    y_vec = np.arange(math.ceil(y_min) - NPAD*RESOLUTION,
-                      math.floor(y_max) + NPAD*RESOLUTION, RESOLUTION)   
+    # build output grid spanning bbox
+    x_vec = np.arange(math.ceil(x_min), math.floor(x_max), RESOLUTION)   
+    y_vec = np.arange(math.ceil(y_min), math.floor(y_max), RESOLUTION)   
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
-    # retrieve data
-    pts = lidar.retrieve(x_min, y_min, x_max, y_max)
+    # retrieve data, including a pad on all sides
+    pts = lidar.retrieve(x_min-PAD, y_min-PAD, x_max+PAD, y_max+PAD)
 
     # filter for ground returns
     mask = np.zeros(len(pts)) 
@@ -124,11 +122,6 @@ def grid_points(x_min, x_max, y_min, y_max, grnd=False):
 
     # compute local medians
     z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
-
-    # remove padding
-    x_vec = x_vec[NPAD:-NPAD+1]
-    y_vec = y_vec[NPAD:-NPAD+1]
-    z_grd = z_grd[NPAD:-NPAD+1, NPAD:-NPAD+1]
 
     return x_vec, y_vec, z_grd
 

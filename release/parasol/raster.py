@@ -252,7 +252,7 @@ def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
             upload_geotiff(fp.name, GROUND_TABLE, modes[ii])
 
 
-def retrieve(x_min, x_max, y_min, y_max, plot=False):
+def retrieve_numpy(x_min, x_max, y_min, y_max, plot=False):
     """
     Retrieve subset of raster from database
 
@@ -262,8 +262,8 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
 
     Returns: z_surf, z_grnd: numpy arrays containing raster subsets
     """
-    z_surf = _retrieve(x_min, x_max, y_min, y_max, SURFACE_TABLE)
-    z_grnd = _retrieve(x_min, x_max, y_min, y_max, GROUND_TABLE)
+    z_surf = _retrieve_numpy(x_min, x_max, y_min, y_max, SURFACE_TABLE)
+    z_grnd = _retrieve_numpy(x_min, x_max, y_min, y_max, GROUND_TABLE)
 
     if plot:
         fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -276,7 +276,7 @@ def retrieve(x_min, x_max, y_min, y_max, plot=False):
     return z_surf, z_grnd
 
 
-def _retrieve(x_min, x_max, y_min, y_max, tablename):
+def _retrieve_numpy(x_min, x_max, y_min, y_max, tablename):
     """called by retrieve() with correct table name to access surf/grnd"""
     # retrieve raster data, returns in-memory representation of Geotiff
     sql = f"""
@@ -308,8 +308,39 @@ def _retrieve(x_min, x_max, y_min, y_max, tablename):
     arr[arr == dtype_max] = np.nan
     arr[arr == dtype_min] = np.nan
 
-
     # done!
     return arr
 
 
+def retrieve_geotiff(filename, x_min, x_max, y_min, y_max, plot=False):
+    """
+    Retrieve subset of raster from database
+
+    Arguments:
+        filename: string, file base name, without the .tif extension
+        x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
+
+    Returns: nothing
+    """
+    _retrieve_geotiff(filename + '_surface.tif', x_min, x_max, y_min, y_max, SURFACE_TABLE)
+    _retrieve_geotiff(filename + '_ground.tif', x_min, x_max, y_min, y_max, GROUND_TABLE)
+
+
+def _retrieve_geotiff(filename, x_min, x_max, y_min, y_max, tablename):
+    """called by retrieve() with correct table name to access surf/grnd"""
+    # retrieve raster data, returns in-memory representation of Geotiff
+    sql = f"""
+    SELECT
+        ST_AsGDALRaster(
+            ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
+                'GTiff'
+        )
+        FROM {tablename};
+    """
+    with connect_db() as conn, conn.cursor() as cur:
+        cur.execute(sql)
+        data = cur.fetchone()[0]
+
+    # write data to file
+    with open(filename, 'wb') as fp:
+        fp.write(bytes(data))

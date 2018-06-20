@@ -48,4 +48,10 @@ x_max = 335000
 y_min = 4694999.905       
 y_max = 4695500
 
-zs, zg = parasol.raster.retrieve(x_min, x_max, y_min, y_max, plot=True)
+# zs, zg = parasol.raster.retrieve_numpy(x_min, x_max, y_min, y_max, plot=True)
+
+# the same, but writing to files instead of retrieving array
+parasol.raster.retrieve_geotiff('delete_me', x_min, x_max, y_min, y_max)
+
+
+

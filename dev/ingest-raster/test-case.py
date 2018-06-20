@@ -14,7 +14,7 @@ import subprocess
 
 logging.basicConfig(level=logging.INFO)
 
-# # create a test raster, as a numpy array
+# # create a test raster, as a numpy array ------------------
 # maxx = 335999.6937      
 # maxy = 4696499.905      
 # minx = 334499.6937
@@ -26,56 +26,19 @@ logging.basicConfig(level=logging.INFO)
 # # write to a geotiff
 # parasol.raster.create_geotiff('test.tif', xvec, yvec, zgrd)
 
-# create and populate database
-parasol.raster.create_db(clobber=True)
-parasol.raster.upload_geotiff('test.tif', clobber=True)
-parasol.raster.register_raster()
-
-# # generate grid, tiled
-# maxx = 335999.6937      
-# maxy = 4696499.905      
-# minx = 334499.6937
-# miny = 4694999.905       
-# 
-# tiles = parasol.raster.tile_limits(minx, maxx, miny, maxy, 500, 500)
-# 
-# x_tiles = []
-# y_tiles = []
-# zz_tiles = []
-# z_min = 100000
-# z_max = -100000
-# for ii, tile in enumerate(tiles):
-#     print(f'Generating tile {ii+1} of {len(tiles)}')
-#     x, y, zz = parasol.raster.grid_points(**tile) # top only
-#     x_tiles.append(x)
-#     y_tiles.append(y)
-#     zz_tiles.append(zz)
-#     z_min = min(z_min, zz.min())
-#     z_max = max(z_max, zz.max())
-# 
-# # DEBUG: plot 
-# for jj in range(ii+1):
-#     x = x_tiles[jj]
-#     y = y_tiles[jj]
-#     zz = zz_tiles[jj]
-#     dx = (x[1]-x[0])/2.
-#     dy = (y[1]-y[0])/2.
-#     extent = [x[0]-dx, x[-1]+dx, y[0]-dy, y[-1]+dy]
-#     plt.imshow(zz, vmin=z_min, vmax=z_max, extent=extent, origin='lower', interpolation='nearest')
-#     xbox = [extent[0], extent[1], extent[1], extent[0], extent[0]]
-#     ybox = [extent[2], extent[2], extent[3], extent[3], extent[2]]
-#     plt.plot(xbox, ybox, color='k', linewidth=0.5, linestyle=':')
-# plt.colorbar()
-# plt.show()
-
-
-# # create and populate database, tiled
-# x_min = 334499.6937
-# x_max = 335999.6937      
-# y_min = 4694999.905       
-# y_max = 4696499.905      
-# x_tile = 500
-# y_tile = 500
-# 
+# # create and populate database using test raster ------------
 # parasol.raster.create_db(clobber=True)
-# parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=True)
+# parasol.raster.upload_geotiff('test.tif', clobber=True)
+# parasol.raster.register_raster()
+
+# create and populate database, tiled ------------------
+x_min = 334499.6937
+x_max = 335999.6937      
+y_min = 4694999.905       
+y_max = 4696499.905      
+x_tile = 500
+y_tile = 500
+
+parasol.raster.create_db(clobber=True)
+parasol.raster.upload_tiles(x_min, x_max, y_min, y_max, x_tile, y_tile, clobber=True)
+parasol.raster.register_raster()

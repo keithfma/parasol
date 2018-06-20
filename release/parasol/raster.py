@@ -9,6 +9,7 @@ import math
 from scipy.spatial import cKDTree
 from osgeo import gdal, osr
 import subprocess
+from pdb import set_trace
 
 
 from parasol import lidar
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 # constants
 RESOLUTION = 1 # meters
+NPAD = 10 # pad width, as a multiple of RESOLUTION
 
 
 def connect_db(dbname=RASTER_DB):
@@ -64,13 +66,12 @@ def create_db(clobber=False):
     logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
-# TODO: add a "pad_width" to allow for better edge treatment
-def grid_points(xmin, xmax, ymin, ymax, grnd=False):
+def grid_points(x_min, x_max, y_min, y_max, grnd=False):
     """
     Grid scattered points using kNN median filter
 
     Arguments:
-        xmin, xmax, ymin, ymax: floats, limits for bounding box 
+        x_min, x_max, y_min, y_max: floats, limits for bounding box 
         grnd: set True to compute surface from ground returns, False to compute
             surface from (first) non-ground returns
     
@@ -79,13 +80,15 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
         z_grd: numpy 2D array, elevation grid 
     """
 
-    # build output grid spanning bbox
-    x_vec = np.arange(math.ceil(xmin), math.floor(xmax), RESOLUTION)   
-    y_vec = np.arange(math.ceil(ymin), math.floor(ymax), RESOLUTION)   
+    # build output grid spanning bbox, including a pad on all sides
+    x_vec = np.arange(math.ceil(x_min) - NPAD*RESOLUTION,
+                      math.floor(x_max) + NPAD*RESOLUTION, RESOLUTION)   
+    y_vec = np.arange(math.ceil(y_min) - NPAD*RESOLUTION,
+                      math.floor(y_max) + NPAD*RESOLUTION, RESOLUTION)   
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
     # retrieve data
-    pts = lidar.retrieve(xmin, ymin, xmax, ymax)
+    pts = lidar.retrieve(x_min, y_min, x_max, y_max)
 
     # filter for ground returns
     mask = np.zeros(len(pts)) 
@@ -122,7 +125,12 @@ def grid_points(xmin, xmax, ymin, ymax, grnd=False):
     # compute local medians
     z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
 
-    return x_vec, y_vec, z_grd  # TODO: decide what outputs I need
+    # remove padding
+    x_vec = x_vec[NPAD:-NPAD+1]
+    y_vec = y_vec[NPAD:-NPAD+1]
+    z_grd = z_grd[NPAD:-NPAD+1, NPAD:-NPAD+1]
+
+    return x_vec, y_vec, z_grd
 
 
 def create_geotiff(filename, x_vec, y_vec, z_grd):
@@ -185,26 +193,29 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
         x_tile, y_tile: floats, desired dimensions for generated tiles, note that
             the actual dimensions are adjusted to evenly divide the ROI
     
-    Returns: list of bounding boxes, formatted as [[x0, x1], [y0, y1]]
+    Returns: list of bounding boxes, each a dict with fields x_min, x_max, y_min, y_max
     """
-    # modify tile dimensions to a nice multiple of the bounding box
-    x_rng = x_max - x_min
-    x_num_tiles = x_rng // x_tile
-    x_tile = x_rng / x_num_tiles 
+    # modify the bounding box to be a multiple of the tile dimension
+    x_pad = (x_max - x_min) % x_tile
+    x_min += math.ceil(x_pad/2)
+    x_max += math.floor(x_pad/2) 
+    x_num_tiles = int((x_max - x_min) // x_tile)
 
-    y_rng = y_max - y_min
-    y_num_tiles = y_rng // y_tile
-    y_tile = y_rng / y_num_tiles 
+    y_pad = (y_max - y_min) % y_tile
+    y_min += math.ceil(y_pad/2)
+    y_max += math.floor(y_pad/2) 
+    y_num_tiles = int((y_max - y_min) // y_tile)
 
     # generate tile bboxes
     tiles = []
     for ii in range(x_num_tiles):
         for jj in range(y_num_tiles):
-            x0 = x_min + ii*x_tile
-            x1 = x0 + x_tile
-            y0 = y_min + jj*y_tile
-            y1 = y0 + y_tile
-            tiles.append([[x0, x1], [y0, y1]])
+            tile = {}
+            tile['x_min'] = x_min + ii*x_tile
+            tile['x_max'] = tile['x_min'] + x_tile
+            tile['y_min'] = y_min + jj*y_tile
+            tile['y_max'] = tile['y_min'] + y_tile
+            tiles.append(tile)
 
     return tiles
 

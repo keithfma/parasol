@@ -81,8 +81,8 @@ def grid_points(x_min, x_max, y_min, y_max, grnd=False):
     """
 
     # build output grid spanning bbox
-    x_vec = np.arange(math.ceil(x_min), math.floor(x_max), RESOLUTION)   
-    y_vec = np.arange(math.ceil(y_min), math.floor(y_max), RESOLUTION)   
+    x_vec = np.arange(math.floor(x_min), math.floor(x_max), RESOLUTION)   
+    y_vec = np.arange(math.floor(y_min), math.floor(y_max), RESOLUTION)   
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
     # retrieve data, including a pad on all sides

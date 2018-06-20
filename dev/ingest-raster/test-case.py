@@ -45,7 +45,7 @@ zz_tiles = []
 z_min = 100000
 z_max = -100000
 for ii, tile in enumerate(tiles):
-    print(f'Generating tile {ii} of {len(tiles)}')
+    print(f'Generating tile {ii+1} of {len(tiles)}')
     x, y, zz = parasol.raster.grid_points(**tile) # top only
     x_tiles.append(x)
     y_tiles.append(y)

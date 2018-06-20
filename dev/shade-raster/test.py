@@ -1,14 +1,25 @@
 """Explore generating and ingesting shade rasters"""
 
 import parasol
+import logging
 
-# extract a subset and write out as geotiff
-x_min = 334499.6937
-x_max = 335000
-y_min = 4694999.905       
-y_max = 4695500
 
-parasol.raster.retrieve_geotiff('delete_me', x_min, x_max, y_min, y_max)
+logging.basicConfig(level=logging.INFO)
+
+
+# # extract a subset and write out as geotiff -----------------
+# x_min = 334499.6937
+# x_max = 335000
+# y_min = 4694999.905       
+# y_max = 4695500
+# parasol.raster.retrieve_geotiff('delete_me', x_min, x_max, y_min, y_max)
+
+# test the automated version ---------------------------------
+parasol.shade.layers_to_geotiff('.')
+
+
+
+# NOTES: some notes from manually generating shade layers in GRASS --------------------------
 
 # r.import input=/home/keith/prj/parasol/repo/dev/shade-raster/delete_me_surface.tif output=delete_me_surface
 # g.region raster=delete_me_surface@parasol-scratch 

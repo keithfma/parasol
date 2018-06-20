@@ -15,7 +15,7 @@
     "PSQL_PORT": 5432,
     "GRASS_GISBASE": "/usr/lib/grass74",
     "GRASS_GISRC": "~/.parasol/grassrc", 
-    "GRASS_GISRC_GISDBASE": "~/.parasol/.grassdb",
-    "GRASS_GISRC_LOCATION_NAME": "parasol-scratch",
-    "GRASS_GISRC_MAPSET": "parasol-scratch"
+    "GRASS_GISDBASE": "~/.parasol/.grassdb",
+    "GRASS_LOCATION": "parasol-scratch",
+    "GRASS_MAPSET": "parasol-scratch"
 }  

@@ -164,9 +164,9 @@ def upload_geotiff(filename, clobber=False):
     """
     # generate sql commands
     if clobber:
-        cmd = f'raster2pgsql -d -C -r -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {RASTER_DB}'
     else:
-        cmd = f'raster2pgsql -a -C -r -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
+        cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {RASTER_DB}'
     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
     sql = out.stdout.decode('utf-8')
 

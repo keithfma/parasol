@@ -1,14 +1,21 @@
 {
-    "LIDAR_DB": "parasol_lidar",
     "GEO_SRID": 4326,
     "PRJ_SRID": 32619,
+    "LIDAR_DB": "parasol_lidar",
     "LIDAR_TABLE": "delete_me",
     "RASTER_DB": "parasol_raster",
     "SURFACE_TABLE": "surface",
     "GROUND_TABLE": "ground",
+    "SHADE_DB": "parasol_shade",
+    "SHADE_TABLE_BASE": "shade_",
     "BBOX_PRJ": [[334000, 336500], [4962500, 4695500]],
     "PSQL_USER": null,
     "PSQL_PASS": null,
     "PSQL_HOST": "localhost",
-    "PSQL_PORT": 5432
+    "PSQL_PORT": 5432,
+    "GRASS_GISBASE": "/usr/lib/grass74",
+    "GRASS_GISRC": "~/.parasol/grassrc", 
+    "GRASS_GISRC_GISDBASE": "~/.parasol/.grassdb",
+    "GRASS_GISRC_LOCATION_NAME": "parasol-scratch",
+    "GRASS_GISRC_MAPSET": "parasol-scratch"
 }  

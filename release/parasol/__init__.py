@@ -26,4 +26,20 @@ PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
 PSQL_PORT = config['PSQL_PORT']
 
+# setup environment variables for GRASS
+os.environ['GISBASE'] = os.path.expanduser(config['GRASS_GISBASE'])
+os.environ['GISRC'] = os.path.expanduser(config["GRASS_GISRC"])
+
+# create grass configuration directory, if needed
+if not os.path.isdir(os.path.dirname(os.environ['GISRC'])):
+    os.makedirs(os.path.dirname(os.environ['GISRC']))
+
+# create grass configuration file
+with open(os.environ['GISRC'], 'w') as fp:
+    fp.write(f'GISDBASE: {os.path.expanduser(config["GRASS_GISRC_GISDBASE"])}\n')
+    fp.write(f'LOCATION_NAME: {config["GRASS_GISRC_LOCATION_NAME"]}\n')
+    fp.write(f'MAPSET: {config["GRASS_GISRC_MAPSET"]}\n')
+
+# load submodules
 from parasol import lidar, raster
+

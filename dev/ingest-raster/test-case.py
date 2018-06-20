@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 x_min = 334499.6937
 x_max = 335999.6937      
 y_min = 4694999.905       
-y_max = 4696499.905      
+y_max = 4695509.905      
 x_tile = 500
 y_tile = 500
 

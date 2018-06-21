@@ -157,6 +157,18 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
         subprocess.run(cmd)
 
 
+def retrieve(xmin, xmax, ymin, ymax):
+    """
+    Retrieve subset within specified ROI
+    
+    Arguments:
+        minx, maxx, miny, maxy: floats, limits for bounding box 
+
+    Returns: numpy array
+    """
+    raise NotImplementedError
+
+
 # command line utilities -----------------------------------------------------
 
 

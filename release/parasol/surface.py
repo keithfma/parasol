@@ -14,10 +14,11 @@ from pdb import set_trace
 import tempfile
 import matplotlib
 from matplotlib import pyplot as plt
+import argparse
 
 from parasol import lidar
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, \
-    PRJ_SRID, SURFACE_TABLE, GROUND_TABLE
+    PRJ_SRID, SURFACE_TABLE, GROUND_TABLE, DOMAIN_XLIM, DOMAIN_YLIM
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 # constants
 RESOLUTION = 1 # meters
 PAD = 10 # meters
+TILE_DIM = 1000 # meters
 
 
 def connect_db(dbname=RASTER_DB):
@@ -221,7 +223,7 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
     return tiles
 
 
-def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
+def new_surface(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
 
@@ -333,76 +335,30 @@ def retrieve(x_min, x_max, y_min, y_max, kind, filename=None, plot=False):
     return arr
 
 
-# def retrieve_numpy(x_min, x_max, y_min, y_max, plot=False):
-#     """
-#     Retrieve subset of raster from database
-# 
-#     Arguments:
-#         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
-#         plot: set True to make a quick plot for debugging
-# 
-#     Returns: z_surf, z_grnd: numpy arrays containing raster subsets
-#     """
-#     z_surf = _retrieve_numpy(x_min, x_max, y_min, y_max, SURFACE_TABLE)
-#     z_grnd = _retrieve_numpy(x_min, x_max, y_min, y_max, GROUND_TABLE)
-# 
-#     if plot:
-#         fig, (ax1, ax2) = plt.subplots(1, 2)
-#         current_cmap = matplotlib.cm.get_cmap()
-#         current_cmap.set_bad(color='red')   
-#         ax1.imshow(z_surf)
-#         ax2.imshow(z_grnd)
-#         plt.show()
-#     
-#     return z_surf, z_grnd
+# command line utilities -----------------------------------------------------
 
 
-# def _retrieve_numpy(x_min, x_max, y_min, y_max, tablename):
-#     """called by retrieve() with correct table name to access surf/grnd"""
-#     # retrieve raster data, returns in-memory representation of Geotiff
-#     sql = f"""
-#     SELECT
-#         ST_AsGDALRaster(
-#             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
-#                 'GTiff'
-#         )
-#         FROM {tablename};
-#     """
-#     with connect_db() as conn, conn.cursor() as cur:
-#         cur.execute(sql)
-#         data = cur.fetchone()[0]
-#     return _as_numpy(data)
+def initialize_cli():
+    """Command line utility for initializing the surface/ground databases"""
+    ap = argparse.ArgumentParser(
+        description="Initialize Parasol surface & ground raster databases - clobbers existing!",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    ap.add_argument('--dryrun', action='store_true', help='Set to preview only')
+    args = ap.parse_args()
 
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
 
-# def retrieve_geotiff(filename, x_min, x_max, y_min, y_max, plot=False):
-#     """
-#     Retrieve subset of raster from database
-# 
-#     Arguments:
-#         filename: string, file base name, without the .tif extension
-#         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
-# 
-#     Returns: nothing
-#     """
-#     _retrieve_geotiff(filename + '_surface.tif', x_min, x_max, y_min, y_max, SURFACE_TABLE)
-#     _retrieve_geotiff(filename + '_ground.tif', x_min, x_max, y_min, y_max, GROUND_TABLE)
-
-
-# def _retrieve_geotiff(filename, x_min, x_max, y_min, y_max, tablename):
-#     """called by retrieve() with correct table name to access surf/grnd"""
-#     # retrieve raster data, returns in-memory representation of Geotiff
-#     sql = f"""
-#     SELECT
-#         ST_AsGDALRaster(
-#             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
-#                 'GTiff'
-#         )
-#         FROM {tablename};
-#     """
-#     with connect_db() as conn, conn.cursor() as cur:
-#         cur.execute(sql)
-#         data = cur.fetchone()[0]
-# 
-#     # write data to file
-#     with open(filename, 'wb') as fp:
-#         fp.write(bytes(data))
+    if (args.dryrun):
+        tiles = tile_limits(DOMAIN_XLIM[0], DOMAIN_XLIM[1], DOMAIN_YLIM[0],
+            DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)
+        print(f'Compute raster in domain: [[{DOMAIN_XLIM}], [{DOMAIN+_YLIM}]]')
+        print(f'Num tiles: {len(tiles)}')
+    
+    else:
+        create_db(True)
+        new_surface(DOMAIN_XLIM[0], DOMAIN_XLIM[1], DOMAIN_YLIM[0],
+            DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)

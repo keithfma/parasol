@@ -19,6 +19,7 @@ setup(
         'console_scripts': [
             'parasol-server=parasol.server:cli',
             'parasol-init-lidar=parasol.lidar:initialize_cli',
+            'parasol-init-surface=parasol.surface:initialize_cli',
             ]
         }
     )

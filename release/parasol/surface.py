@@ -16,12 +16,12 @@ import matplotlib
 from matplotlib import pyplot as plt
 import argparse
 import os 
+from glob import glob
 
+import parasol
 from parasol import lidar
 from parasol.common import tile_limits
-# from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, \
-#     PRJ_SRID, SURFACE_TABLE, GROUND_TABLE, DOMAIN_XLIM, DOMAIN_YLIM
-from parasol import PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM
+from parasol import DATA_DIR, PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM
 
 logger = logging.getLogger(__name__)
 
@@ -30,44 +30,6 @@ logger = logging.getLogger(__name__)
 RESOLUTION = 1 # meters
 PAD = 10 # meters
 TILE_DIM = 1000 # meters
-
-
-# def connect_db(dbname=RASTER_DB):
-#     """
-#     Return connection to raster DB and return cursor
-# 
-#     Arguments:
-#         dbname: string, database name to connect to
-# 
-#     Returns: psycopg2 connection object
-#     """
-#     conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
-#         host=PSQL_HOST, port=PSQL_PORT)
-#     return conn
-#     
-# 
-# def create_db(clobber=False):
-#     """
-#     Create a new database and initialize for gridded raster data
-# 
-#     Arguments:
-#         clobber: set True to delete and re-initialize an existing database
-# 
-#     Return: Nothing
-#     """
-#     # TODO: add indexes as needed
-#     # connect to default database
-#     with connect_db('postgres') as conn, conn.cursor() as cur:
-#         conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
-#         if clobber:
-#             logger.info(f'Dropped existing database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
-#             cur.execute(f'DROP DATABASE IF EXISTS {RASTER_DB}');
-#         cur.execute(f'CREATE DATABASE {RASTER_DB};')
-#         cur.close()
-#     # init new database
-#     with connect_db() as conn, conn.cursor() as cur:
-#         cur.execute('CREATE EXTENSION postgis;')
-#     logger.info(f'Created new database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
 def grid_points(x_min, x_max, y_min, y_max):
@@ -155,40 +117,6 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     driver = outRaster = outband = None
 
 
-# def upload_geotiff(filename, tablename, mode):
-#     """
-#     Upload GeoTiff file to database
-# 
-#     Command-line tool 'rastertopsql' used to generate SQL commands
-# 
-#     Arguments:
-#         filename: string, GeoTiff file to upload
-#         tablename: string, target table in DB
-#         mode: string, one of 'create', 'add', 'finish'. create mode initializes
-#             the raster table and appends the raster, add mode appends the
-#             raster, and finish mode appends the raster and sets the constraints.
-#     
-#     Returns: Nothing
-#     """
-#     # generate sql commands
-#     if mode == 'create':
-#         cmd = f'raster2pgsql -d -s {PRJ_SRID} -b 1 -t auto {filename} {tablename}'
-#     elif mode == 'add' or mode == 'finish':
-#         cmd = f'raster2pgsql -a -s {PRJ_SRID} -b 1 {filename} {tablename}'
-#     else:
-#         raise ValueError('mode argument not recognized')
-#     out = subprocess.run(cmd.split(' '), stdout=subprocess.PIPE, check=True)
-#     sql = out.stdout.decode('utf-8')
-#     if mode == 'finish':
-#         sql += (f"SELECT AddRasterConstraints('','{tablename}','rast',"
-#                 "TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE);")
-#     
-#     # execute sql commands
-#     with connect_db() as conn, conn.cursor() as cur:
-#         cur.execute(sql)
-#         cur.close()
-
-
 def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
@@ -211,94 +139,22 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
     for ii, tile in enumerate(tiles):
         logger.info(f'Generating tile {ii+1} of {num_tiles}')
         x_vec, y_vec, z_grnd, z_surf = grid_points(**tile)
-        create_geotiff('grnd_{:04d}.tif'.format(ii), x_vec, y_vec, z_grnd)
-        create_geotiff('surf_{:04d}.tif'.format(ii), x_vec, y_vec, z_surf)
+        
+        grnd_name = os.path.join(DATA_DIR, 'ground_tile_{:04d}.tif'.format(ii))
+        create_geotiff(grnd_name, x_vec, y_vec, z_grnd)
+        logger.info(f'Wrote tile {grnd_name}')
+        
+        surf_name = os.path.join(DATA_DIR, 'surface_tile_{:04d}.tif'.format(ii))
+        create_geotiff(surf_name, x_vec, y_vec, z_surf)
+        logger.info(f'Wrote tile {surf_name}')
 
-    # TODO: merge tiles
-
-    # TODO: delete tiles
-
-
-# def _as_numpy(data):
-#     """Convert binary raster data from DB to numpy array"""
-#     # read data to GDAL object
-#     # See: https://gis.stackexchange.com/questions/130139/downloading-raster-data-into-python-from-postgis-using-psycopg2 
-#     vsipath = '/vsimem/parasol' # must be in this root path
-#     gdal.FileFromMemBuffer(vsipath, bytes(data))
-#     ds = gdal.Open(vsipath)
-#     band = ds.GetRasterBand(1)
-#     arr = band.ReadAsArray()
-#     # TODO: get coordinate vectors, use ds.GetGeoTransform, and go from there
-#     ds = band = None
-#     gdal.Unlink(vsipath)
-#     # replace NODATA with np.nan
-#     dtype_max = np.finfo(arr.dtype).max
-#     dtype_min = np.finfo(arr.dtype).min
-#     arr[arr == dtype_max] = np.nan
-#     arr[arr == dtype_min] = np.nan
-#     # done!
-#     return arr
-# 
-# 
-# def _as_geotiff(data, filename):
-#     """Convert binary raster data from DB to geotiff file"""
-#     with open(filename, 'wb') as fp:
-#         fp.write(bytes(data))
-# 
-# 
-# def retrieve(x_min, x_max, y_min, y_max, kind, filename=None, plot=False):
-#     """
-#     Retrieve subset of raster from database
-# 
-#     Arguments:
-#         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
-#         kind: string, one of 'surface', 'ground', selects raster to retrieve
-#         filename: string or None, provide a filename to save to geotiff
-#         plot: set True to make a quick plot for debugging, only valid if
-#             filename is not set
-#     
-#     Returns: numpy array (if filename == None) or None
-#     """
-#     # parse input arguments
-#     if kind == 'surface':
-#         table_name = SURFACE_TABLE
-#     elif kind == 'ground':
-#         table_name = GROUND_TABLE
-#     else:
-#         raise ValueError('Invalid selection for argument "kind"')
-#     if filename and plot:
-#         raise ValueError("Can't plot if 'filename' is provided")
-#     
-#     # get raster data from DB
-#     sql = f"""
-#     SELECT
-#         ST_AsGDALRaster(
-#             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
-#                 'GTiff'
-#         )
-#         FROM {table_name};
-#     """
-#     with connect_db() as conn, conn.cursor() as cur:
-#         cur.execute(sql)
-#         data = cur.fetchone()[0]
-#         cur.close()
-# 
-#     if filename:
-#         # handle writing to geotiff
-#         _as_geotiff(data, filename)
-#         arr = None
-# 
-#     else:
-#         # handle reading to numpy array
-#         arr = _as_numpy(arr)
-#         if plot: 
-#             current_cmap = matplotlib.cm.get_cmap()
-#             current_cmap.set_bad(color='red')   
-#             plt.imshow(arr)
-#             plt.show()
-#      
-#     # done!
-#     return arr
+    # merge tiles
+    logger.info('Merging tiles')
+    for prefix in ['ground', 'surface']:
+        cmd =  ['gdal_merge.py']
+        cmd.extend(glob(os.path.join(DATA_DIR, prefix + '_tile_*.tif')))
+        cmd.extend(['-of', 'GTiff', '-o', os.path.join(DATA_DIR, prefix + '.tif')])
+        subprocess.run(cmd)
 
 
 # command line utilities -----------------------------------------------------

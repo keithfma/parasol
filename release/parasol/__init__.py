@@ -14,16 +14,13 @@ with open(CONFIG_FILE, 'r') as fp:
     config = json.load(fp)
 
 # unpack config constants
-DATA_DIR = config['DATA_DIR']
+DATA_DIR = os.path.expanduser(config['DATA_DIR'])
 DOMAIN_XLIM = config['DOMAIN_XLIM']
 DOMAIN_YLIM = config['DOMAIN_YLIM']
 LIDAR_DB = config['LIDAR_DB']
 GEO_SRID = config['GEO_SRID']
 PRJ_SRID = config['PRJ_SRID']
 LIDAR_TABLE = config['LIDAR_TABLE']
-RASTER_DB = config['RASTER_DB']
-SURFACE_TABLE = config['SURFACE_TABLE']
-GROUND_TABLE = config['GROUND_TABLE']
 BBOX_PRJ = config['BBOX_PRJ']
 PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']
@@ -34,6 +31,10 @@ GRASS_GISRC = os.path.expanduser(config["GRASS_GISRC"])
 GRASS_GISDBASE = os.path.expanduser(config["GRASS_GISDBASE"])
 GRASS_LOCATION = config["GRASS_LOCATION"]
 GRASS_MAPSET = config["GRASS_MAPSET"]
+
+# create data folder, if needed
+if not os.path.isdir(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
 # setup environment variables for GRASS
 os.environ['GISBASE'] = GRASS_GISBASE

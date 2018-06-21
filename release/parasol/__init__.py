@@ -14,6 +14,7 @@ with open(CONFIG_FILE, 'r') as fp:
     config = json.load(fp)
 
 # unpack config constants
+DATA_DIR = config['DATA_DIR']
 LIDAR_DB = config['LIDAR_DB']
 GEO_SRID = config['GEO_SRID']
 PRJ_SRID = config['PRJ_SRID']
@@ -52,5 +53,5 @@ subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e',
     f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'])
 
 # load submodules
-from parasol import lidar, raster, shade
+from parasol import lidar, surface, shade
 

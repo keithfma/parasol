@@ -6,7 +6,7 @@ import os
 import subprocess
 import logging
 
-from parasol import raster
+from parasol import surface 
 from parasol import GRASS_MAPSET
 
 
@@ -21,11 +21,12 @@ INTERVAL = 1
 
 
 # TODO: use a temporary directory for scratch files
+# TODO: compute in tiles
 def insolation(x_min, x_max, y_min, y_max, year, day):
     
     # import surface elevation
     # TODO: read ground as well to compute constant shade component
-    raster.retrieve(x_min, x_max, y_min, y_max, kind='surface',
+    surface.retrieve(x_min, x_max, y_min, y_max, kind='surface',
         filename='surface.tif', plot=False)
     subprocess.run(['grass', '--exec', 'r.import', '--overwrite', 
         f'input=surface.tif', f'output=surface@{GRASS_MAPSET}']) 

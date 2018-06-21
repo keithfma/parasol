@@ -7,7 +7,8 @@ import psycopg2 as pg
 import numpy as np
 import math
 from scipy.spatial import cKDTree
-from osgeo import gdal, osr
+import gdal
+import osr
 import subprocess
 from pdb import set_trace
 import tempfile

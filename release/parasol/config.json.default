@@ -1,4 +1,5 @@
 {
+    "DATA_DIR": "~/.parasol/data",
     "GEO_SRID": 4326,
     "PRJ_SRID": 32619,
     "LIDAR_DB": "parasol_lidar",

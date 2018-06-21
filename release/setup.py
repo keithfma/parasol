@@ -13,6 +13,7 @@ setup(
         'psycopg2',
         'numpy',
         'scipy',
+        'pdal',
         ],
     entry_points={
         'console_scripts': [

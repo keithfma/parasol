@@ -17,6 +17,7 @@ from matplotlib import pyplot as plt
 import argparse
 import os 
 from glob import glob
+import tempfile
 
 import parasol
 from parasol import lidar
@@ -157,16 +158,33 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
         subprocess.run(cmd)
 
 
-def retrieve(xmin, xmax, ymin, ymax):
+# INCOMPLETE
+def retrieve(x_min, x_max, y_min, y_max, which):
     """
     Retrieve subset within specified ROI
     
     Arguments:
         minx, maxx, miny, maxy: floats, limits for bounding box 
+        which: string, which raster to retrieve data from, must be one of
+            'surface', 'ground'
 
     Returns: numpy array
     """
-    raise NotImplementedError
+    # get raster file name
+    if which == 'surface':
+        src_file = os.path.join(DATA_DIR, 'surface.tif')
+    elif which == 'ground':
+        src_file = os.path.join(DATA_DIR, 'ground.tif')
+    else:
+        raise ValueError('Invalid choice for "which" variable')
+
+    # get subset as file
+    with tempfile.NamedTemporaryFile() as fp:
+        dest_file = fp.name()
+        subprocess.run(['gdal_translate', '-of', 'GTiff', '-projwin',
+            str(x_min), str(y_max), str(x_max), str(y_min), src_file, dest_file])
+
+    # TODO: read file 
 
 
 # command line utilities -----------------------------------------------------

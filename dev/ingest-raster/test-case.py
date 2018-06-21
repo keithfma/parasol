@@ -43,15 +43,16 @@ logging.basicConfig(level=logging.INFO)
 # parasol.raster.new(x_min, x_max, y_min, y_max, x_tile, y_tile)
 
 # retrieve part of the raster ingested above
-x_min = 334499.6937
-x_max = 335000
-y_min = 4694999.905       
-y_max = 4695500
+x_min = 327516
+x_max = x_min + 1000 
+y_min = 4692153
+y_max = y_min + 1000
+parasol.surface.retrieve(x_min, x_max, y_min, y_max, 'surface')
 
 # zs, zg = parasol.raster.retrieve_numpy(x_min, x_max, y_min, y_max, plot=True)
 
 # the same, but writing to files instead of retrieving array
-parasol.raster.retrieve_geotiff('delete_me', x_min, x_max, y_min, y_max)
+# parasol.raster.retrieve_geotiff('delete_me', x_min, x_max, y_min, y_max)
 
 
 

@@ -24,9 +24,11 @@ INTERVAL = 1
 def insolation(x_min, x_max, y_min, y_max, year, day):
     
     # import surface elevation
-    raster.retrieve_geotiff('input', x_min, x_max, y_min, y_max)
+    # TODO: read ground as well to compute constant shade component
+    raster.retrieve(x_min, x_max, y_min, y_max, kind='surface',
+        filename='surface.tif', plot=False)
     subprocess.run(['grass', '--exec', 'r.import', '--overwrite', 
-        f'input=input_surface.tif', f'output=surface@{GRASS_MAPSET}']) 
+        f'input=surface.tif', f'output=surface@{GRASS_MAPSET}']) 
 
     # set compute region -- very important!
     subprocess.run(['g.region', f'raster=surface@{GRASS_MAPSET}']) 

@@ -251,45 +251,8 @@ def new(x_min, x_max, y_min, y_max, x_tile, y_tile):
             upload_geotiff(fp.name, GROUND_TABLE, modes[ii])
 
 
-def retrieve_numpy(x_min, x_max, y_min, y_max, plot=False):
-    """
-    Retrieve subset of raster from database
-
-    Arguments:
-        x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
-        plot: set True to make a quick plot for debugging
-
-    Returns: z_surf, z_grnd: numpy arrays containing raster subsets
-    """
-    z_surf = _retrieve_numpy(x_min, x_max, y_min, y_max, SURFACE_TABLE)
-    z_grnd = _retrieve_numpy(x_min, x_max, y_min, y_max, GROUND_TABLE)
-
-    if plot:
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        current_cmap = matplotlib.cm.get_cmap()
-        current_cmap.set_bad(color='red')   
-        ax1.imshow(z_surf)
-        ax2.imshow(z_grnd)
-        plt.show()
-    
-    return z_surf, z_grnd
-
-
-def _retrieve_numpy(x_min, x_max, y_min, y_max, tablename):
-    """called by retrieve() with correct table name to access surf/grnd"""
-    # retrieve raster data, returns in-memory representation of Geotiff
-    sql = f"""
-    SELECT
-        ST_AsGDALRaster(
-            ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
-                'GTiff'
-        )
-        FROM {tablename};
-    """
-    with connect_db() as conn, conn.cursor() as cur:
-        cur.execute(sql)
-        data = cur.fetchone()[0]
-
+def _as_numpy(data):
+    """Convert binary raster data from DB to numpy array"""
     # read data to GDAL object
     # See: https://gis.stackexchange.com/questions/130139/downloading-raster-data-into-python-from-postgis-using-psycopg2 
     vsipath = '/vsimem/parasol' # must be in this root path
@@ -300,46 +263,145 @@ def _retrieve_numpy(x_min, x_max, y_min, y_max, tablename):
     # TODO: get coordinate vectors, use ds.GetGeoTransform, and go from there
     ds = band = None
     gdal.Unlink(vsipath)
-    
     # replace NODATA with np.nan
     dtype_max = np.finfo(arr.dtype).max
     dtype_min = np.finfo(arr.dtype).min
     arr[arr == dtype_max] = np.nan
     arr[arr == dtype_min] = np.nan
-
     # done!
     return arr
 
 
-def retrieve_geotiff(filename, x_min, x_max, y_min, y_max, plot=False):
+def _as_geotiff(data, filename):
+    """Convert binary raster data from DB to geotiff file"""
+    with open(filename, 'wb') as fp:
+        fp.write(bytes(data))
+
+
+def retrieve(x_min, x_max, y_min, y_max, kind, filename=None, plot=False):
     """
     Retrieve subset of raster from database
 
     Arguments:
-        filename: string, file base name, without the .tif extension
         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
-
-    Returns: nothing
+        kind: string, one of 'surface', 'ground', selects raster to retrieve
+        filename: string or None, provide a filename to save to geotiff
+        plot: set True to make a quick plot for debugging, only valid if
+            filename is not set
+    
+    Returns: numpy array (if filename == None) or None
     """
-    _retrieve_geotiff(filename + '_surface.tif', x_min, x_max, y_min, y_max, SURFACE_TABLE)
-    _retrieve_geotiff(filename + '_ground.tif', x_min, x_max, y_min, y_max, GROUND_TABLE)
-
-
-def _retrieve_geotiff(filename, x_min, x_max, y_min, y_max, tablename):
-    """called by retrieve() with correct table name to access surf/grnd"""
-    # retrieve raster data, returns in-memory representation of Geotiff
+    # parse input arguments
+    if kind == 'surface':
+        table_name = SURFACE_TABLE
+    elif kind == 'ground':
+        table_name = GROUND_TABLE
+    else:
+        raise ValueError('Invalid selection for argument "kind"')
+    if filename and plot:
+        raise ValueError("Can't plot if 'filename' is provided")
+    
+    # get raster data from DB
     sql = f"""
     SELECT
         ST_AsGDALRaster(
             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
                 'GTiff'
         )
-        FROM {tablename};
+        FROM {table_name};
     """
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
         data = cur.fetchone()[0]
 
-    # write data to file
-    with open(filename, 'wb') as fp:
-        fp.write(bytes(data))
+    if filename:
+        # handle writing to geotiff
+        _as_geotiff(data, filename)
+        arr = None
+
+    else:
+        # handle reading to numpy array
+        arr = _as_numpy(arr)
+        if plot: 
+            current_cmap = matplotlib.cm.get_cmap()
+            current_cmap.set_bad(color='red')   
+            plt.imshow(arr)
+            plt.show()
+     
+    # done!
+    return arr
+
+
+# def retrieve_numpy(x_min, x_max, y_min, y_max, plot=False):
+#     """
+#     Retrieve subset of raster from database
+# 
+#     Arguments:
+#         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
+#         plot: set True to make a quick plot for debugging
+# 
+#     Returns: z_surf, z_grnd: numpy arrays containing raster subsets
+#     """
+#     z_surf = _retrieve_numpy(x_min, x_max, y_min, y_max, SURFACE_TABLE)
+#     z_grnd = _retrieve_numpy(x_min, x_max, y_min, y_max, GROUND_TABLE)
+# 
+#     if plot:
+#         fig, (ax1, ax2) = plt.subplots(1, 2)
+#         current_cmap = matplotlib.cm.get_cmap()
+#         current_cmap.set_bad(color='red')   
+#         ax1.imshow(z_surf)
+#         ax2.imshow(z_grnd)
+#         plt.show()
+#     
+#     return z_surf, z_grnd
+
+
+# def _retrieve_numpy(x_min, x_max, y_min, y_max, tablename):
+#     """called by retrieve() with correct table name to access surf/grnd"""
+#     # retrieve raster data, returns in-memory representation of Geotiff
+#     sql = f"""
+#     SELECT
+#         ST_AsGDALRaster(
+#             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
+#                 'GTiff'
+#         )
+#         FROM {tablename};
+#     """
+#     with connect_db() as conn, conn.cursor() as cur:
+#         cur.execute(sql)
+#         data = cur.fetchone()[0]
+#     return _as_numpy(data)
+
+
+# def retrieve_geotiff(filename, x_min, x_max, y_min, y_max, plot=False):
+#     """
+#     Retrieve subset of raster from database
+# 
+#     Arguments:
+#         filename: string, file base name, without the .tif extension
+#         x_min, x_max, y_min, y_max: floats, limits for the region to retrieve
+# 
+#     Returns: nothing
+#     """
+#     _retrieve_geotiff(filename + '_surface.tif', x_min, x_max, y_min, y_max, SURFACE_TABLE)
+#     _retrieve_geotiff(filename + '_ground.tif', x_min, x_max, y_min, y_max, GROUND_TABLE)
+
+
+# def _retrieve_geotiff(filename, x_min, x_max, y_min, y_max, tablename):
+#     """called by retrieve() with correct table name to access surf/grnd"""
+#     # retrieve raster data, returns in-memory representation of Geotiff
+#     sql = f"""
+#     SELECT
+#         ST_AsGDALRaster(
+#             ST_Union(ST_Clip(rast, ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {PRJ_SRID}))),
+#                 'GTiff'
+#         )
+#         FROM {tablename};
+#     """
+#     with connect_db() as conn, conn.cursor() as cur:
+#         cur.execute(sql)
+#         data = cur.fetchone()[0]
+# 
+#     # write data to file
+#     with open(filename, 'wb') as fp:
+#         fp.write(bytes(data))

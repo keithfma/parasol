@@ -55,5 +55,8 @@ subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e',
     f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'])
 
 # load submodules
-from parasol import lidar, surface, shade
+from parasol import common
+from parasol import lidar
+from parasol import surface
+from parasol import shade
 

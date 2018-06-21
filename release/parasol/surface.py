@@ -15,8 +15,10 @@ import tempfile
 import matplotlib
 from matplotlib import pyplot as plt
 import argparse
+import gc
 
 from parasol import lidar
+from parasol.common import tile_limits
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, \
     PRJ_SRID, SURFACE_TABLE, GROUND_TABLE, DOMAIN_XLIM, DOMAIN_YLIM
 
@@ -60,6 +62,7 @@ def create_db(clobber=False):
             logger.info(f'Dropped existing database: {RASTER_DB} @ {PSQL_HOST}:{PSQL_PORT}')
             cur.execute(f'DROP DATABASE IF EXISTS {RASTER_DB}');
         cur.execute(f'CREATE DATABASE {RASTER_DB};')
+        cur.close()
     # init new database
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
@@ -80,50 +83,51 @@ def grid_points(x_min, x_max, y_min, y_max, grnd=False):
         z_grd: numpy 2D array, elevation grid 
     """
 
-    # build output grid spanning bbox
-    x_vec = np.arange(math.floor(x_min), math.floor(x_max), RESOLUTION)   
-    y_vec = np.arange(math.floor(y_min), math.floor(y_max), RESOLUTION)   
-    x_grd, y_grd = np.meshgrid(x_vec, y_vec)
+    # # build output grid spanning bbox
+    # x_vec = np.arange(math.floor(x_min), math.floor(x_max), RESOLUTION)   
+    # y_vec = np.arange(math.floor(y_min), math.floor(y_max), RESOLUTION)   
+    # x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
     # retrieve data, including a pad on all sides
-    pts = lidar.retrieve(x_min-PAD, y_min-PAD, x_max+PAD, y_max+PAD)
+    # pts = lidar.retrieve(x_min-PAD, y_min-PAD, x_max+PAD, y_max+PAD)
+    lidar.retrieve(x_min-PAD, y_min-PAD, x_max+PAD, y_max+PAD, 'delete_me.laz')
 
-    # filter for ground returns
-    mask = np.zeros(len(pts)) 
-    if grnd:
-        # extract ground points
-        for idx, pt in enumerate(pts):
-            if pt[3] == pt[4]  and pt[5] == 2:
-                # last or only return, classified as "ground"
-                mask[idx] = 1
-    else:
-        # extract upper surface points
-        for idx, pt in enumerate(pts):
-            if (pt[3] == 1 or pt[4] == 1) and pt[5] == 1:
-                # first or only return, classified as "default"
-                mask[idx] = 1
-    pts = np.extract(mask, pts)
+    # # filter for ground returns
+    # mask = np.zeros(len(pts)) 
+    # if grnd:
+    #     # extract ground points
+    #     for idx, pt in enumerate(pts):
+    #         if pt[3] == pt[4]  and pt[5] == 2:
+    #             # last or only return, classified as "ground"
+    #             mask[idx] = 1
+    # else:
+    #     # extract upper surface points
+    #     for idx, pt in enumerate(pts):
+    #         if (pt[3] == 1 or pt[4] == 1) and pt[5] == 1:
+    #             # first or only return, classified as "default"
+    #             mask[idx] = 1
+    # pts = np.extract(mask, pts)
 
-    # extract [x, y] and z arrays
-    npts = len(pts)
-    xy = np.zeros((npts, 2))
-    zz = np.zeros(npts)
-    for idx, pt in enumerate(pts):
-        xy[idx, 0] = pt[0]
-        xy[idx, 1] = pt[1]
-        zz[idx] = pt[2]
+    # # extract [x, y] and z arrays
+    # npts = len(pts)
+    # xy = np.zeros((npts, 2))
+    # zz = np.zeros(npts)
+    # for idx, pt in enumerate(pts):
+    #     xy[idx, 0] = pt[0]
+    #     xy[idx, 1] = pt[1]
+    #     zz[idx] = pt[2]
 
-    # construct KDTree
-    tree = cKDTree(xy) 
+    # # construct KDTree
+    # tree = cKDTree(xy) 
 
-    # find NN for all grid points
-    xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
-    nn_dist, nn_idx = tree.query(xy_grd, k=16)
+    # # find NN for all grid points
+    # xy_grd = np.hstack([x_grd.reshape((-1,1)), y_grd.reshape((-1,1))])
+    # nn_dist, nn_idx = tree.query(xy_grd, k=16)
 
-    # compute local medians
-    z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
+    # # compute local medians
+    # z_grd = np.median(zz[nn_idx], axis=1).reshape(x_grd.shape)
 
-    return x_vec, y_vec, z_grd
+    # return x_vec, y_vec, z_grd
 
 
 def create_geotiff(filename, x_vec, y_vec, z_grd):
@@ -151,6 +155,8 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     outRasterSRS.ImportFromEPSG(PRJ_SRID)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
     outband.FlushCache()
+    # clean up
+    driver = outRaster = outband = None
 
 
 def upload_geotiff(filename, tablename, mode):
@@ -187,42 +193,6 @@ def upload_geotiff(filename, tablename, mode):
         cur.close()
 
 
-def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
-    """
-    Return list of bounding boxes for tiles within the specified range
-    
-    Arguments:
-        x_min, x_max, y_min, y_max: floats, limits for the full region-of-interest
-        x_tile, y_tile: floats, desired dimensions for generated tiles, note that
-            the actual dimensions are adjusted to evenly divide the ROI
-    
-    Returns: list of bounding boxes, each a dict with fields x_min, x_max, y_min, y_max
-    """
-    # modify the bounding box to be a multiple of the tile dimension
-    x_pad = (x_max - x_min) % x_tile
-    x_min += math.ceil(x_pad/2)
-    x_max += math.floor(x_pad/2) 
-    x_num_tiles = int((x_max - x_min) // x_tile)
-
-    y_pad = (y_max - y_min) % y_tile
-    y_min += math.ceil(y_pad/2)
-    y_max += math.floor(y_pad/2) 
-    y_num_tiles = int((y_max - y_min) // y_tile)
-
-    # generate tile bboxes
-    tiles = []
-    for ii in range(x_num_tiles):
-        for jj in range(y_num_tiles):
-            tile = {}
-            tile['x_min'] = x_min + ii*x_tile
-            tile['x_max'] = tile['x_min'] + x_tile
-            tile['y_min'] = y_min + jj*y_tile
-            tile['y_max'] = tile['y_min'] + y_tile
-            tiles.append(tile)
-
-    return tiles
-
-
 def new_surface(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile
@@ -243,15 +213,20 @@ def new_surface(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
     for ii, tile in enumerate(tiles):
         logger.info(f'Generating tile {ii+1} of {num_tiles} - surface')
-        x_vec, y_vec, z_grd = grid_points(**tile)
+        grid_points(**tile)
+        # x_vec, y_vec, z_grd = grid_points(**tile)
         with tempfile.NamedTemporaryFile() as fp:
-            create_geotiff(fp.name, x_vec, y_vec, z_grd)
-            upload_geotiff(fp.name, SURFACE_TABLE, modes[ii])
+            # create_geotiff(fp.name, x_vec, y_vec, z_grd)
+            # upload_geotiff(fp.name, SURFACE_TABLE, modes[ii])
+            fp.close()
         logger.info(f'Generating tile {ii+1} of {num_tiles} - ground')
-        x_vec, y_vec, z_grd = grid_points(**tile, grnd=True)
+        grid_points(**tile, grnd=True)
+        # x_vec, y_vec, z_grd = grid_points(**tile, grnd=True)
         with tempfile.NamedTemporaryFile() as fp:
-            create_geotiff(fp.name, x_vec, y_vec, z_grd)
-            upload_geotiff(fp.name, GROUND_TABLE, modes[ii])
+            # create_geotiff(fp.name, x_vec, y_vec, z_grd)
+            # upload_geotiff(fp.name, GROUND_TABLE, modes[ii])
+            fp.close()
+            # gc.collect(2)
 
 
 def _as_numpy(data):
@@ -316,6 +291,7 @@ def retrieve(x_min, x_max, y_min, y_max, kind, filename=None, plot=False):
     with connect_db() as conn, conn.cursor() as cur:
         cur.execute(sql)
         data = cur.fetchone()[0]
+        cur.close()
 
     if filename:
         # handle writing to geotiff
@@ -355,7 +331,7 @@ def initialize_cli():
     if (args.dryrun):
         tiles = tile_limits(DOMAIN_XLIM[0], DOMAIN_XLIM[1], DOMAIN_YLIM[0],
             DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)
-        print(f'Compute raster in domain: [[{DOMAIN_XLIM}], [{DOMAIN+_YLIM}]]')
+        print(f'Compute raster in domain: [[{DOMAIN_XLIM}], [{DOMAIN_YLIM}]]')
         print(f'Num tiles: {len(tiles)}')
     
     else:

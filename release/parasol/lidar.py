@@ -8,6 +8,7 @@ import json
 import pdal
 import argparse
 from glob import glob
+import numpy as np
 import logging
 
 from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
@@ -150,7 +151,8 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
     if not plasio_file: 
         if not len(pipeline.arrays) == 1:
             raise ValueError('Assumption violated')
-        return pipeline.arrays[0]
+        array = np.copy(pipeline.arrays[0])
+        return array
 
 
 # command line utilities -----------------------------------------------------

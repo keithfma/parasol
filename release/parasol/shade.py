@@ -6,8 +6,8 @@ import os
 import subprocess
 import logging
 
-from parasol import surface 
-from parasol import GRASS_MAPSET
+from parasol import surface, common
+from parasol import GRASS_MAPSET, DATA_DIR
 
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,17 @@ STOP_HOUR = 24
 INTERVAL = 1
 
 
-# TODO: use a temporary directory for scratch files
-# TODO: compute in tiles
-def insolation(x_min, x_max, y_min, y_max, year, day):
+# merge results as bands of one raster, then write
+def insolation(x_min, x_max, y_min, y_max, year, day, prefix):
+    """
+    Compute insolation (W/m2) raster within ROI for defined interval
+    
+    Arguments:
+        x_min, x_max, y_min, y_max: floats, limits of ROI
+        year, day: ints, date for insolation calculation
+        prefix: string, base name for resulting geotiffs, generates one geotiff
+            per timestep
+    """
     
     # import surface elevation
     # TODO: read ground as well to compute constant shade component
@@ -68,4 +76,5 @@ def insolation(x_min, x_max, y_min, y_max, year, day):
 # # NOTE: command works Bash, fails to find files here. Shelved as non-essential
 # def clear_mapset():
 #     subprocess.run(['grass', '--exec', 'g.remove', 'type=raster', f'pattern="*"'])
+
 

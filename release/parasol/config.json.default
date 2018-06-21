@@ -1,5 +1,7 @@
 {
     "DATA_DIR": "~/.parasol/data",
+    "DOMAIN_XLIM": [327215.17, 332763.20],
+    "DOMAIN_YLIM": [4689152.81, 4694784.72],
     "GEO_SRID": 4326,
     "PRJ_SRID": 32619,
     "LIDAR_DB": "parasol_lidar",

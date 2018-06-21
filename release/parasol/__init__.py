@@ -15,6 +15,8 @@ with open(CONFIG_FILE, 'r') as fp:
 
 # unpack config constants
 DATA_DIR = config['DATA_DIR']
+DOMAIN_XLIM = config['DOMAIN_XLIM']
+DOMAIN_YLIM = config['DOMAIN_YLIM']
 LIDAR_DB = config['LIDAR_DB']
 GEO_SRID = config['GEO_SRID']
 PRJ_SRID = config['PRJ_SRID']

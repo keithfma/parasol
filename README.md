@@ -12,3 +12,7 @@
 + Have to set a special env variable to enable GTiff output from Postgres. See
   https://postgis.net/docs/postgis_installation.html . Add the following to
   /etc/postgresql/10/main/enviroment: `POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL`
+
++ installing wxpython: https://uwpce-pythoncert.github.io/Py300/notes/Installing_wxPython.html
++ https://wxpython.org/pages/downloads/
++ https://stackoverflow.com/questions/720806/wxpython-for-python-3

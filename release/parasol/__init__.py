@@ -2,6 +2,7 @@ import json
 from pkg_resources import resource_filename
 from shutil import copyfile
 import os
+import subprocess
 
 # load config dict
 CONFIG_FILE = resource_filename('parasol', 'config.json')
@@ -25,5 +26,31 @@ PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
 PSQL_PORT = config['PSQL_PORT']
+GRASS_GISBASE = os.path.expanduser(config["GRASS_GISBASE"])
+GRASS_GISRC = os.path.expanduser(config["GRASS_GISRC"])
+GRASS_GISDBASE = os.path.expanduser(config["GRASS_GISDBASE"])
+GRASS_LOCATION = config["GRASS_LOCATION"]
+GRASS_MAPSET = config["GRASS_MAPSET"]
 
-from parasol import lidar, raster
+# setup environment variables for GRASS
+os.environ['GISBASE'] = GRASS_GISBASE
+os.environ['GISRC'] = GRASS_GISRC
+
+# create grass configuration directory, if needed
+if not os.path.isdir(os.path.dirname(GRASS_GISRC)):
+    os.makedirs(os.path.dirname(GRASS_GISRC))
+
+# create grass configuration file
+with open(GRASS_GISRC, 'w') as fp:
+    fp.write(f'GISDBASE: {GRASS_GISDBASE}\n')
+    fp.write(f'LOCATION_NAME: {GRASS_LOCATION}\n')
+    fp.write(f'MAPSET: {GRASS_MAPSET}\n')
+    fp.write('GUI: wxpython\n')
+
+# create database, location, and mapset folders, if needed
+subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e',
+    f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'])
+
+# load submodules
+from parasol import lidar, raster, shade
+

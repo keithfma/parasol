@@ -14,7 +14,6 @@ import tempfile
 import matplotlib
 from matplotlib import pyplot as plt
 
-
 from parasol import lidar
 from parasol import RASTER_DB, PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT, \
     PRJ_SRID, SURFACE_TABLE, GROUND_TABLE

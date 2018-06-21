@@ -10,6 +10,9 @@ import argparse
 from glob import glob
 import numpy as np
 import logging
+from pdb import set_trace
+import uuid
+import os
 
 from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
@@ -109,18 +112,23 @@ def ingest(laz_file):
     logger.info(f'Completed ingest: {laz_file}')
 
 
-def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
+# TODO: IMPORTANT would make more sense to query the DB directly, and avoid
+# writing out to disk unnecesarily
+def retrieve(xmin, xmax, ymin, ymax):
     """
     Retrieve all points within a bounding box
     
     Arguments:
         minx, maxx, miny, maxy: floats, limits for bounding box 
-        plasio_file: optional, provide a string to save results as a
-            plas.io-friendly LAZ file. If enabled, no array is returned
 
-    Returns: list of numpy arrays per patch, one point per row, named columns
+    Returns: numpy array with columns
+        X, Y, Z, ReturnNumber, NumberOfReturns, Classification
     """
+    # NOTE: original version used PDAL to return numpy array, but this had some
+    #   internal memory leak
+
     # build pipeline definition
+    filename = uuid.uuid4().hex
     pipeline_dict = {
         "pipeline":[
             {
@@ -128,31 +136,25 @@ def retrieve(xmin, xmax, ymin, ymax, plasio_file=None):
                 "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
                 "table": LIDAR_TABLE,
                 "column": "pa",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {PRJ_SRID}))",
+            }, {
+                "type": "writers.text",
+                "format": "csv",
+                "filename": filename,
             }
           ]
         }
-    pipeline_dict['pipeline'][0]['where'] = (
-        f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {PRJ_SRID}))")
-
-    if plasio_file: 
-        # optionally write to plasio-friendly LAZ file
-        pipeline_dict['pipeline'].extend([
-            {
-                "type": "writers.las",
-                "forward": "all",
-                "compression": "laszip",
-                "filename": plasio_file,
-            }])
+    
     # create and execute pipeline
     pipeline = pdal.Pipeline(json.dumps(pipeline_dict))
     pipeline.validate()
     pipeline.execute()
-    # return array, if requested
-    if not plasio_file: 
-        if not len(pipeline.arrays) == 1:
-            raise ValueError('Assumption violated')
-        array = np.copy(pipeline.arrays[0])
-        return array
+    
+    # read resulting file to numpy, then delete it
+    array = np.genfromtxt(filename, delimiter=',', dtype=float, skip_header=1)
+    os.remove(filename)
+    
+    return array
 
 
 # command line utilities -----------------------------------------------------

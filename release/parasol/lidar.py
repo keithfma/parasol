@@ -13,6 +13,7 @@ import logging
 from pdb import set_trace
 import uuid
 import os
+import json
 
 from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
@@ -158,6 +159,10 @@ def retrieve(xmin, xmax, ymin, ymax):
 def retrieve_db(xmin, xmax, ymin, ymax):
     """
     Retrieve all points within a bounding box
+
+    NOTE: intersection is at the patch level - meaning the output set will
+        likely contain points outside the specified ROI. This is OK for my
+        purposes, so I do not bother culling the resulting point set.
     
     Arguments:
         minx, maxx, miny, maxy: floats, limits for bounding box 
@@ -165,7 +170,16 @@ def retrieve_db(xmin, xmax, ymin, ymax):
     Returns: numpy array with columns
         X, Y, Z, ReturnNumber, NumberOfReturns, Classification
     """
-    raise NotImplementedError
+    with connect_db() as conn, conn.cursor() as cur:
+        sql = f"SELECT PC_AsText(pa) FROM lidar WHERE PC_Intersects(lidar.pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {PRJ_SRID}))"
+        cur.execute(sql)
+        recs = cur.fetchall()
+    pts = []
+    for rec in recs:
+        patch = json.loads(rec[0])
+        pts.extend(patch['pts'])
+
+    return np.array(pts)
 
 
 # command line utilities -----------------------------------------------------

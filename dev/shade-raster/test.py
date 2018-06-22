@@ -19,7 +19,7 @@ y_max = 4695500
 # parasol.shade.geotiff_to_layer('delete_me_surface.tif', 'surface')
 # parasol.shade.layers_to_geotiff('.')
 
-parasol.shade.insolation(x_min, x_max, y_min, y_max, 2018, 150)
+parasol.shade.insolation(2018, 150)
 
 
 

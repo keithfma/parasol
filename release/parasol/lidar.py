@@ -111,9 +111,7 @@ def ingest(laz_file):
     pipeline.execute()
     logger.info(f'Completed ingest: {laz_file}')
 
-
-# TODO: IMPORTANT would make more sense to query the DB directly, and avoid
-# writing out to disk unnecesarily
+# TODO: replace with retrieve_db when ready
 def retrieve(xmin, xmax, ymin, ymax):
     """
     Retrieve all points within a bounding box
@@ -155,6 +153,19 @@ def retrieve(xmin, xmax, ymin, ymax):
     os.remove(filename)
     
     return array
+
+
+def retrieve_db(xmin, xmax, ymin, ymax):
+    """
+    Retrieve all points within a bounding box
+    
+    Arguments:
+        minx, maxx, miny, maxy: floats, limits for bounding box 
+
+    Returns: numpy array with columns
+        X, Y, Z, ReturnNumber, NumberOfReturns, Classification
+    """
+    raise NotImplementedError
 
 
 # command line utilities -----------------------------------------------------

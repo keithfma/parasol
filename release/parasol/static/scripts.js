@@ -37,11 +37,12 @@ function updateRoute() {
 
 function updateShade() {
     var shadeIdx = parseInt($('#timeSlider')[0].value);
-    if (shadeLayer) shadeLayer.remove();
-    shadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
+    var newShadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
         layers: shadeLayers[shadeIdx],
         opacity: 0.70
     }).addTo(map);
+    if (shadeLayer) shadeLayer.remove();
+    shadeLayer = newShadeLayer;
     console.log('Updated shade map to idx: ' + shadeIdx.toString() + ', layer: ', shadeLayers[shadeIdx]); 
 };
 
@@ -75,11 +76,11 @@ $(document).ready(function() {
     // update slider properties
     var slider = $('#timeSlider')[0];
     slider.min = "0";
-    slider.max = (shadeLayers.length - 1).toString();
+    slider.max = (shadeLayers.length - 5).toString(); // cut off night hours
     slider.value = "0";
 
     // add event listener for slider
-    slider.onchange = updateShade;
+    slider.oninput = updateShade;
 
     // update start location (left click)
     // TODO: make it an umbrella

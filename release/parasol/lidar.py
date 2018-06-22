@@ -112,49 +112,6 @@ def ingest(laz_file):
     pipeline.execute()
     logger.info(f'Completed ingest: {laz_file}')
 
-# TODO: replace with retrieve_db when ready
-def retrieve(xmin, xmax, ymin, ymax):
-    """
-    Retrieve all points within a bounding box
-    
-    Arguments:
-        minx, maxx, miny, maxy: floats, limits for bounding box 
-
-    Returns: numpy array with columns
-        X, Y, Z, ReturnNumber, NumberOfReturns, Classification
-    """
-    # NOTE: original version used PDAL to return numpy array, but this had some
-    #   internal memory leak
-
-    # build pipeline definition
-    filename = uuid.uuid4().hex
-    pipeline_dict = {
-        "pipeline":[
-            {
-                "type": "readers.pgpointcloud",
-                "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
-                "table": LIDAR_TABLE,
-                "column": "pa",
-                "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {PRJ_SRID}))",
-            }, {
-                "type": "writers.text",
-                "format": "csv",
-                "filename": filename,
-            }
-          ]
-        }
-    
-    # create and execute pipeline
-    pipeline = pdal.Pipeline(json.dumps(pipeline_dict))
-    pipeline.validate()
-    pipeline.execute()
-    
-    # read resulting file to numpy, then delete it
-    array = np.genfromtxt(filename, delimiter=',', dtype=float, skip_header=1)
-    os.remove(filename)
-    
-    return array
-
 
 def retrieve_db(xmin, xmax, ymin, ymax):
     """

@@ -12,6 +12,7 @@ var startMarker;
 var endMarker;
 var route;
 var animation;
+var shadeLayers = [];
 
 // get route and update map
 function updateRoute() {
@@ -37,32 +38,24 @@ function updateRoute() {
 function updateShade() {
     var shadeIdx = parseInt($('#timeSlider')[0].value);
     if (shadeLayer) shadeLayer.remove();
-    shadeLayer = L.imageOverlay(shadeUrls[shadeIdx], shadeBbox, {opacity: .9})
-    shadeLayer.addTo(map);
-    console.log('Updated shade map to idx: ' + shadeIdx.toString() + ", url: " + shadeUrls[shadeIdx]); 
+    shadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
+        layers: shadeLayers[shadeIdx],
+        opacity: 0.70
+    }).addTo(map);
+    console.log('Updated shade map to idx: ' + shadeIdx.toString() + ', layer: ', shadeLayers[shadeIdx]); 
 };
 
 
 // init - run on page load
 $(document).ready(function() {
     
-    // generate list of all shade image urls
-    for (let tt = 0; tt <= 2400; tt += 25) {
+    // generate list of all shade layer names
+    for (let tt = 500; tt <= 2200; tt += 100) {
         // generate image file path
         var tstr = tt.toString().padStart(4, "0");
-        shadeUrls.push('/img/shade_' + tstr.substring(0,2) + '.' +tstr.substring(2) + '.png');
+        shadeLayers.push('parasol:sol_' + tstr.substring(0,2) + '.' +tstr.substring(2));
     } 
-
-    // select initial shade image
-    // TODO: set initial layer by current time
-    var initShadeIdx = 40; // 10 AM
-    
-    // update slider properties
-    var slider = $('#timeSlider')[0];
-    slider.min = "15";
-    slider.max = "80"; // shadeUrls.length.toString();
-    slider.value = initShadeIdx;
-
+   
     // init the map object
     map = L.map('parasol-map', {
         center: [42.3481931, -71.0639548],
@@ -75,9 +68,15 @@ $(document).ready(function() {
         maxZoom: 18,
         attribution: osmAttrib
     }).addTo(map); // this will be our active base layer on startup
-
+    
     // init a map scale
     L.control.scale().addTo(map);
+
+    // update slider properties
+    var slider = $('#timeSlider')[0];
+    slider.min = "0";
+    slider.max = (shadeLayers.length - 1).toString();
+    slider.value = "0";
 
     // add event listener for slider
     slider.onchange = updateShade;

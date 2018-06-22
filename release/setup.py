@@ -13,11 +13,13 @@ setup(
         'psycopg2',
         'numpy',
         'scipy',
+        'pdal',
         ],
     entry_points={
         'console_scripts': [
             'parasol-server=parasol.server:cli',
             'parasol-init-lidar=parasol.lidar:initialize_cli',
+            'parasol-init-surface=parasol.surface:initialize_cli',
             ]
         }
     )

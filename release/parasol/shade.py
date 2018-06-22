@@ -6,8 +6,8 @@ import os
 import subprocess
 import logging
 
-from parasol import raster
-from parasol import GRASS_MAPSET
+from parasol import surface, common
+from parasol import GRASS_MAPSET, DATA_DIR
 
 
 logger = logging.getLogger(__name__)
@@ -15,18 +15,29 @@ logger = logging.getLogger(__name__)
 
 # constants
 INSOLATION_PREFIX = 'sol'
-START_HOUR = 0
-STOP_HOUR = 24
+START_HOUR = 5
+STOP_HOUR = 22 
 INTERVAL = 1
 
 
-# TODO: use a temporary directory for scratch files
-def insolation(x_min, x_max, y_min, y_max, year, day):
+# TODO: work on tiles, then merge. Will be necessary for larger input areas
+
+def insolation(year, day):
+    """
+    Compute insolation (W/m2) raster within ROI for defined interval
+    
+    Arguments:
+        x_min, x_max, y_min, y_max: floats, limits of ROI
+        year, day: ints, date for insolation calculation
+        prefix: string, base name for resulting geotiffs, generates one geotiff
+            per timestep
+    """
     
     # import surface elevation
-    raster.retrieve_geotiff('input', x_min, x_max, y_min, y_max)
+    # TODO: read ground as well to compute constant shade component
+    surf_file = os.path.join(DATA_DIR, 'surface.tif')
     subprocess.run(['grass', '--exec', 'r.import', '--overwrite', 
-        f'input=input_surface.tif', f'output=surface@{GRASS_MAPSET}']) 
+        f'input={surf_file}', f'output=surface@{GRASS_MAPSET}']) 
 
     # set compute region -- very important!
     subprocess.run(['g.region', f'raster=surface@{GRASS_MAPSET}']) 
@@ -56,7 +67,7 @@ def insolation(x_min, x_max, y_min, y_max, year, day):
     # dump insolation layers to file
     for base_name in base_names:
         layer_name = f'{base_name}@{GRASS_MAPSET}'
-        file_name = f'{base_name}.tif'
+        file_name = os.path.join(DATA_DIR, f'{base_name}.tif')
         logger.info(f'Saving "{layer_name}" as "{file_name}"')
         subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}',
             f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
@@ -65,4 +76,5 @@ def insolation(x_min, x_max, y_min, y_max, year, day):
 # # NOTE: command works Bash, fails to find files here. Shelved as non-essential
 # def clear_mapset():
 #     subprocess.run(['grass', '--exec', 'g.remove', 'type=raster', f'pattern="*"'])
+
 

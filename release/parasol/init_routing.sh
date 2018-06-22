@@ -5,15 +5,15 @@
 
 # NOTE: user creation / access config has to be done manually
 
-DBNAME=parasol
-OSMFILE=~/.parasol/osm/all.osm
+DBNAME=parasol-osm
+OSMFILE=~/prj/parasol/repo/data/osm/dist/all.osm
 
 # create / init database
 createdb $DBNAME
-psql -d $DBNAME -a << SQL
+psql -U $1 -P $2 -d $DBNAME -a << SQL
 CREATE EXTENSION postgis;
 CREATE EXTENSION pgrouting;
 SQL
 
 # ingest data (assumes it it downloaded)
-osm2pgrouting -f $OSMFILE -d $DBNAME  --clean
+osm2pgrouting -U $1 -W $2 -f $OSMFILE -d $DBNAME  --clean

@@ -7,10 +7,12 @@ import argparse
 import os
 from pkg_resources import resource_filename
 import psycopg2
+from pdb import set_trace
 
 
 # constants
-PSQL_DB = 'parasol'
+# TODO: move to config.json
+PSQL_DB = 'parasol-osm'
 PSQL_USER = 'keith'
 
 # create app
@@ -25,13 +27,6 @@ app = flask.Flask('parasol')
 def main():
     """Main Parasol user interface"""
     return flask.render_template('index.html')
-
-
-@app.route('/img/<img_name>', methods=['GET'])
-def img_file(img_name):
-    """Serve files in static/img by name"""
-    filename = resource_filename('parasol', os.path.join('static', 'img', img_name))
-    return flask.send_file(filename, mimetype='image/png')
 
 
 @app.route('/route', methods=['GET'])
@@ -54,7 +49,7 @@ def route():
     # connect to Postgresql database 
     conn = psycopg2.connect(f"dbname={PSQL_DB} user={PSQL_USER}")
     cur = conn.cursor()
-
+    
     # find start vertex
     cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
                 (lon0, lat0))

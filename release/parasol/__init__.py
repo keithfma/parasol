@@ -21,7 +21,6 @@ LIDAR_DB = config['LIDAR_DB']
 GEO_SRID = config['GEO_SRID']
 PRJ_SRID = config['PRJ_SRID']
 LIDAR_TABLE = config['LIDAR_TABLE']
-BBOX_PRJ = config['BBOX_PRJ']
 PSQL_USER = config['PSQL_USER']
 PSQL_PASS = config['PSQL_PASS']
 PSQL_HOST = config['PSQL_HOST']
@@ -60,4 +59,5 @@ from parasol import common
 from parasol import lidar
 from parasol import surface
 from parasol import shade
+from parasol import osm
 

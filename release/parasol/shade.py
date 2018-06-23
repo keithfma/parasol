@@ -9,15 +9,14 @@ import logging
 from parasol import surface, common
 from parasol import GRASS_MAPSET, DATA_DIR
 
+from parasol import SHADE_START_HOUR, SHADE_STOP_HOUR, SHADE_INTERVAL_HOUR
+
 
 logger = logging.getLogger(__name__)
 
 
 # constants
 INSOLATION_PREFIX = 'sol'
-START_HOUR = 5
-STOP_HOUR = 22 
-INTERVAL = 1
 
 
 # TODO: work on tiles, then merge. Will be necessary for larger input areas
@@ -53,13 +52,13 @@ def insolation(year, day):
     # solar calculation (loops over all intervals)
     subprocess.run(['grass', '--exec', 'r.sun.hourly', 
         f'elevation=surface@{GRASS_MAPSET}', f'aspect=aspect@{GRASS_MAPSET}',
-        f'slope=slope@{GRASS_MAPSET}', f'start_time={START_HOUR}',
-        f'end_time={STOP_HOUR}', f'time_step={INTERVAL}', f'day={day}',
+        f'slope=slope@{GRASS_MAPSET}', f'start_time={SHADE_START_HOUR}',
+        f'end_time={SHADE_STOP_HOUR}', f'time_step={SHADE_INTERVAL_HOUR}', f'day={day}',
         f'year={year}', f'glob_rad_basename={INSOLATION_PREFIX}', '--overwrite'])
 
     # build base names for layers and output files
     base_names = []
-    for tt in range(START_HOUR*100, STOP_HOUR*100 + 1, int(INTERVAL*100)):
+    for tt in range(SHADE_START_HOUR*100, SHADE_STOP_HOUR*100 + 1, int(SHADE_INTERVAL_HOUR*100)):
         hour = '{:02d}'.format(tt // 100)
         minute = '{:02d}'.format(tt % 100)
         base_names.append(f'{INSOLATION_PREFIX}_{hour}.{minute}')

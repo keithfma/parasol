@@ -1,4 +1,8 @@
 {
+    "PSQL_USER": null,
+    "PSQL_PASS": null,
+    "PSQL_HOST": "localhost",
+    "PSQL_PORT": 5432,
     "DATA_DIR": "~/.parasol",
     "DOMAIN_XLIM": [327215.17, 332763.20],
     "DOMAIN_YLIM": [4689152.81, 4694784.72],
@@ -7,13 +11,12 @@
     "LIDAR_DB": "parasol_lidar",
     "LIDAR_TABLE": "lidar",
     "OSM_DB": "parasol_osm",
-    "PSQL_USER": null,
-    "PSQL_PASS": null,
-    "PSQL_HOST": "localhost",
-    "PSQL_PORT": 5432,
     "GRASS_GISBASE": "/usr/lib/grass74",
     "GRASS_GISRC": "~/.parasol/grassrc", 
     "GRASS_GISDBASE": "~/.parasol/.grassdb",
-    "GRASS_LOCATION": "parasol-scratch",
-    "GRASS_MAPSET": "parasol-scratch"
+    "GRASS_LOCATION": "parasol-shade",
+    "GRASS_MAPSET": "parasol-shade"
+    "SHADE_START_HOUR": 5,
+    "SHADE_STOP_HOUR": 22,  
+    "SHADE_INTERVAL_HOUR": 1
 }  

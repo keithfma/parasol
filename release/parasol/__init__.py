@@ -31,6 +31,9 @@ GRASS_GISRC = os.path.expanduser(config["GRASS_GISRC"])
 GRASS_GISDBASE = os.path.expanduser(config["GRASS_GISDBASE"])
 GRASS_LOCATION = config["GRASS_LOCATION"]
 GRASS_MAPSET = config["GRASS_MAPSET"]
+SHADE_START_HOUR = config["SHADE_START_HOUR"]
+SHADE_STOP_HOUR = config["SHADE_STOP_HOUR"]
+SHADE_INTERVAL_HOUR = config["SHADE_INTERVAL_HOUR"]
 
 # create data folder, if needed
 if not os.path.isdir(DATA_DIR):
@@ -52,8 +55,9 @@ with open(GRASS_GISRC, 'w') as fp:
     fp.write('GUI: wxpython\n')
 
 # create database, location, and mapset folders, if needed
-subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e',
-    f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'])
+map_dir = f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'
+if not os.path.isdir(map_dir):
+    subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e', map_dir])
 
 # load submodules
 from parasol import common

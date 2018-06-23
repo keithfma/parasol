@@ -5,6 +5,40 @@ Subroutines shared across multiple modules
 import math
 
 
+def connect_db():
+    """
+    Return connection to DB
+
+    Arguments:
+        dbname: string, database name to connect to
+
+    Returns: psycopg2 connection object
+    """
+    conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
+        host=PSQL_HOST, port=PSQL_PORT)
+    return conn
+
+
+def new_db(dbname, clobber=False):
+    """
+    Create a new database and initialize for lidar point data
+
+    Arguments:
+        dbname: string, database name to create
+        clobber: set True to delete and re-initialize an existing database
+
+    Return: Nothing
+    """
+    # connect to default database
+    with connect_db('postgres') as conn:
+        conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
+        cur = conn.cursor()
+        if clobber:
+            logger.info(f'Dropped existing database: {dbname} @ {PSQL_HOST}:{PSQL_PORT}')
+            cur.execute(f'DROP DATABASE IF EXISTS {dbname}');
+        cur.execute(f'CREATE DATABASE {dbname};')
+
+
 def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Return list of bounding boxes for tiles within the specified range

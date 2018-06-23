@@ -15,25 +15,12 @@ import uuid
 import os
 import json
 
+from parasol.common import new_db, connect_db
 from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
     PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
 
 logger = logging.getLogger(__name__)
-
-
-def connect_db(dbname=LIDAR_DB):
-    """
-    Return connection to lidar DB and return cursor
-
-    Arguments:
-        dbname: string, database name to connect to
-
-    Returns: psycopg2 connection object
-    """
-    conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
-        host=PSQL_HOST, port=PSQL_PORT)
-    return conn
     
 
 def create_db(clobber=False):
@@ -45,18 +32,9 @@ def create_db(clobber=False):
 
     Return: Nothing
     """
-    # TODO: add indexes as needed
-    # connect to default database
-    with connect_db('postgres') as conn:
-        conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
-        cur = conn.cursor()
-        if clobber:
-            logger.info(f'Dropped existing database: {LIDAR_DB} @ {PSQL_HOST}:{PSQL_PORT}')
-            cur.execute(f'DROP DATABASE IF EXISTS {LIDAR_DB}');
-        cur.execute(f'CREATE DATABASE {LIDAR_DB};')
-    # init new database
-    with connect_db() as conn:
-        cur = conn.cursor()
+    # TODO: add index, if necessary
+    new_db(LIDAR_DB, clobber)
+    with connect_db(LIDAR_DB) as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pointcloud;')
         cur.execute('CREATE EXTENSION pointcloud_postgis;')
@@ -127,7 +105,7 @@ def retrieve_db(xmin, xmax, ymin, ymax):
     Returns: numpy array with columns
         X, Y, Z, ReturnNumber, NumberOfReturns, Classification
     """
-    with connect_db() as conn, conn.cursor() as cur:
+    with connect_db(LIDAR_DB) as conn, conn.cursor() as cur:
         sql = f"SELECT PC_AsText(pa) FROM lidar WHERE PC_Intersects(lidar.pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {PRJ_SRID}))"
         cur.execute(sql)
         recs = cur.fetchall()

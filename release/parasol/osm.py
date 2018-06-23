@@ -7,9 +7,11 @@ import pyproj
 import logging
 import wget
 import subprocess
+import argparse
 
 from parasol.common import connect_db, new_db
-from parasol import DATA_DIR, GEO_SRID, PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM
+from parasol import DATA_DIR, GEO_SRID, PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM, \
+    OSM_DB, PSQL_USER, PSQL_PASS
 
 
 logger = logging.getLogger(__name__)
@@ -31,10 +33,9 @@ def create_db(clobber=False):
     """
     # TODO: add index, if necessary
     new_db(OSM_DB, clobber)
-    with connect_db() as conn, conn.cursor() as cur:
+    with connect_db(OSM_DB) as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pgrouting;')
-    logger.info(f'Created new database: {OSM_DB} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
 def fetch_data():
@@ -76,3 +77,22 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
+# command line utilities -----------------------------------------------------
+
+
+def initialize_cli():
+    """Command line utility for initializing the OSM database"""
+    ap = argparse.ArgumentParser(
+        description="Initialize Parasol OSM database",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    args = ap.parse_args()
+
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
+
+    create_db(True)
+    ingest()
+        

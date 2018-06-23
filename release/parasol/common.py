@@ -2,10 +2,17 @@
 Subroutines shared across multiple modules
 """
 
+import logging
 import math
+import psycopg2 as pg 
+
+from parasol import PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
 
 
-def connect_db():
+logger = logging.getLogger(__name__)
+
+
+def connect_db(dbname):
     """
     Return connection to DB
 
@@ -37,6 +44,7 @@ def new_db(dbname, clobber=False):
             logger.info(f'Dropped existing database: {dbname} @ {PSQL_HOST}:{PSQL_PORT}')
             cur.execute(f'DROP DATABASE IF EXISTS {dbname}');
         cur.execute(f'CREATE DATABASE {dbname};')
+    logger.info(f'Created new database: {dbname} @ {PSQL_HOST}:{PSQL_PORT}')
 
 
 def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):

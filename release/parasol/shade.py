@@ -6,6 +6,7 @@ import os
 import subprocess
 import logging
 import argparse
+from datetime import datetime
 
 from parasol import surface, common, cfg
 
@@ -76,50 +77,62 @@ def prep_inputs():
         f'input=surface@{cfg.GRASS_MAPSET}', '-l', 'output=lon'])              
 
 
+# TODO: switch to a single time calculation, if you can
+
+
 # TODO: work on tiles, then merge. Will be necessary for larger input areas
-def insolation(year, day, hour_start, hour_end, hour_interval, prefix):
+def insolation(year=None, day=None, hour_start=cfg.SHADE_START_HOUR,
+    hour_stop=cfg.SHADE_STOP_HOUR, hour_interval=cfg.SHADE_INTERVAL_HOUR,
+    prefix='today'):
     """
     Compute insolation (W/m2) raster within ROI for defined interval
     
     Arguments:
         year, day: ints, date for insolation calculation
-        hour_start, hour_end: floats, start and end hours for loop
+        hour_start, hour_stop: floats, start and end hours for loop
         hour_interval: float, step size for loop
         prefix: string, base name for resulting geotiffs, generates one geotiff
             per timestep
     """
+    # check arguments
+    if round(hour_interval*100) != hour_interval*100:
+        raise ValueError('"hour_interval" precision is limited to 0.01')
+
+    # use current day as default time
+    now = datetime.now()
+    if not year:
+        year = now.year
+    if not day:
+        day = int(now.strftime('%j'))
+
+    # create output directory, if needed
+    if not os.path.isdir(cfg.SHADE_DIR):
+        os.makedirs(cfg.SHADE_DIR)
+
     # set compute region -- very important!
-    subprocess.run(['g.region', f'raster=surface@{GRASS_MAPSET}']) 
+    subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
 
-    # # generate ancillary inputs needed for solar calc
-    # subprocess.run(['grass', '--exec', 'r.slope.aspect', '--overwrite',
-    #     f'elevation=surface@{GRASS_MAPSET}', 'slope=slope', f'aspect=aspect'])
-    # subprocess.run(['grass', '--exec', 'r.latlong', '--overwrite',
-    #     f'input=surface@{GRASS_MAPSET}', 'output=lat'])              
-    # subprocess.run(['grass', '--exec', 'r.latlong', '--overwrite', 
-    #     f'input=surface@{GRASS_MAPSET}', '-l', 'output=lon'])              
+    # solar calculation (loops over all intervals)
+    subprocess.run(['grass', '--exec', 'r.sun.hourly', 
+        f'elevation=surface@{cfg.GRASS_MAPSET}', f'aspect=aspect@{cfg.GRASS_MAPSET}',
+        f'slope=slope@{cfg.GRASS_MAPSET}', f'start_time={hour_start}',
+        f'end_time={hour_stop}', f'time_step={hour_interval}', f'day={day}',
+        f'year={year}', f'glob_rad_basename={prefix}', '--overwrite'])
 
-    # # solar calculation (loops over all intervals)
-    # subprocess.run(['grass', '--exec', 'r.sun.hourly', 
-    #     f'elevation=surface@{GRASS_MAPSET}', f'aspect=aspect@{GRASS_MAPSET}',
-    #     f'slope=slope@{GRASS_MAPSET}', f'start_time={SHADE_START_HOUR}',
-    #     f'end_time={SHADE_STOP_HOUR}', f'time_step={SHADE_INTERVAL_HOUR}', f'day={day}',
-    #     f'year={year}', f'glob_rad_basename={PREFIX}', '--overwrite'])
-
-    # # build base names for layers and output files
-    # base_names = []
-    # for tt in range(SHADE_START_HOUR*100, SHADE_STOP_HOUR*100 + 1, int(SHADE_INTERVAL_HOUR*100)):
-    #     hour = '{:02d}'.format(tt // 100)
-    #     minute = '{:02d}'.format(tt % 100)
-    #     base_names.append(f'{PREFIX}_{hour}.{minute}')
-    # 
-    # # dump insolation layers to file
-    # for base_name in base_names:
-    #     layer_name = f'{base_name}@{GRASS_MAPSET}'
-    #     file_name = os.path.join(DATA_DIR, f'{base_name}.tif')
-    #     logger.info(f'Saving "{layer_name}" as "{file_name}"')
-    #     subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}',
-    #         f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
+    # build base names for layers
+    base_names = []
+    for tt in range(hour_start*100, hour_stop*100 + 1, int(hour_interval*100)):
+        hour = '{:02d}'.format(tt // 100)
+        minute = '{:02d}'.format(tt % 100)
+        base_names.append(f'{prefix}_{hour}.{minute}')
+    
+    # dump insolation layers to file
+    for base_name in base_names:
+        layer_name = f'{base_name}@{cfg.GRASS_MAPSET}'
+        file_name = os.path.join(cfg.SHADE_DIR, f'{base_name}.tif')
+        logger.info(f'Saving "{layer_name}" as "{file_name}"')
+        subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}',
+            f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
 
 
 

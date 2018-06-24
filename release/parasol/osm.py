@@ -9,17 +9,14 @@ import wget
 import subprocess
 import argparse
 
-from parasol.common import connect_db, new_db
-from parasol import DATA_DIR, GEO_SRID, PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM, \
-    OSM_DB, PSQL_USER, PSQL_PASS
+from parasol import common, cfg
 
 
 logger = logging.getLogger(__name__)
 
 
 # constants
-OSM_DIR = os.path.join(DATA_DIR, 'osm')
-OSM_FILE = os.path.join(OSM_DIR, 'domain.osm')
+OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
     
 
 def create_db(clobber=False):
@@ -32,8 +29,8 @@ def create_db(clobber=False):
     Return: Nothing
     """
     # TODO: add index, if necessary
-    new_db(OSM_DB, clobber)
-    with connect_db(OSM_DB) as conn, conn.cursor() as cur:
+    common.new_db(OSM_DB, clobber)
+    with common.connect_db(OSM_DB) as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pgrouting;')
 
@@ -41,19 +38,19 @@ def create_db(clobber=False):
 def fetch_data():
     """Download OpenStreetMaps data for the Parasol study area"""
     # get OSM bounding box (geographic)
-    prj0 = pyproj.Proj(init=f'epsg:{PRJ_SRID}')
-    prj1 = pyproj.Proj(init=f'epsg:{GEO_SRID}')
-    ll = pyproj.transform(prj0, prj1, DOMAIN_XLIM[0], DOMAIN_YLIM[0])
-    lr = pyproj.transform(prj0, prj1, DOMAIN_XLIM[1], DOMAIN_YLIM[0])
-    ul = pyproj.transform(prj0, prj1, DOMAIN_XLIM[0], DOMAIN_YLIM[1])
-    ur = pyproj.transform(prj0, prj1, DOMAIN_XLIM[1], DOMAIN_YLIM[1])
+    prj0 = pyproj.Proj(init=f'epsg:{cfg.PRJ_SRID}')
+    prj1 = pyproj.Proj(init=f'epsg:{cfg.GEO_SRID}')
+    ll = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[0], cfg.DOMAIN_YLIM[0])
+    lr = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[1], cfg.DOMAIN_YLIM[0])
+    ul = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[0], cfg.DOMAIN_YLIM[1])
+    ur = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[1], cfg.DOMAIN_YLIM[1])
     lons = [ll[0], lr[0], ur[0], ul[0]]
     lats = [ll[1], lr[1], ur[1], ul[1]]
     
     # create output folder if needed
-    if not os.path.isdir(OSM_DIR):
-        logger.info(f'Created directory {OSM_DIR}')
-        os.makedirs(OSM_DIR)
+    if not os.path.isdir(cfg.OSM_DIR):
+        logger.info(f'Created directory {cfg.OSM_DIR}')
+        os.makedirs(cfg.OSM_DIR)
 
     # fetch data from OSM overpass API
     # ...cribbed example from: https://github.com/pgRouting/osm2pgrouting/issues/44

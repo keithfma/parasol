@@ -15,9 +15,7 @@ import uuid
 import os
 import json
 
-from parasol.common import new_db, connect_db
-from parasol import LIDAR_DB, LIDAR_TABLE, GEO_SRID, PRJ_SRID, \
-    PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
+from parasol import cfg, common
 
 
 logger = logging.getLogger(__name__)
@@ -32,14 +30,14 @@ def create_db(clobber=False):
 
     Return: Nothing
     """
-    # TODO: add index, if necessary
-    new_db(LIDAR_DB, clobber)
-    with connect_db(LIDAR_DB) as conn, conn.cursor() as cur:
+    common.new_db(cfg.LIDAR_DB, clobber)
+    with common.connect_db(cfg.LIDAR_DB) as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pointcloud;')
         cur.execute('CREATE EXTENSION pointcloud_postgis;')
-        cur.execute(f'CREATE TABLE {LIDAR_TABLE} (id SERIAL PRIMARY KEY, pa PCPATCH(1));')
-    logger.info(f'Created new database: {LIDAR_DB} @ {PSQL_HOST}:{PSQL_PORT}')
+        cur.execute(f'CREATE TABLE {cfg.LIDAR_TABLE} (id SERIAL PRIMARY KEY, pa PCPATCH(1));')
+        cur.execute(f'CREATE INDEX ON {cfg.LIDAR_TABLE} USING GIST(PC_EnvelopeGeometry(pa));')
+    logger.info(f'Created new database: {cfg.LIDAR_DB} @ {cfg.PSQL_HOST}:{cfg.PSQL_PORT}')
 
 
 def ingest(laz_file):
@@ -66,16 +64,16 @@ def ingest(laz_file):
                 "filename": laz_file,
             }, {
                 "type": "filters.reprojection",
-                "out_srs": f"EPSG:{PRJ_SRID}",
+                "out_srs": f"EPSG:{cfg.PRJ_SRID}",
             }, {
                 "type": "filters.chipper",
                 "capacity": 400,
             }, {
                 "type": "writers.pgpointcloud",
-                "connection": f"host={PSQL_HOST} dbname={LIDAR_DB} user={PSQL_USER} password={PSQL_PASS} port={PSQL_PORT}",
-                "table": LIDAR_TABLE,
+                "connection": f"host={cfg.PSQL_HOST} dbname={cfg.LIDAR_DB} user={cfg.PSQL_USER} password={cfg.PSQL_PASS} port={cfg.PSQL_PORT}",
+                "table": cfg.LIDAR_TABLE,
                 "compression": "dimensional",
-                "srid": PRJ_SRID,
+                "srid": cfg.PRJ_SRID,
                 "output_dims": "X,Y,Z,ReturnNumber,NumberOfReturns,Classification", # reduce data volume
                 "scale_x": 0.01, # precision in meters
                 "scale_y": 0.01,
@@ -91,13 +89,17 @@ def ingest(laz_file):
     logger.info(f'Completed ingest: {laz_file}')
 
 
-def retrieve_db(xmin, xmax, ymin, ymax):
+# NOTE: some problem with my DB query caused the direct query version of
+#   retrieve() to get waaay to many points. Reverted to the clunky text version
+#   to keep forward momentum.
+
+# NOTE: original version used PDAL to return numpy array, but this had some
+#   internal memory leak
+
+
+def retrieve(xmin, xmax, ymin, ymax):
     """
     Retrieve all points within a bounding box
-
-    NOTE: intersection is at the patch level - meaning the output set will
-        likely contain points outside the specified ROI. This is OK for my
-        purposes, so I do not bother culling the resulting point set.
     
     Arguments:
         minx, maxx, miny, maxy: floats, limits for bounding box 
@@ -105,16 +107,36 @@ def retrieve_db(xmin, xmax, ymin, ymax):
     Returns: numpy array with columns
         X, Y, Z, ReturnNumber, NumberOfReturns, Classification
     """
-    with connect_db(LIDAR_DB) as conn, conn.cursor() as cur:
-        sql = f"SELECT PC_AsText(pa) FROM lidar WHERE PC_Intersects(lidar.pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {PRJ_SRID}))"
-        cur.execute(sql)
-        recs = cur.fetchall()
-    pts = []
-    for rec in recs:
-        patch = json.loads(rec[0])
-        pts.extend(patch['pts'])
 
-    return np.array(pts)
+    # build pipeline definition
+    filename = uuid.uuid4().hex
+    pipeline_dict = {
+        "pipeline":[
+            {
+                "type": "readers.pgpointcloud",
+                "connection": f"host={cfg.PSQL_HOST} dbname={cfg.LIDAR_DB} user={cfg.PSQL_USER} password={cfg.PSQL_PASS} port={cfg.PSQL_PORT}",
+                "table": cfg.LIDAR_TABLE,
+                "column": "pa",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {cfg.PRJ_SRID}))",
+            }, {
+                "type": "writers.text",
+                "format": "csv",
+                "filename": filename,
+            }
+          ]
+        }
+    
+    # create and execute pipeline
+    pipeline = pdal.Pipeline(json.dumps(pipeline_dict))
+    pipeline.validate()
+    pipeline.execute()
+    
+    # read resulting file to numpy, then delete it
+    array = np.loadtxt(filename, delimiter=',', dtype=float, skiprows=1)
+    os.remove(filename)
+    
+    logger.info(f'Received {array.shape[0]} points')
+    return array
 
 
 # command line utilities -----------------------------------------------------
@@ -136,10 +158,10 @@ def initialize_cli():
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
 
-    input_files = glob(args.pattern)
+    input_files = glob(os.path.expanduser(args.pattern))
     
     if args.dryrun:
-        print(f'DATABASE: {LIDAR_DB} @ {PSQL_HOST}:{PSQL_PORT}')
+        print(f'DATABASE: {cfg.LIDAR_DB} @ {cfg.PSQL_HOST}:{cfg.PSQL_PORT}')
         print(f'CLEAN EXISTING: {args.clean}')
         print('FILES:')
         for fn in input_files:

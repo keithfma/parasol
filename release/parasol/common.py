@@ -6,7 +6,7 @@ import logging
 import math
 import psycopg2 as pg 
 
-from parasol import PSQL_USER, PSQL_PASS, PSQL_HOST, PSQL_PORT
+from parasol import cfg
 
 
 logger = logging.getLogger(__name__)
@@ -21,8 +21,8 @@ def connect_db(dbname):
 
     Returns: psycopg2 connection object
     """
-    conn = pg.connect(dbname=dbname, user=PSQL_USER, password=PSQL_PASS,
-        host=PSQL_HOST, port=PSQL_PORT)
+    conn = pg.connect(dbname=dbname, user=cfg.PSQL_USER, password=cfg.PSQL_PASS,
+        host=cfg.PSQL_HOST, port=cfg.PSQL_PORT)
     return conn
 
 
@@ -41,10 +41,10 @@ def new_db(dbname, clobber=False):
         conn.set_isolation_level(pg.extensions.ISOLATION_LEVEL_AUTOCOMMIT) 
         cur = conn.cursor()
         if clobber:
-            logger.info(f'Dropped existing database: {dbname} @ {PSQL_HOST}:{PSQL_PORT}')
+            logger.info(f'Dropped existing database: {dbname} @ {cfg.PSQL_HOST}:{cfg.PSQL_PORT}')
             cur.execute(f'DROP DATABASE IF EXISTS {dbname}');
         cur.execute(f'CREATE DATABASE {dbname};')
-    logger.info(f'Created new database: {dbname} @ {PSQL_HOST}:{PSQL_PORT}')
+    logger.info(f'Created new database: {dbname} @ {cfg.PSQL_HOST}:{cfg.PSQL_PORT}')
 
 
 def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):

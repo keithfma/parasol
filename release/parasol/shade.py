@@ -15,26 +15,29 @@ logger = logging.getLogger(__name__)
 # constants
 PREFIX = 'sol'
 
-# # setup environment variables for GRASS
-# os.environ['GISBASE'] = GRASS_GISBASE
-# os.environ['GISRC'] = GRASS_GISRC
-# 
-# # create grass configuration directory, if needed
-# if not os.path.isdir(os.path.dirname(GRASS_GISRC)):
-#     os.makedirs(os.path.dirname(GRASS_GISRC))
-# 
-# # create grass configuration file
-# with open(GRASS_GISRC, 'w') as fp:
-#     fp.write(f'GISDBASE: {GRASS_GISDBASE}\n')
-#     fp.write(f'LOCATION_NAME: {GRASS_LOCATION}\n')
-#     fp.write(f'MAPSET: {GRASS_MAPSET}\n')
-#     fp.write('GUI: wxpython\n')
-# 
-# # create database, location, and mapset folders, if needed
-# map_dir = f'{GRASS_GISDBASE}/{GRASS_LOCATION}/{GRASS_MAPSET}'
-# if not os.path.isdir(map_dir):
-#     os.makedirs(map_dir)
-#     subprocess.run(['grass74', '-c', f'EPSG:{PRJ_SRID}', '-e', map_dir])
+
+def init_grass():
+    """Jump through all the hoops needed to run GRASS programatically"""
+    # setup environment variables for GRASS
+    os.environ['GISBASE'] = cfg.GRASS_GISBASE
+    os.environ['GISRC'] = cfg.GRASS_GISRC
+    
+    # create grass configuration directory, if needed
+    if not os.path.isdir(os.path.dirname(cfg.GRASS_GISRC)):
+        os.makedirs(os.path.dirname(cfg.GRASS_GISRC))
+    
+    # create grass configuration file
+    with open(cfg.GRASS_GISRC, 'w') as fp:
+        fp.write(f'GISDBASE: {cfg.GRASS_GISDBASE}\n')
+        fp.write(f'LOCATION_NAME: {cfg.GRASS_LOCATION}\n')
+        fp.write(f'MAPSET: {cfg.GRASS_MAPSET}\n')
+        fp.write('GUI: wxpython\n')
+    
+    # create database, location, and mapset folders, if needed
+    map_dir = f'{cfg.GRASS_GISDBASE}/{cfg.GRASS_LOCATION}/{cfg.GRASS_MAPSET}'
+    if not os.path.isdir(map_dir):
+        os.makedirs(map_dir)
+        subprocess.run(['grass74', '-c', f'EPSG:{cfg.PRJ_SRID}', '-e', map_dir])
 
 
 # TODO: work on tiles, then merge. Will be necessary for larger input areas

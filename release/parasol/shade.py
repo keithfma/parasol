@@ -7,16 +7,14 @@ import subprocess
 import logging
 import argparse
 from datetime import datetime
+import numpy as np
+import math
 from pdb import set_trace
 
 from parasol import surface, common, cfg
 
 
 logger = logging.getLogger(__name__)
-
-
-# constants
-PREFIX = 'sol'
 
 
 def init_grass():
@@ -94,6 +92,7 @@ def insolation(day, hour, file_name):
     subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
 
     # solar calculation
+    logger.info(f'Computing insolation for day={day}, time={hour}')
     subprocess.run(['grass', '--exec', 'r.sun', f'time={hour}', f'day={day}',
         f'elevation=surface@{cfg.GRASS_MAPSET}', f'aspect=aspect@{cfg.GRASS_MAPSET}',
         f'slope=slope@{cfg.GRASS_MAPSET}', f'glob_rad={layer_name}@{cfg.GRASS_MAPSET}',
@@ -119,6 +118,26 @@ def insolation(day, hour, file_name):
         f'pattern="{layer_name}"'])
 
 
+# TODO: explore multiprocessing
+def update_today():
+    """Update insolation frames for whole day in loop"""
+
+    # get current day and list of times (interval, etc, are set using config variables)
+    day = int(datetime.now().strftime('%j'))
+    times = np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR)
+    
+    # create output directory, if needed
+    if not os.path.isdir(cfg.SHADE_DIR):
+        os.makedirs(cfg.SHADE_DIR)
+
+    for ii, time in enumerate(times): 
+        logger.info(f'Update daily insolation, time step {ii} of {len(times)}')
+        time_hour = math.floor(time)
+        time_min = round((time - time_hour)*60)
+        name = os.path.join(cfg.SHADE_DIR,
+            'today_{:02d}.{:02d}.tif'.format(time_hour, time_min))
+        insolation(day, time, name)
+
 # command line utilities -----------------------------------------------------
 
 
@@ -138,6 +157,10 @@ def initialize_cli():
     init_grass()
     prep_inputs()
 
-# TODO: CLI for computing a validation scene
 
 # TODO: CLI for updating shade for current day (multithread?)
+
+
+
+
+# TODO: CLI for computing a validation scene

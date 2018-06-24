@@ -77,71 +77,43 @@ def prep_inputs():
         f'input=surface@{cfg.GRASS_MAPSET}', '-l', 'output=lon'])              
 
 
-# TODO: switch to a single time calculation, if you can
-
-
-# TODO: work on tiles, then merge. Will be necessary for larger input areas
-def insolation(year=None, day=None, hour_start=cfg.SHADE_START_HOUR,
-    hour_stop=cfg.SHADE_STOP_HOUR, hour_interval=cfg.SHADE_INTERVAL_HOUR,
-    prefix='today'):
+def insolation(day, hour, file_name):
     """
-    Compute insolation (W/m2) raster within ROI for defined interval
+    Compute insolation (W/m2) raster within ROI for specified time 
     
     Arguments:
-        year, day: ints, date for insolation calculation
-        hour_start, hour_stop: floats, start and end hours for loop
-        hour_interval: float, step size for loop
-        prefix: string, base name for resulting geotiffs, generates one geotiff
-            per timestep
+        day: int, day of the year 
+        hour: local solar time, decimal hours
+        file_name: string, path to save retults as geotiff
     """
-    # check arguments
-    if round(hour_interval*100) != hour_interval*100:
-        raise ValueError('"hour_interval" precision is limited to 0.01')
-
-    # use current day as default time
-    now = datetime.now()
-    if not year:
-        year = now.year
-    if not day:
-        day = int(now.strftime('%j'))
-
-    # create output directory, if needed
-    if not os.path.isdir(cfg.SHADE_DIR):
-        os.makedirs(cfg.SHADE_DIR)
+    # get name for GRASS layer
+    base_name = os.path.splitext(os.path.basename(file_name))[0]
+    layer_name = f'{base_name}{cfg.GRASS_MAPSET}'
 
     # set compute region -- very important!
     subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
 
-    # solar calculation (loops over all intervals)
-    subprocess.run(['grass', '--exec', 'r.sun.hourly', 
+    # solar calculation
+    subprocess.run(['grass', '--exec', 'r.sun', f'time={hour}', f'day={day}',
         f'elevation=surface@{cfg.GRASS_MAPSET}', f'aspect=aspect@{cfg.GRASS_MAPSET}',
-        f'slope=slope@{cfg.GRASS_MAPSET}', f'start_time={hour_start}',
-        f'end_time={hour_stop}', f'time_step={hour_interval}', f'day={day}',
-        f'year={year}', f'glob_rad_basename={prefix}', '--overwrite'])
+        f'slope=slope@{cfg.GRASS_MAPSET}', f'glob_rad={layer_name}',
+        '--overwrite'])
 
-    # build base names for layers
-    base_names = []
-    for tt in range(hour_start*100, hour_stop*100 + 1, int(hour_interval*100)):
-        hour = '{:02d}'.format(tt // 100)
-        minute = '{:02d}'.format(tt % 100)
-        base_names.append(f'{prefix}_{hour}.{minute}')
+    # dump results to file
+    logger.info(f'Saving "{layer_name}" as "{file_name}"')
+    subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}',
+        f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
     
-    # dump insolation layers to file
-    for base_name in base_names:
-        layer_name = f'{base_name}@{cfg.GRASS_MAPSET}'
-        file_name = os.path.join(cfg.SHADE_DIR, f'{base_name}.tif')
-        logger.info(f'Saving "{layer_name}" as "{file_name}"')
-        subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}',
-            f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
-
-
+    # # delete the temporary layer in the GRASS DB
+    # subprocess.run(['grass', '--exec', 'g.remove', '-f', 'type=raster',
+    #     f'pattern={layer_name}'])
 
 
 # command line utilities -----------------------------------------------------
 
 
 def initialize_cli():
-    """Command line utility to initsurface/ground data and display layers"""
+    """Command line utility to init inputs for shade calculations"""
     ap = argparse.ArgumentParser(
         description="Initialize Parasol surface & ground raster databases - clobbers existing!",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
@@ -155,5 +127,7 @@ def initialize_cli():
 
     init_grass()
     prep_inputs()
-    # TODO: compute current day shade 
-    # TODO: compute past shade for validation images 
+
+# TODO: CLI for computing a validation scene
+
+# TODO: CLI for updating shade for current day (multithread?)

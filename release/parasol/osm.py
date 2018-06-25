@@ -81,7 +81,7 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
     """
     Generate evenly-spaced points along all ways in the ROI
     
-    NOTE: 
+    NOTE: output is in the projected coord sys defined by cfg.PRJ_SRID 
     
     Arguments
         bbox: 5-element list/tuple, containing bounding box [x_min, x_max,
@@ -104,17 +104,22 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
         if bbox: 
             where = f'WHERE ST_Intersects(ways.the_geom, ST_MakeEnvelope(' \
                     f'{bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}, {bbox[4]}))'
-        cur.execute(f'SELECT gid, ST_AsBinary(the_geom) FROM ways {where};')
+        geom = f'ST_AsBinary(ST_Transform(the_geom, {cfg.PRJ_SRID}))'  
+        cur.execute(f'SELECT gid, {geom} FROM ways {where};')
 
         # read results and resample each way geometry
         # note: column osm_id is non-unique, do not use this as a key below
         recs = cur.fetchall()
         ways = {}
         for rec in recs:
+            # unpack record
             way_id = rec[0]
             line = shapely.wkb.loads(rec[1].tobytes())
-            # TODO: resample!
-            way_xy = np.vstack(line.xy).T
+            # resample line
+            dists = range(0, round(line.length) + 1, spacing)
+            line_pts = [line.interpolate(d).xy for d in dists]
+            # package results
+            way_xy = np.hstack(line_pts).T
             ways[way_id] = way_xy
 
     # return ways

@@ -146,6 +146,20 @@ def update_today():
         insolation(day, time, name)
 
 
+def add_geoserver_workspace():
+    """
+    Create geoserver workspace
+
+    See guide at: http://docs.geoserver.org/stable/en/user/rest/workspaces.html
+    """
+    # note: may fail if workspace exists already, which is fine
+    url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/workspaces'
+    hdr = {"Content-type": "text/xml"}
+    auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
+    resp = requests.post(url, headers=hdr, auth=auth, 
+        data=f"<workspace><name>{cfg.GEOSERVER_WORKSPACE}</name></workspace>")
+
+
 def add_geoserver_style():
     """
     Upload shade layer style definition to geoserver
@@ -153,7 +167,7 @@ def add_geoserver_style():
     See guide at: http://docs.geoserver.org/stable/en/user/rest/styles.html
     """
     # create style
-    # note: may fail if style exists already, which is fin
+    # note: may fail if style exists already, which is fine
     url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/styles'
     hdr = {"Content-type": "application/json"}
     auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
@@ -182,9 +196,48 @@ def add_geoserver_style():
     resp.raise_for_status()
 
 
-def add_geoserver_layer():
-    """Upload shade layer definition to geoserver"""
-    raise NotImplementedError
+def add_geoserver_layer(tif_file):
+    """
+    Upload shade layer definition to geoserver
+    """
+    # create coveragestore
+    store_name = os.path.basename(os.path.splitext(tif_file)[0])
+    url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/workspaces/{cfg.GEOSERVER_WORKSPACE}/coveragestores'
+    auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
+    hdr = {'Content-type': 'application/json'}    
+    data =  {
+        'coverageStore': {
+            'name': store_name,  
+            'workspace': cfg.GEOSERVER_WORKSPACE,
+            'enabled': True,
+            }
+        }
+    resp = requests.post(url, headers=hdr, auth=auth, json=data)
+    return resp
+
+# curl -u admin:geoserver -v -XPOST -H 'Content-Type: application/xml' \
+#      -d '<coverageStore><name>int_dec</name><workspace>restProba</workspace>  
+#          <enabled>true</enabled></coverageStore>' \
+#          http://localhost:8080/geoserver/rest/workspaces/restProba/coveragestores
+
+
+    # TODO: add data to store
+    # {
+    #     "coverageStore": {
+    #         "name": "surface",
+    #         "type": "GeoTIFF",
+    #         "enabled": true,
+    #         "workspace": {
+    #             "name": "parasol",
+    #             "href": "http://localhost:8080/geoserver/rest/workspaces/parasol.json"
+    #         },
+    #         "_default": false,
+    #         "url": "/home/keith/parasol/data/surface.tif",
+    #         "coverages": "http://localhost:8080/geoserver/rest/workspaces/parasol/coveragestores/surface/coverages.json"
+    #   }
+    # }
+
+    # TODO: create layer
 
 
 # command line utilities -----------------------------------------------------

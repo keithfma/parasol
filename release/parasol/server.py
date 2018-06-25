@@ -9,6 +9,8 @@ from pkg_resources import resource_filename
 import psycopg2
 from pdb import set_trace
 
+from parasol import cfg
+
 
 # constants
 # TODO: move to config.json
@@ -47,7 +49,7 @@ def route():
     lon1 = float(flask.request.args.get('lon1'))
    
     # connect to Postgresql database 
-    conn = psycopg2.connect(f"dbname={PSQL_DB} user={PSQL_USER}")
+    conn = psycopg2.connect(f"dbname={cfg.OSM_DB} user={cfg.PSQL_USER}")
     cur = conn.cursor()
     
     # find start vertex
@@ -79,8 +81,10 @@ def cli():
         formatter_class= argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument('--debug', action='store_true',
         help='run server in "debug mode"')
+    ap.add_argument('--host', type=str, default='0.0.0.0',
+        help='hostname for flask server')
     ap.add_argument('--port', type=int, default=5000,
         help='server port number')
     args = ap.parse_args()
 
-    app.run(port=args.port, debug=args.debug)
+    app.run(host=args.host, port=args.port, debug=args.debug)

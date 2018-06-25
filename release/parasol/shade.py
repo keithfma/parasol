@@ -196,46 +196,39 @@ def add_geoserver_style():
     resp.raise_for_status()
 
 
+# NOTE: no periods in store names!
+
+
 def add_geoserver_layer(tif_file):
     """
     Upload shade layer definition to geoserver
     """
     # create coveragestore
+    # note: may fail if style exists already, which is fine
     store_name = os.path.basename(os.path.splitext(tif_file)[0])
     url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/workspaces/{cfg.GEOSERVER_WORKSPACE}/coveragestores'
     auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
     hdr = {'Content-type': 'application/json'}    
     data =  {
-        'coverageStore': {
-            'name': store_name,  
-            'workspace': cfg.GEOSERVER_WORKSPACE,
-            'enabled': True,
-            }
-        }
+        "coverageStore": {
+            "name": store_name,
+            "type": "GeoTIFF",
+            "enabled": True,
+            "workspace": {
+                "name": cfg.GEOSERVER_WORKSPACE,
+            },
+            "_default": False,
+            "url": f"file:{tif_file}",
+      }
+    }
     resp = requests.post(url, headers=hdr, auth=auth, json=data)
-    return resp
-
-# curl -u admin:geoserver -v -XPOST -H 'Content-Type: application/xml' \
-#      -d '<coverageStore><name>int_dec</name><workspace>restProba</workspace>  
-#          <enabled>true</enabled></coverageStore>' \
-#          http://localhost:8080/geoserver/rest/workspaces/restProba/coveragestores
-
-
-    # TODO: add data to store
-    # {
-    #     "coverageStore": {
-    #         "name": "surface",
-    #         "type": "GeoTIFF",
-    #         "enabled": true,
-    #         "workspace": {
-    #             "name": "parasol",
-    #             "href": "http://localhost:8080/geoserver/rest/workspaces/parasol.json"
-    #         },
-    #         "_default": false,
-    #         "url": "/home/keith/parasol/data/surface.tif",
-    #         "coverages": "http://localhost:8080/geoserver/rest/workspaces/parasol/coveragestores/surface/coverages.json"
-    #   }
-    # }
+    
+    # add data to store
+    # note: basically the same as the create command, except the method and
+    #   url, needed in case the store exists already
+    url = url + '/' + store_name
+    resp = requests.put(url, headers=hdr, auth=auth, json=data)
+    resp.raise_for_status()
 
     # TODO: create layer
 

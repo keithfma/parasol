@@ -20,15 +20,12 @@ from glob import glob
 import tempfile
 
 import parasol
-from parasol import lidar
-from parasol.common import tile_limits
-from parasol import DATA_DIR, PRJ_SRID, DOMAIN_XLIM, DOMAIN_YLIM
+from parasol import lidar, common, cfg
 
 logger = logging.getLogger(__name__)
 
 
-# constants
-RESOLUTION = 1 # meters
+# local constants
 PAD = 10 # meters
 TILE_DIM = 1000 # meters
 
@@ -48,8 +45,8 @@ def grid_points(x_min, x_max, y_min, y_max):
     """
 
     # build output grid spanning bbox
-    x_vec = np.arange(math.floor(x_min), math.floor(x_max), RESOLUTION)   
-    y_vec = np.arange(math.floor(y_min), math.floor(y_max), RESOLUTION)   
+    x_vec = np.arange(math.floor(x_min), math.floor(x_max), cfg.SURFACE_RES_M)   
+    y_vec = np.arange(math.floor(y_min), math.floor(y_max), cfg.SURFACE_RES_M)   
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
     # retrieve data, including a pad on all sides
@@ -107,11 +104,11 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     rows, cols = z_grd.shape
     driver = gdal.GetDriverByName('GTiff')
     outRaster = driver.Create(filename, cols, rows, 1, gdal.GDT_Float32)
-    outRaster.SetGeoTransform((x_vec[0], RESOLUTION, 0, y_vec[0], 0, -RESOLUTION))
+    outRaster.SetGeoTransform((x_vec[0], cfg.SURFACE_RES_M, 0, y_vec[0], 0, -cfg.SURFACE_RES_M))
     outband = outRaster.GetRasterBand(1)
     outband.WriteArray(z_grd)
     outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromEPSG(PRJ_SRID)
+    outRasterSRS.ImportFromEPSG(cfg.PRJ_SRID)
     outRaster.SetProjection(outRasterSRS.ExportToWkt())
     outband.FlushCache()
     # clean up
@@ -129,23 +126,29 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
     
     Returns: nothing
     """
-    tiles = tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile)
+    tiles = common.tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile)
     num_tiles = len(tiles)
 
     modes = ['add'] * len(tiles)
     modes[0] = 'create'
     modes[-1] = 'finish'
+    
+    # create directory, if needed
+    if not os.path.isdir(cfg.SURFACE_DIR):
+        os.makedirs(cfg.SURFACE_DIR)
 
     # generate tiles
     for ii, tile in enumerate(tiles):
         logger.info(f'Generating tile {ii+1} of {num_tiles}')
         x_vec, y_vec, z_grnd, z_surf = grid_points(**tile)
         
-        grnd_name = os.path.join(DATA_DIR, 'ground_tile_{:04d}.tif'.format(ii))
+        logger.info(f'Gridding ground points')
+        grnd_name = os.path.join(cfg.SURFACE_DIR, 'ground_tile_{:04d}.tif'.format(ii))
         create_geotiff(grnd_name, x_vec, y_vec, z_grnd)
         logger.info(f'Wrote tile {grnd_name}')
         
-        surf_name = os.path.join(DATA_DIR, 'surface_tile_{:04d}.tif'.format(ii))
+        logger.info(f'Gridding surface points')
+        surf_name = os.path.join(cfg.SURFACE_DIR, 'surface_tile_{:04d}.tif'.format(ii))
         create_geotiff(surf_name, x_vec, y_vec, z_surf)
         logger.info(f'Wrote tile {surf_name}')
 
@@ -153,12 +156,16 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
     logger.info('Merging tiles')
     for prefix in ['ground', 'surface']:
         cmd =  ['gdal_merge.py']
-        cmd.extend(glob(os.path.join(DATA_DIR, prefix + '_tile_*.tif')))
-        cmd.extend(['-of', 'GTiff', '-o', os.path.join(DATA_DIR, prefix + '.tif')])
+        cmd.extend(glob(os.path.join(cfg.SURFACE_DIR, prefix + '_tile_*.tif')))
+        cmd.extend(['-of', 'GTiff', '-o', os.path.join(cfg.SURFACE_DIR, prefix + '.tif')])
         subprocess.run(cmd)
 
+    # delete tiles, which are no longer needed
+    logger.info('Deleting tile files')
+    for fn in glob(os.path.join(cfg.SURFACE_DIR, prefix + '_tile_*.tif')):
+        os.remove(fn)
 
-# INCOMPLETE
+
 def retrieve(x_min, x_max, y_min, y_max, which):
     """
     Retrieve subset within specified ROI
@@ -172,9 +179,9 @@ def retrieve(x_min, x_max, y_min, y_max, which):
     """
     # get raster file name
     if which == 'surface':
-        src_file = os.path.join(DATA_DIR, 'surface.tif')
+        src_file = os.path.join(cfg.SURFACE_DIR, 'surface.tif')
     elif which == 'ground':
-        src_file = os.path.join(DATA_DIR, 'ground.tif')
+        src_file = os.path.join(cfg.SURFACE_DIR, 'ground.tif')
     else:
         raise ValueError('Invalid choice for "which" variable')
 
@@ -205,11 +212,11 @@ def initialize_cli():
     logger.setLevel(log_lvl)
 
     if (args.dryrun):
-        tiles = tile_limits(DOMAIN_XLIM[0], DOMAIN_XLIM[1], DOMAIN_YLIM[0],
-            DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)
-        print(f'Compute raster in domain: [[{DOMAIN_XLIM}], [{DOMAIN_YLIM}]]')
+        tiles = common.tile_limits(cfg.DOMAIN_XLIM[0], cfg.DOMAIN_XLIM[1],
+            cfg.DOMAIN_YLIM[0], cfg.DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)
+        print(f'Compute raster in domain: [[{cfg.DOMAIN_XLIM}], [{cfg.DOMAIN_YLIM}]]')
         print(f'Num tiles: {len(tiles)}')
     
     else:
-        create_surfaces(DOMAIN_XLIM[0], DOMAIN_XLIM[1], DOMAIN_YLIM[0],
-            DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)
+        create_surfaces(cfg.DOMAIN_XLIM[0], cfg.DOMAIN_XLIM[1], cfg.DOMAIN_YLIM[0],
+           cfg. DOMAIN_YLIM[1], TILE_DIM, TILE_DIM)

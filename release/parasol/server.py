@@ -12,11 +12,6 @@ from pdb import set_trace
 from parasol import cfg
 
 
-# constants
-# TODO: move to config.json
-PSQL_DB = 'parasol-osm'
-PSQL_USER = 'keith'
-
 # create app
 app = flask.Flask('parasol')
 

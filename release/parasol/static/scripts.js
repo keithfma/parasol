@@ -35,9 +35,10 @@ function updateRoute() {
 };
 
 
+//TODO: figure out how to make the geoserver IP more flexible
 function updateShade() {
     var shadeIdx = parseInt($('#timeSlider')[0].value);
-    var newShadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
+    var newShadeLayer = L.tileLayer.wms('http://52.25.188.159:8080/geoserver/ows?', {
         layers: shadeLayers[shadeIdx],
         opacity: 0.70
     }).addTo(map);

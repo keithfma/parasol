@@ -8,6 +8,9 @@ import logging
 import wget
 import subprocess
 import argparse
+from pdb import set_trace
+import shapely.wkb
+import numpy as np
 
 from parasol import common, cfg
 
@@ -74,7 +77,7 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
-def way_points(spacing):
+def way_points(x_min, x_max, y_min, y_max, spacing):
     """
     Generate evenly-spaced points along all ways in the ROI
     
@@ -85,13 +88,29 @@ def way_points(spacing):
         spacing: float, space between adjacent points along each way
 
     Returns: 
-        waypts: dict, keys are way IDs, values are N x 2 numpy arrays
+        ways: dict, keys are way IDs, values are N x 2 numpy arrays
             containing the x, y position of sequential points along the way.
             The first row is always the start point, and the last is always the
             endpoint. Spacing for the last point for each way is generally less
             than the desired spacing, beware!
     """
-    raise NotImplementedError
+    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        
+        # query returning geometry of all ways
+        # TODO: clip to ROI
+        cur.execute('select osm_id, ST_AsBinary(the_geom) from ways limit 10;') # TODO: remove limit
+
+        # read results and resample each way geometry
+        recs = cur.fetchall()
+        ways = {}
+        for rec in recs:
+            way_id = rec[0]
+            line = shapely.wkb.loads(rec[1].tobytes())
+            # TODO: resample!
+            way_xy = np.vstack(line.xy).T
+            ways[way_id] = way_xy
+
+    return ways
 
 
 # command line utilities -----------------------------------------------------

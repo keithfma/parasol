@@ -162,7 +162,7 @@ def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
     # delete tiles, which are no longer needed
     logger.info('Deleting tile files')
-    for fn in glob(os.path.join(cfg.SURFACE_DIR, prefix + '_tile_*.tif')):
+    for fn in glob(os.path.join(cfg.SURFACE_DIR, '*_tile_*.tif')):
         os.remove(fn)
 
 

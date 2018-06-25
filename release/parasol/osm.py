@@ -29,8 +29,8 @@ def create_db(clobber=False):
     Return: Nothing
     """
     # TODO: add index, if necessary
-    common.new_db(OSM_DB, clobber)
-    with common.connect_db(OSM_DB) as conn, conn.cursor() as cur:
+    common.new_db(cfg.OSM_DB, clobber)
+    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pgrouting;')
 
@@ -69,8 +69,8 @@ def ingest():
     Returns: Nothing
     """
     logger.info(f'Started ingest: {OSM_FILE}')
-    subprocess.run(['osm2pgrouting', '-U', PSQL_USER, '-W', PSQL_PASS, '-f',
-        OSM_FILE, '-d', OSM_DB,  '--clean'])
+    subprocess.run(['osm2pgrouting', '-U', cfg.PSQL_USER, '-W', cfg.PSQL_PASS, '-f',
+        OSM_FILE, '-d', cfg.OSM_DB,  '--clean'])
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
@@ -91,5 +91,6 @@ def initialize_cli():
     logger.setLevel(log_lvl)
 
     create_db(True)
+    fetch_data()
     ingest()
         

@@ -12,6 +12,7 @@ import math
 from pdb import set_trace
 import requests
 from pkg_resources import resource_filename
+import glob
 
 from parasol import surface, common, cfg
 
@@ -196,9 +197,8 @@ def add_geoserver_style():
     resp.raise_for_status()
 
 
-# NOTE: no periods in store names!
 
-
+# NOTE: no periods in store names! This seems to cause problems
 def add_geoserver_layer(tif_file):
     """
     Upload shade layer definition to geoserver
@@ -259,6 +259,14 @@ def add_geoserver_layer(tif_file):
     return resp
 
 
+def init_geoserver():
+    """Initialize geoserver workspace, layers, and style"""
+    add_geoserver_workspace()
+    add_geoserver_style()
+    for fn in glob.glob(os.path.join(cfg.SHADE_DIR, 'today_*.tif')):
+        add_geoserver_layer(fn)
+
+
 # command line utilities -----------------------------------------------------
 
 
@@ -296,3 +304,19 @@ def update_cli():
 
 
 # TODO: CLI for computing a validation scene
+
+
+def initialize_geoserver_cli():
+    """Command line utility to init geoserver layers"""
+    ap = argparse.ArgumentParser(
+        description="Initialize Parasol geoserver layers - clobbers existing!",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    args = ap.parse_args()
+
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
+
+    init_geoserver()

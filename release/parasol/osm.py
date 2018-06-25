@@ -148,6 +148,33 @@ def plot_way_points(ways, downsample=50):
     plt.show()
 
 
+def way_insolation(wpts):
+    """
+    Compute path-integrated insolation for all ways
+
+    Arguments:
+        wpts: dict, output from way_points(), contains way gid as keys, and
+            evenly spaced points along way as values
+    
+    Returns: wsol: dict, contains way gid as key, integrated insolation as
+        values (units are J/m2, assuming a constant walking speed)
+    """
+    raise NotImplementedError
+
+
+def update_cost_columns(wpts):
+    """
+    Update insolation cost columns for all way elements in OSM database
+
+    Arguments:
+        wpts: dict, output from way_points(), contains way gid as keys, and
+            evenly spaced points along way as values
+    
+    Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
+    """
+    return NotImplementedError
+
+
 # command line utilities -----------------------------------------------------
 
 
@@ -173,3 +200,10 @@ def initialize_cli():
     pts = way_points() # compute all
     with open(WAYPOINT_FILE, 'wb') as fp:
         pickle.dump(pts, fp)
+
+
+def update_cli():
+    """Command line utiltiy for updating solar cost values in OSM DB"""
+    raise NotImplementedError 
+
+

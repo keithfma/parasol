@@ -13,6 +13,7 @@ from pdb import set_trace
 import requests
 from pkg_resources import resource_filename
 import glob
+from osgeo import gdal
 
 from parasol import surface, common, cfg
 
@@ -147,7 +148,7 @@ def update_today():
         insolation(day, time, name)
 
 
-def retrieve(hour, minute):
+def retrieve(hour, minute, bbox=None):
     """
     Retrieve (subset of) insolation raster closest to the specified time
 
@@ -162,6 +163,10 @@ def retrieve(hour, minute):
         x_vec, y_vec: numpy 1D arrays, coordinate vectors
         z_grd: numpy 2D array, insolation
     """
+    # handle bbox
+    if bbox:
+        raise NotImplementedError('Raster subsets are not yet supported')
+
     # select insolation raster file
     out_time = hour + minute/60
     shade_file = None
@@ -175,8 +180,16 @@ def retrieve(hour, minute):
 
     # read in raster (subset) and coordinate vectors
     # TODO: implement subset using bounding box
+    ds = gdal.Open(shade_file)
+    z_grd = np.array(ds.GetRasterBand(1).ReadAsArray())
 
-    return None
+    transform = ds.GetGeoTransform()
+    y_pixel = np.arange(0, z_grd.shape[0])
+    x_pixel = np.arange(0, z_grd.shape[1])
+    x_vec = transform[0] + x_pixel*transform[1] + y_pixel*transform[2]
+    y_vec = transform[3] + x_pixel*transform[4] + y_pixel*transform[5]
+
+    return x_vec, y_vec, z_grd
 
 
 def add_geoserver_workspace():

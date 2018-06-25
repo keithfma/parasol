@@ -11,6 +11,7 @@ import argparse
 from pdb import set_trace
 import shapely.wkb
 import numpy as np
+from matplotlib import pyplot as plt
 
 from parasol import common, cfg
 
@@ -122,8 +123,25 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             way_xy = np.hstack(line_pts).T
             ways[way_id] = way_xy
 
-    # return ways
     return ways 
+
+
+def plot_way_points(ways, downsample=50):
+    """
+    Generate simple plot of way points, for debugging
+    
+    Arguments:
+        ways: dict, output from way_points()
+        downsample: int, downsampling factor, to ease the load
+
+    Returns: nothing, displays the resulting plot
+    """
+    display_interval = 500
+    for ii, xy in enumerate(ways.values()):
+        plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
+        if ii % display_interval == 0:
+            print(f'Plotting way {ii+1} of {len(ways)}') 
+    plt.show()
 
 
 # command line utilities -----------------------------------------------------

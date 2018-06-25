@@ -142,7 +142,7 @@ def update_today():
         time_hour = math.floor(time)
         time_min = round((time - time_hour)*60)
         name = os.path.join(cfg.SHADE_DIR,
-            'today_{:02d}.{:02d}.tif'.format(time_hour, time_min))
+            'today_{:02d}{:02d}.tif'.format(time_hour, time_min))
         insolation(day, time, name)
 
 
@@ -231,6 +231,29 @@ def add_geoserver_layer(tif_file):
     resp.raise_for_status()
 
     # TODO: create layer
+    url = url + '/coverages'
+    hdr = {'Content-type': 'application/json'}
+    data = {
+        'coverage': {
+            "name": store_name,
+            "title": store_name,
+            "srs": "EPSG:32619"
+            }
+        }
+    resp = requests.post(url, headers=hdr, auth=auth, json=data)
+    return resp
+    
+
+# curl -u admin:geoserver -v -XPOST -H 'Content-type: text/xml' \
+#       -d '<coverage>
+#           <name>imageGeoTiffWGS84</name>
+#           <title>imageGeoTiffWGS84</title>
+#           <nativeCRS>GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;World Geodetic System 1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137.0, 298.257223563, AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],PRIMEM[&quot;Greenwich&quot;, 0.0, AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],UNIT[&quot;degree&quot;, 0.017453292519943295],AXIS[&quot;Geodetic longitude&quot;, EAST],AXIS[&quot;Geodetic latitude&quot;, NORTH],AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</nativeCRS>
+#           <srs>EPSG:4326</srs>
+#           <latLonBoundingBox><minx>-179.958</minx><maxx>-105.002</maxx><miny>-65.007</miny><maxy>65.007</maxy><crs>EPSG:4326</crs></latLonBoundingBox>
+#           </coverage>' \
+#       "http://localhost:8080/geoserver/rest/workspaces/wsgeotiff/coveragestores/wsgeotiff_imageGeoTiffWGS84_1298678792699/coverages"
+    
 
 
 # command line utilities -----------------------------------------------------

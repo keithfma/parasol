@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 # constants
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
-WAYPOINT_FILE = os.path.join(cfg.OSM_DIR, 'way_points.pkl')
+WAYS_FILE = os.path.join(cfg.OSM_DIR, 'ways_pts.pkl')
+WAYS_PTS_FILE = os.path.join(cfg.OSM_DIR, 'ways.pkl')
     
 
 def create_db(clobber=False):
@@ -94,12 +95,15 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
         spacing: float, space between adjacent points along each way
 
     Returns: 
-        ways: dict, keys are way IDs, values are N x 2 numpy arrays
-            containing the x, y position of sequential points along the way.
-            The first row is always the start point, and the last is always the
-            endpoint. Spacing for the last point for each way is generally less
-            than the desired spacing, beware! this will cause an overshoot of
-            up to spacing for the last point
+        ways: dict, keys are way IDs, values are N x 2 numpy arrays containing
+            the x, y position of sequential points along the way
+        way_pts: dict, keys are way IDs, values are N x 2 numpy arrays
+            containing the x, y position of evenly-spaced sequential points
+            interpolated along the way.  The first row is always the start
+            point, and the last is always the endpoint. Spacing for the last
+            point for each way is generally less than the desired spacing,
+            beware! this will cause an overshoot of up to spacing for the last
+            point
     """
     logger.info(f'Computing way points, bbox={bbox}, spacing={spacing}')
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
@@ -115,36 +119,40 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
         # read results and resample each way geometry
         # note: column osm_id is non-unique, do not use this as a key below
         recs = cur.fetchall()
+        way_pts = {}
         ways = {}
         for rec in recs:
             # unpack record
             way_id = rec[0]
             line = shapely.wkb.loads(rec[1].tobytes())
+            way[way_id] = np.vstack(line.xy).T
+            set_trace()
             # resample line
             dists = range(0, round(line.length) + 1, spacing) # 
             line_pts = [line.interpolate(d).xy for d in dists]
             # package results
             way_xy = np.hstack(line_pts).T
             ways[way_id] = way_xy
+    logger.info(f'Completed way points for {len(ways)} ways')
 
-    return ways 
+    return ways, way_pts 
 
 
-def plot_way_points(ways, downsample=50):
+def plot_way_points(pts, downsample=50):
     """
-    Generate simple plot of way points, for debugging
+    Generate simple plot of way points
     
     Arguments:
-        ways: dict, output from way_points()
+        pts: dict, output from way_points()
         downsample: int, downsampling factor, to ease the load
 
     Returns: nothing, displays the resulting plot
     """
     display_interval = 500
-    for ii, xy in enumerate(ways.values()):
+    for ii, xy in enumerate(pts.values()):
         plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
         if ii % display_interval == 0:
-            print(f'Plotting way {ii+1} of {len(ways)}') 
+            print(f'Plotting way {ii+1} of {len(pts)}') 
     plt.show()
 
 
@@ -158,6 +166,18 @@ def way_insolation(wpts):
     
     Returns: wsol: dict, contains way gid as key, integrated insolation as
         values (units are J/m2, assuming a constant walking speed)
+    """
+    raise NotImplementedError
+
+
+def plot_way_insolation(ways, downsample=50):
+    """
+    Generate simple plot of way integrated insolation
+    
+    Arguments:
+        ways: dict, output from way_insolation()
+
+    Returns: nothing, displays the resulting plot
     """
     raise NotImplementedError
 
@@ -197,8 +217,10 @@ def initialize_cli():
     ingest()
 
     # init waypoint lookup table
-    pts = way_points() # compute all
-    with open(WAYPOINT_FILE, 'wb') as fp:
+    ways, pts = way_points() # compute all
+    with open(WAYS_FILE, 'wb') as fp:
+        pickle.dump(ways, fp)
+    with open(WAS_PTS_FILE, 'wb') as fp:
         pickle.dump(pts, fp)
 
 

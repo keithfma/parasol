@@ -15,6 +15,7 @@ setup(
         'scipy',
         'pdal',
         'pyproj',
+        'numpy',
         ],
     entry_points={
         'console_scripts': [

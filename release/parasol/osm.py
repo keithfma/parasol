@@ -74,6 +74,26 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
+def way_points(spacing):
+    """
+    Generate evenly-spaced points along all ways in the ROI
+    
+    NOTE: 
+    
+    Arguments
+        x_min, x_max, y_min, y_max: floats, bounding box for ROI
+        spacing: float, space between adjacent points along each way
+
+    Returns: 
+        waypts: dict, keys are way IDs, values are N x 2 numpy arrays
+            containing the x, y position of sequential points along the way.
+            The first row is always the start point, and the last is always the
+            endpoint. Spacing for the last point for each way is generally less
+            than the desired spacing, beware!
+    """
+    raise NotImplementedError
+
+
 # command line utilities -----------------------------------------------------
 
 

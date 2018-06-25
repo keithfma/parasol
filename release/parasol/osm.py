@@ -77,15 +77,17 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
-def way_points(x_min, x_max, y_min, y_max, srid, spacing):
+def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
     """
     Generate evenly-spaced points along all ways in the ROI
     
     NOTE: 
     
     Arguments
-        x_min, x_max, y_min, y_max: floats, bounding box for ROI
-        srid: int, spatial reference ID (EPSG code) for the bounding box
+        bbox: 5-element list/tuple, containing bounding box [x_min, x_max,
+            y_min, y_max, srid], the srid is an integer spatial reference ID
+            (EPSG code) for the float limits. Set None to return all ways in
+            the database
         spacing: float, space between adjacent points along each way
 
     Returns: 
@@ -98,11 +100,14 @@ def way_points(x_min, x_max, y_min, y_max, srid, spacing):
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
         
         # query returning geometry of all ways
-        # note: column osm_id is non-unique, do not use this as a key below
-        envelope = f'ST_MakeEnvelope({x_min}, {y_min}, {x_max}, {y_max}, {srid})'
-        cur.execute(f'SELECT gid, ST_AsBinary(the_geom) FROM ways WHERE ST_Intersects(ways.the_geom, {envelope});')
+        where = ''
+        if bbox: 
+            where = f'WHERE ST_Intersects(ways.the_geom, ST_MakeEnvelope(' \
+                    f'{bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}, {bbox[4]}))'
+        cur.execute(f'SELECT gid, ST_AsBinary(the_geom) FROM ways {where};')
 
         # read results and resample each way geometry
+        # note: column osm_id is non-unique, do not use this as a key below
         recs = cur.fetchall()
         ways = {}
         for rec in recs:
@@ -113,7 +118,7 @@ def way_points(x_min, x_max, y_min, y_max, srid, spacing):
             ways[way_id] = way_xy
 
     # return ways
-    return recs
+    return ways 
 
 
 # command line utilities -----------------------------------------------------

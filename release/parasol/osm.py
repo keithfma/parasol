@@ -12,6 +12,7 @@ from pdb import set_trace
 import shapely.wkb
 import numpy as np
 from matplotlib import pyplot as plt
+import pickle
 
 from parasol import common, cfg
 
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 # constants
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
+WAYPOINT_FILE = os.path.join(cfg.OSM_DIR, 'way_points.pkl')
     
 
 def create_db(clobber=False):
@@ -96,8 +98,10 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             containing the x, y position of sequential points along the way.
             The first row is always the start point, and the last is always the
             endpoint. Spacing for the last point for each way is generally less
-            than the desired spacing, beware!
+            than the desired spacing, beware! this will cause an overshoot of
+            up to spacing for the last point
     """
+    logger.info(f'Computing way points, bbox={bbox}, spacing={spacing}')
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
         
         # query returning geometry of all ways
@@ -117,7 +121,7 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             way_id = rec[0]
             line = shapely.wkb.loads(rec[1].tobytes())
             # resample line
-            dists = range(0, round(line.length) + 1, spacing)
+            dists = range(0, round(line.length) + 1, spacing) # 
             line_pts = [line.interpolate(d).xy for d in dists]
             # package results
             way_xy = np.hstack(line_pts).T
@@ -160,7 +164,12 @@ def initialize_cli():
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
 
+    # init database    
     create_db(True)
     fetch_data()
     ingest()
-        
+
+    # init waypoint lookup table
+    pts = way_points() # compute all
+    with open(WAYPOINT_FILE, 'wb') as fp:
+        pickle.dump(pts, fp)

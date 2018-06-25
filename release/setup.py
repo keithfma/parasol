@@ -22,6 +22,7 @@ setup(
             'parasol-init-lidar=parasol.lidar:initialize_cli',
             'parasol-init-surface=parasol.surface:initialize_cli',
             'parasol-init-shade=parasol.shade:initialize_cli',
+            'parasol-update-shade=parasol.shade:update_cli',
             'parasol-init-osm=parasol.osm:initialize_cli',
             ]
         }

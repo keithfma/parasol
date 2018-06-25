@@ -138,6 +138,11 @@ def update_today():
             'today_{:02d}.{:02d}.tif'.format(time_hour, time_min))
         insolation(day, time, name)
 
+
+# TODO: add style to geoserver
+# TODO: add layer to geoserver
+
+
 # command line utilities -----------------------------------------------------
 
 
@@ -158,9 +163,20 @@ def initialize_cli():
     prep_inputs()
 
 
-# TODO: CLI for updating shade for current day (multithread?)
+def update_cli():
+    """Command line utility to init inputs for shade calculations"""
+    ap = argparse.ArgumentParser(
+        description="Update daily insolation rasters - clobbers existing!",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    args = ap.parse_args()
 
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
 
+    update_today()
 
 
 # TODO: CLI for computing a validation scene

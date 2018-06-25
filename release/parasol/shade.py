@@ -147,6 +147,38 @@ def update_today():
         insolation(day, time, name)
 
 
+def retrieve(hour, minute):
+    """
+    Retrieve (subset of) insolation raster closest to the specified time
+
+    Arguments:
+        hour, min: floats, time to retrieve, day is assumed to be "today", if
+            there is not an exact match, the nearest available raster will be
+            returned
+        bbox: length-5 tuple/list, [x_min, x_max, y_min, y_max, srid], bounding
+            box used to clip raster, output may not match limits exactly 
+    
+    Returns: x_vec, y_vec, z_grd
+        x_vec, y_vec: numpy 1D arrays, coordinate vectors
+        z_grd: numpy 2D array, insolation
+    """
+    # select insolation raster file
+    out_time = hour + minute/60
+    shade_file = None
+    shade_time = 99999
+    for this_file in glob.glob(os.path.join(cfg.SHADE_DIR, 'today_*.tif')):
+        tmp = os.path.basename(this_file)[6:-4]
+        this_time = float(tmp[:2]) + float(tmp[2:])/60
+        if abs(out_time - this_time) < abs(out_time - shade_time):
+            shade_time = this_time
+            shade_file = this_file 
+
+    # read in raster (subset) and coordinate vectors
+    # TODO: implement subset using bounding box
+
+    return None
+
+
 def add_geoserver_workspace():
     """
     Create geoserver workspace

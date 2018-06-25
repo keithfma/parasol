@@ -21,5 +21,10 @@
     "GRASS_MAPSET": "parasol-shade"
     "SHADE_START_HOUR": 5,
     "SHADE_STOP_HOUR": 22,  
-    "SHADE_INTERVAL_HOUR": 1
+    "SHADE_INTERVAL_HOUR": 1, 
+    "GEOSERVER_HOST": "localhost", 
+    "GEOSERVER_PORT": 8080,
+    "GEOSERVER_USER": null,
+    "GEOSERVER_PASS": "geoserver", 
+    "GEOSERVER_WORKSPACE": "parasol"
 }  

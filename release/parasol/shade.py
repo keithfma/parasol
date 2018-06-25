@@ -10,11 +10,17 @@ from datetime import datetime
 import numpy as np
 import math
 from pdb import set_trace
+import requests
+from pkg_resources import resource_filename
 
 from parasol import surface, common, cfg
 
 
 logger = logging.getLogger(__name__)
+
+
+# local constants
+STYLE_NAME = 'shade'
 
 
 def init_grass():
@@ -99,7 +105,8 @@ def insolation(day, hour, file_name):
         '--overwrite'])
 
     # compute minimum insolation
-    result = subprocess.run(['r.info', '-r', f'map={layer_name}@{cfg.GRASS_MAPSET}'], stdout=subprocess.PIPE)
+    result = subprocess.run(['grass', '--exec', 'r.info', '-r',
+        f'map={layer_name}@{cfg.GRASS_MAPSET}'], stdout=subprocess.PIPE)
     min_line = result.stdout.decode('utf-8').split()[0]
     min_value = float(min_line.split('=')[1])
 
@@ -113,7 +120,7 @@ def insolation(day, hour, file_name):
         f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
     
     # delete the temporary layer in the GRASS DB
-    # TODO: fails to find layer, not clear wy
+    # TODO: fails to find layer, not clear why
     subprocess.run(['grass', '--exec', 'g.remove', '-f', 'type=raster',
         f'pattern="{layer_name}"'])
 
@@ -139,8 +146,45 @@ def update_today():
         insolation(day, time, name)
 
 
-# TODO: add style to geoserver
-# TODO: add layer to geoserver
+def add_geoserver_style():
+    """
+    Upload shade layer style definition to geoserver
+
+    See guide at: http://docs.geoserver.org/stable/en/user/rest/styles.html
+    """
+    # create style
+    # note: may fail if style exists already, which is fin
+    url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/styles'
+    hdr = {"Content-type": "application/json"}
+    auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
+    data = {
+        "style": {
+            "name": STYLE_NAME,
+            "workspace": {
+                "name": cfg.GEOSERVER_WORKSPACE,
+            },
+            "format": "sld",
+            "languageVersion": {
+                "version": "1.0.0"
+            },
+            "filename": f"{STYLE_NAME}.sld"
+        }
+    }
+    resp = requests.post(url, auth=auth, json=data, headers=hdr)
+
+    # update style definition
+    url = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/rest/workspaces/{cfg.GEOSERVER_WORKSPACE}/styles/{STYLE_NAME}.xml'
+    hdr = {"Content-type": "application/vnd.ogc.sld+xml"}
+    auth = (cfg.GEOSERVER_USER, cfg.GEOSERVER_PASS)
+    style_file = resource_filename('parasol', os.path.join('templates', 'shade.sld'))
+    with open(style_file, 'r') as fp:
+        resp = requests.put(url, auth=auth, headers=hdr, data=fp.read())
+    resp.raise_for_status()
+
+
+def add_geoserver_layer():
+    """Upload shade layer definition to geoserver"""
+    raise NotImplementedError
 
 
 # command line utilities -----------------------------------------------------

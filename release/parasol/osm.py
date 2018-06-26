@@ -12,6 +12,7 @@ from pdb import set_trace
 import shapely.wkb
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib
 import pickle
 import scipy.interpolate
 import scipy.integrate
@@ -136,27 +137,6 @@ def way_points(bbox=None):
     return ways, way_pts 
 
 
-def plot_way_points(pts, downsample=50, show=True):
-    """
-    Generate simple plot of way points
-    
-    Arguments:
-        pts: dict, output from way_points()
-        downsample: int, downsampling factor, to ease the load
-        show: set True to display plot, else, do nothing to give the user a
-            chance to make modifications first
-
-    Returns: nothing, displays the resulting plot
-    """
-    display_interval = 500
-    for ii, xy in enumerate(pts.values()):
-        plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
-        if ii % display_interval == 0:
-            print(f'Plotting way {ii+1} of {len(pts)}') 
-    if show:
-        plt.show()
-
-
 def way_insolation(hour, minute, wpts):
     """
     Compute path-integrated insolation for all ways
@@ -186,24 +166,68 @@ def way_insolation(hour, minute, wpts):
         spts[gid] = interp(xy[:,0], xy[:,1], grid=False)
 
     # integrate along path for each segment
+    # TODO: convert units by dividing out a (constant) walking speed
     stot = {}
     for gid, ss in spts.items():
         stot[gid] = scipy.integrate.trapz(ss, dx=cfg.OSM_WAYPT_SPACING)
     
-    
     return spts, stot
 
 
-def plot_way_insolation(ways, downsample=50):
+# TODO: color by insolation
+def plot_way_insolation_pts(pts, downsample=50, show=True):
+    """
+    Generate simple plot of way points
+    
+    Arguments:
+        pts: dict, output from way_points()
+        downsample: int, downsampling factor, to ease the load
+        show: set True to display plot, else, do nothing to give the user a
+            chance to make modifications first
+
+    Returns: nothing, displays the resulting plot
+    """
+    display_interval = 500
+    for ii, xy in enumerate(pts.values()):
+        plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
+        if ii % display_interval == 0:
+            print(f'Plotting way {ii} of {len(pts)}') 
+    if show:
+        plt.show()
+
+
+def plot_way_insolation(ways, ways_sol, downsample=5, show=True):
     """
     Generate simple plot of way integrated insolation
     
     Arguments:
-        ways: dict, output from way_insolation()
+        ways: dict, output from way_pts 
+        way_sol: dict, output from way_insolation()
+        show: set True to display plot, else, do nothing to give the user a
+            chance to make modifications first
 
     Returns: nothing, displays the resulting plot
     """
-    raise NotImplementedError
+    # setup color scale
+    cm = matplotlib.cm.ScalarMappable(
+        norm=matplotlib.colors.Normalize(vmin=1000, vmax=10000),
+        cmap='viridis')
+
+    # loop, plot select lines
+    display_interval = 500
+    gids = list(ways.keys())[::downsample]
+
+    for ii, gid in enumerate(gids):
+        this_clr = cm.to_rgba(ways_sol[gid])
+        plt.plot(ways[gid][:,0], ways[gid][:,1], color=this_clr)
+
+        if ii % display_interval == 0:
+            print(f'Plotting way {ii} of {len(gids)}') 
+
+    if show:
+        plt.show()
+        
+    
 
 
 def update_cost_columns(wpts):

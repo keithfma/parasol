@@ -117,7 +117,7 @@ def insolation(day, hour, top_name, bot_name):
 
     # apply minimum insolation where surface is above the ground (trees, buildings)
     if_str = f'if( "shade-mask", {min_value}, "{top_layer}@{cfg.GRASS_MAPSET}" )'
-    subprocess.run(['r.mapcalc', f'expression="{bot_layer}@{cfg.GRASS_MAPSET}" = {if_str}', '--overwrite'])
+    subprocess.run(['grass', '--exec', 'r.mapcalc', f'expression="{bot_layer}@{cfg.GRASS_MAPSET}" = {if_str}', '--overwrite'])
 
     # dump results to file
     logger.info(f'Saving top surface insolation as "{top_name}"')

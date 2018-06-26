@@ -174,7 +174,8 @@ def way_insolation(hour, minute, wpts):
     return spts, stot
 
 
-def plot_way_insolation_pts(pts, pts_sol, vmin=1000, vmax=10000, downsample=50, show=True):
+# NOTE: speed problem is because there are too many plot layers, merge before plotting
+def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, show=True):
     """
     Generate simple plot of way points
     
@@ -186,19 +187,16 @@ def plot_way_insolation_pts(pts, pts_sol, vmin=1000, vmax=10000, downsample=50, 
 
     Returns: nothing, displays the resulting plot
     """
-    # loop, plot select pts 
-    display_interval = 500
-    gids = list(pts.keys())
+    xx = []
+    yy = []
+    zz = []
+    for gid in pts.keys():
+        xx.extend(pts[gid][::downsample, 0])
+        yy.extend(pts[gid][::downsample, 1])
+        zz.extend(pts_sol[gid][::downsample])
 
-    for ii, gid in enumerate(gids):
-        xx = pts[gid][::downsample, 0]
-        yy = pts[gid][::downsample, 1]
-        zz = pts_sol[gid][::downsample]
-        plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax)
+    plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax, marker='.')
         
-        if ii % display_interval == 0:
-            print(f'Plotting way {ii} of {len(pts)}') 
-
     if show:
         plt.show()
 

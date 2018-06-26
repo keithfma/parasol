@@ -84,6 +84,7 @@ def prep_inputs():
         f'input=surface@{cfg.GRASS_MAPSET}', '-l', 'output=lon'])              
 
 
+# TODO: save insolation on upper surface and lower surface, the former is better for visualization
 def insolation(day, hour, file_name):
     """
     Compute insolation (W/m2) raster within ROI for specified time 

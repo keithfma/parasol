@@ -13,8 +13,10 @@ import shapely.wkb
 import numpy as np
 from matplotlib import pyplot as plt
 import pickle
+import scipy.interpolate
+import scipy.integrate
 
-from parasol import common, cfg
+from parasol import common, cfg, shade
 
 
 logger = logging.getLogger(__name__)
@@ -81,7 +83,7 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
-def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
+def way_points(bbox=None):
     """
     Generate evenly-spaced points along all ways in the ROI
     
@@ -92,7 +94,6 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             y_min, y_max, srid], the srid is an integer spatial reference ID
             (EPSG code) for the float limits. Set None to return all ways in
             the database
-        spacing: float, space between adjacent points along each way
 
     Returns: 
         ways: dict, keys are way IDs, values are N x 2 numpy arrays containing
@@ -105,7 +106,7 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             beware! this will cause an overshoot of up to spacing for the last
             point
     """
-    logger.info(f'Computing way points, bbox={bbox}, spacing={spacing}')
+    logger.info(f'Computing way points, bbox={bbox}, spacing={cfg.OSM_WAYPT_SPACING}')
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
         
         # query returning geometry of all ways
@@ -125,26 +126,25 @@ def way_points(bbox=None, spacing=cfg.OSM_WAYPT_SPACING):
             # unpack record
             way_id = rec[0]
             line = shapely.wkb.loads(rec[1].tobytes())
-            way[way_id] = np.vstack(line.xy).T
-            set_trace()
+            ways[way_id] = np.vstack(line.xy).T
             # resample line
-            dists = range(0, round(line.length) + 1, spacing) # 
+            dists = range(0, round(line.length) + 1, cfg.OSM_WAYPT_SPACING) 
             line_pts = [line.interpolate(d).xy for d in dists]
-            # package results
-            way_xy = np.hstack(line_pts).T
-            ways[way_id] = way_xy
+            way_pts[way_id] = np.hstack(line_pts).T
     logger.info(f'Completed way points for {len(ways)} ways')
 
     return ways, way_pts 
 
 
-def plot_way_points(pts, downsample=50):
+def plot_way_points(pts, downsample=50, show=True):
     """
     Generate simple plot of way points
     
     Arguments:
         pts: dict, output from way_points()
         downsample: int, downsampling factor, to ease the load
+        show: set True to display plot, else, do nothing to give the user a
+            chance to make modifications first
 
     Returns: nothing, displays the resulting plot
     """
@@ -153,21 +153,45 @@ def plot_way_points(pts, downsample=50):
         plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
         if ii % display_interval == 0:
             print(f'Plotting way {ii+1} of {len(pts)}') 
-    plt.show()
+    if show:
+        plt.show()
 
 
-def way_insolation(wpts):
+def way_insolation(hour, minute, wpts):
     """
     Compute path-integrated insolation for all ways
 
     Arguments:
+        hour, minute: time to compute insolation, will use nearest if not an
+            exact match
         wpts: dict, output from way_points(), contains way gid as keys, and
             evenly spaced points along way as values
     
-    Returns: wsol: dict, contains way gid as key, integrated insolation as
-        values (units are J/m2, assuming a constant walking speed)
+    Returns: spts, stot
+        spts: dict, contains way gid as key, point observations of insolation
+            as values (units are W/m2)
+        stot: dict, contains way gid as key, integrated insolation as
+            values (units are J/m2, assuming a constant walking speed)
     """
-    raise NotImplementedError
+    # retrieve shade raster for nearest available time
+    xx, yy, zz = shade.retrieve(hour, minute)
+    yy = yy[::-1] # interpolant requires increasing coords
+    zz = zz[:, ::-1]
+    np.nan_to_num(zz, copy=False)              
+
+    # interpolate values at all way points
+    interp = scipy.interpolate.RectBivariateSpline(xx, yy, zz, kx=1, ky=1)
+    spts = {}
+    for gid, xy in wpts.items():
+        spts[gid] = interp(xy[:,0], xy[:,1], grid=False)
+
+    # integrate along path for each segment
+    stot = {}
+    for gid, ss in spts.items():
+        stot[gid] = scipy.integrate.trapz(ss, dx=cfg.OSM_WAYPT_SPACING)
+    
+    
+    return spts, stot
 
 
 def plot_way_insolation(ways, downsample=50):
@@ -220,7 +244,7 @@ def initialize_cli():
     ways, pts = way_points() # compute all
     with open(WAYS_FILE, 'wb') as fp:
         pickle.dump(ways, fp)
-    with open(WAS_PTS_FILE, 'wb') as fp:
+    with open(WAYS_PTS_FILE, 'wb') as fp:
         pickle.dump(pts, fp)
 
 

@@ -85,17 +85,19 @@ def prep_inputs():
 
 
 # TODO: save insolation on upper surface and lower surface, the former is better for visualization
-def insolation(day, hour, file_name):
+def insolation(day, hour, top_name, bot_name):
     """
     Compute insolation (W/m2) raster within ROI for specified time 
     
     Arguments:
         day: int, day of the year 
         hour: local solar time, decimal hours
-        file_name: string, path to save retults as geotiff
+        top_name: string, path to save retults as geotiff
+        bot_name: string, path to save retults as geotiff
     """
     # get name for GRASS layer
-    layer_name = os.path.splitext(os.path.basename(file_name))[0]
+    top_layer = os.path.splitext(os.path.basename(top_name))[0]
+    bot_layer = os.path.splitext(os.path.basename(bot_name))[0]
 
     # set compute region -- very important!
     subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
@@ -104,28 +106,33 @@ def insolation(day, hour, file_name):
     logger.info(f'Computing insolation for day={day}, time={hour}')
     subprocess.run(['grass', '--exec', 'r.sun', f'time={hour}', f'day={day}',
         f'elevation=surface@{cfg.GRASS_MAPSET}', f'aspect=aspect@{cfg.GRASS_MAPSET}',
-        f'slope=slope@{cfg.GRASS_MAPSET}', f'glob_rad={layer_name}@{cfg.GRASS_MAPSET}',
+        f'slope=slope@{cfg.GRASS_MAPSET}', f'glob_rad={top_layer}@{cfg.GRASS_MAPSET}',
         '--overwrite'])
 
     # compute minimum insolation
     result = subprocess.run(['grass', '--exec', 'r.info', '-r',
-        f'map={layer_name}@{cfg.GRASS_MAPSET}'], stdout=subprocess.PIPE)
+        f'map={top_layer}@{cfg.GRASS_MAPSET}'], stdout=subprocess.PIPE)
     min_line = result.stdout.decode('utf-8').split()[0]
     min_value = float(min_line.split('=')[1])
 
     # apply minimum insolation where surface is above the ground (trees, buildings)
-    if_str = f'if( "shade-mask", {min_value}, "{layer_name}@{cfg.GRASS_MAPSET}" )'
-    subprocess.run(['r.mapcalc', f'expression="{layer_name}@{cfg.GRASS_MAPSET}" = {if_str}', '--overwrite'])
+    if_str = f'if( "shade-mask", {min_value}, "{top_layer}@{cfg.GRASS_MAPSET}" )'
+    subprocess.run(['r.mapcalc', f'expression="{bot_layer}@{cfg.GRASS_MAPSET}" = {if_str}', '--overwrite'])
 
     # dump results to file
-    logger.info(f'Saving insolation as "{file_name}"')
-    subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={layer_name}@{cfg.GRASS_MAPSET}',
-        f'output={file_name}', 'format=GTiff', '-c', '--overwrite'])
+    logger.info(f'Saving top surface insolation as "{top_name}"')
+    subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={top_layer}@{cfg.GRASS_MAPSET}',
+        f'output={top_name}', 'format=GTiff', '-c', '--overwrite'])
+    logger.info(f'Saving ground surface insolation as "{bot_name}"')
+    subprocess.run(['grass', '--exec', 'r.out.gdal', f'input={bot_layer}@{cfg.GRASS_MAPSET}',
+        f'output={bot_name}', 'format=GTiff', '-c', '--overwrite'])
     
     # delete the temporary layer in the GRASS DB
     # TODO: fails to find layer, not clear why
     subprocess.run(['grass', '--exec', 'g.remove', '-f', 'type=raster',
-        f'pattern="{layer_name}"'])
+        f'pattern="{top_layer}"'])
+    subprocess.run(['grass', '--exec', 'g.remove', '-f', 'type=raster',
+        f'pattern="{bot_layer}"'])
 
 
 # TODO: explore multiprocessing
@@ -144,9 +151,11 @@ def update_today():
         logger.info(f'Update daily insolation, time step {ii} of {len(times)}')
         time_hour = math.floor(time)
         time_min = round((time - time_hour)*60)
-        name = os.path.join(cfg.SHADE_DIR,
-            'today_{:02d}{:02d}.tif'.format(time_hour, time_min))
-        insolation(day, time, name)
+        top_name = os.path.join(cfg.SHADE_DIR,
+            'top_{:02d}{:02d}.tif'.format(time_hour, time_min))
+        bot_name = os.path.join(cfg.SHADE_DIR,
+            'bot_{:02d}{:02d}.tif'.format(time_hour, time_min))
+        insolation(day, time, top_name, bot_name)
 
 
 def retrieve(hour, minute, bbox=None):

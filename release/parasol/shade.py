@@ -13,6 +13,7 @@ from pdb import set_trace
 import requests
 from pkg_resources import resource_filename
 import glob
+from osgeo import gdal
 
 from parasol import surface, common, cfg
 
@@ -83,6 +84,7 @@ def prep_inputs():
         f'input=surface@{cfg.GRASS_MAPSET}', '-l', 'output=lon'])              
 
 
+# TODO: save insolation on upper surface and lower surface, the former is better for visualization
 def insolation(day, hour, file_name):
     """
     Compute insolation (W/m2) raster within ROI for specified time 
@@ -145,6 +147,50 @@ def update_today():
         name = os.path.join(cfg.SHADE_DIR,
             'today_{:02d}{:02d}.tif'.format(time_hour, time_min))
         insolation(day, time, name)
+
+
+def retrieve(hour, minute, bbox=None):
+    """
+    Retrieve (subset of) insolation raster closest to the specified time
+
+    Arguments:
+        hour, min: floats, time to retrieve, day is assumed to be "today", if
+            there is not an exact match, the nearest available raster will be
+            returned
+        bbox: length-5 tuple/list, [x_min, x_max, y_min, y_max, srid], bounding
+            box used to clip raster, output may not match limits exactly 
+    
+    Returns: x_vec, y_vec, z_grd
+        x_vec, y_vec: numpy 1D arrays, coordinate vectors
+        z_grd: numpy 2D array, insolation
+    """
+    # handle bbox
+    if bbox:
+        raise NotImplementedError('Raster subsets are not yet supported')
+
+    # select insolation raster file
+    out_time = hour + minute/60
+    shade_file = None
+    shade_time = 99999
+    for this_file in glob.glob(os.path.join(cfg.SHADE_DIR, 'today_*.tif')):
+        tmp = os.path.basename(this_file)[6:-4]
+        this_time = float(tmp[:2]) + float(tmp[2:])/60
+        if abs(out_time - this_time) < abs(out_time - shade_time):
+            shade_time = this_time
+            shade_file = this_file 
+
+    # read in raster (subset) and coordinate vectors
+    # TODO: implement subset using bounding box
+    ds = gdal.Open(shade_file)
+    z_grd = np.array(ds.GetRasterBand(1).ReadAsArray())
+
+    transform = ds.GetGeoTransform()
+    y_pixel = np.arange(0, z_grd.shape[0])
+    x_pixel = np.arange(0, z_grd.shape[1])
+    x_vec = transform[0] + x_pixel*transform[1] + y_pixel*transform[2]
+    y_vec = transform[3] + x_pixel*transform[4] + y_pixel*transform[5]
+
+    return x_vec, y_vec, z_grd
 
 
 def add_geoserver_workspace():

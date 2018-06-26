@@ -21,5 +21,6 @@ from parasol import common
 from parasol import lidar
 from parasol import surface
 from parasol import shade
+from parasol import geoserver
 from parasol import osm
 

@@ -1,5 +1,19 @@
-h1 {
-    text-align: center; 
+.rhs {
+    float: right;
+    width: 40%;
+    margin-left: auto;
+    margin-right: 10%;
+    text-align: right;
+    vertical-align: middle;
+}
+
+.lhs {
+    float: left;
+    width: 40%;
+    margin-left: 10%;
+    margin-right: auto;
+    text-align: left;
+    vertical-align: middle;
 }
 
 #parasol-map {

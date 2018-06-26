@@ -193,6 +193,8 @@ def retrieve(hour, minute, bbox=None):
     return x_vec, y_vec, z_grd
 
 
+# TODO: migrate geoserver to own module
+
 def add_geoserver_workspace():
     """
     Create geoserver workspace

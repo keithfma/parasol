@@ -174,8 +174,7 @@ def way_insolation(hour, minute, wpts):
     return spts, stot
 
 
-# TODO: color by insolation
-def plot_way_insolation_pts(pts, downsample=50, show=True):
+def plot_way_insolation_pts(pts, pts_sol, vmin=1000, vmax=10000, downsample=50, show=True):
     """
     Generate simple plot of way points
     
@@ -187,22 +186,32 @@ def plot_way_insolation_pts(pts, downsample=50, show=True):
 
     Returns: nothing, displays the resulting plot
     """
+    # loop, plot select pts 
     display_interval = 500
-    for ii, xy in enumerate(pts.values()):
-        plt.plot(xy[::downsample, 0], xy[::downsample ,1], '.', color='blue')
+    gids = list(pts.keys())
+
+    for ii, gid in enumerate(gids):
+        xx = pts[gid][::downsample, 0]
+        yy = pts[gid][::downsample, 1]
+        zz = pts_sol[gid][::downsample]
+        plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax)
+        
         if ii % display_interval == 0:
             print(f'Plotting way {ii} of {len(pts)}') 
+
     if show:
         plt.show()
 
 
-def plot_way_insolation(ways, ways_sol, downsample=5, show=True):
+def plot_way_insolation(ways, ways_sol, vmin=1000, vmax=10000, downsample=5, show=True):
     """
     Generate simple plot of way integrated insolation
     
     Arguments:
         ways: dict, output from way_pts 
         way_sol: dict, output from way_insolation()
+        vmin, vmax: color scale limits
+        downsample: int, downsampling factor, to ease the load
         show: set True to display plot, else, do nothing to give the user a
             chance to make modifications first
 
@@ -210,7 +219,7 @@ def plot_way_insolation(ways, ways_sol, downsample=5, show=True):
     """
     # setup color scale
     cm = matplotlib.cm.ScalarMappable(
-        norm=matplotlib.colors.Normalize(vmin=1000, vmax=10000),
+        norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax),
         cmap='viridis')
 
     # loop, plot select lines

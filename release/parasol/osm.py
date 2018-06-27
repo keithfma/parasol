@@ -174,6 +174,22 @@ def way_insolation(hour, minute, wpts):
     return spts, stot
 
 
+def update_cost_columns(wpts):
+    """
+    Update insolation cost columns for all way elements in OSM database
+
+    Arguments:
+        wpts: dict, output from way_points(), contains way gid as keys, and
+            evenly spaced points along way as values
+    
+    Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
+    """
+    return NotImplementedError
+
+
+# plots ----------------------------------------------------------------------
+
+
 def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, show=True):
     """
     Generate simple plot of way points
@@ -225,24 +241,10 @@ def plot_way_insolation(ways, ways_sol, vmin=1000, vmax=10000, downsample=5, sho
             this_line.append((this_way[ii,0], this_way[ii,1]))
         this_color = cm.to_rgba(this_way_sol)
 
-    # plot at-once using line collection approach
-
+    # TODO: plot at-once using line collection approach
 
     if show:
         plt.show()
-
-
-def update_cost_columns(wpts):
-    """
-    Update insolation cost columns for all way elements in OSM database
-
-    Arguments:
-        wpts: dict, output from way_points(), contains way gid as keys, and
-            evenly spaced points along way as values
-    
-    Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
-    """
-    return NotImplementedError
 
 
 # command line utilities -----------------------------------------------------
@@ -267,6 +269,7 @@ def initialize_cli():
     ingest()
 
     # init waypoint lookup table
+    # TODO: move this into the database - one less file to worry about
     ways, pts = way_points() # compute all
     with open(WAYS_FILE, 'wb') as fp:
         pickle.dump(ways, fp)

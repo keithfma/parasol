@@ -174,7 +174,6 @@ def way_insolation(hour, minute, wpts):
     return spts, stot
 
 
-# NOTE: speed problem is because there are too many plot layers, merge before plotting
 def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, show=True):
     """
     Generate simple plot of way points
@@ -187,16 +186,12 @@ def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, sho
 
     Returns: nothing, displays the resulting plot
     """
-    xx = []
-    yy = []
-    zz = []
+    xx = []; yy = []; zz = []
     for gid in pts.keys():
         xx.extend(pts[gid][::downsample, 0])
         yy.extend(pts[gid][::downsample, 1])
         zz.extend(pts_sol[gid][::downsample])
-
     plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax, marker='.')
-        
     if show:
         plt.show()
 
@@ -220,21 +215,21 @@ def plot_way_insolation(ways, ways_sol, vmin=1000, vmax=10000, downsample=5, sho
         norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax),
         cmap='viridis')
 
-    # loop, plot select lines
-    display_interval = 500
-    gids = list(ways.keys())[::downsample]
+    # build lists of lines and colors
+    lines = [], colors = []
+    for gid in gids:
+        this_way = ways[gid]
+        this_way_sol = ways_sol[gid]
+        this_line = []
+        for ii in range(this_way.shape[0]):
+            this_line.append((this_way[ii,0], this_way[ii,1]))
+        this_color = cm.to_rgba(this_way_sol)
 
-    for ii, gid in enumerate(gids):
-        this_clr = cm.to_rgba(ways_sol[gid])
-        plt.plot(ways[gid][:,0], ways[gid][:,1], color=this_clr)
+    # plot at-once using line collection approach
 
-        if ii % display_interval == 0:
-            print(f'Plotting way {ii} of {len(gids)}') 
 
     if show:
         plt.show()
-        
-    
 
 
 def update_cost_columns(wpts):

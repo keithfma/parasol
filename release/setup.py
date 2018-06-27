@@ -24,7 +24,7 @@ setup(
             'parasol-init-surface=parasol.surface:initialize_cli',
             'parasol-init-shade=parasol.shade:initialize_cli',
             'parasol-update-shade=parasol.shade:update_cli',
-            'parasol-init-geoserver=parasol.shade:initialize_geoserver_cli',
+            'parasol-init-geoserver=parasol.geoserver:initialize_geoserver_cli',
             'parasol-init-osm=parasol.osm:initialize_cli',
             'parasol-update-osm=parasol.osm:update_cli',
             ]

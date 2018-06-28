@@ -23,7 +23,7 @@ app = flask.Flask('parasol')
 @app.route('/ui', methods=["GET"])
 def main():
     """Main Parasol user interface"""
-    return flask.render_template('index.html')
+    return flask.render_template('new.html')
 
 
 @app.route('/route', methods=['GET'])
@@ -43,17 +43,8 @@ def route():
     lat1 = float(flask.request.args.get('lat1'))
     lon1 = float(flask.request.args.get('lon1'))
     beta = float(flask.request.args.get('beta'))
-    
     geojson = routing.route(lon0, lat0, lon1, lat1, beta)
-    print(geojson)
-    
     return flask.Response(status=200, response=geojson, mimetype='application/json')
-
-
-# DEBUG
-@app.route('/debug', methods=["GET"])
-def bootstrap():
-    return flask.render_template('new.html')
 
 
 # command line ---------------------------------------------------------------

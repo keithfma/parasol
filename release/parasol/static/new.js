@@ -4,6 +4,7 @@ var map;
 var searchProvider;
 var originSearch;
 var destSearch;
+var route;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -59,8 +60,14 @@ function updateRoute(event) {
                 beta: 0.5
             },
             dataType: 'json',
+            error: function(result) {
+                console.log('Failed to fetch route, result:', result);
+            },
             success: function(result) {
-                console.log(result);
+                console.log('Successfully fetched route, result:', result);
+                if (route) route.remove();
+                route = L.geoJSON(result);
+                route.addTo(map);
             }
         });
     }

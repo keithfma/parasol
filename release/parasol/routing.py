@@ -53,6 +53,7 @@ def route(lon0, lat0, lon1, lat1, beta):
     
     return geojson
 
+
 def nearest_id(lon, lat):
     """
     Return record ID for nearest vertex in the OSM database

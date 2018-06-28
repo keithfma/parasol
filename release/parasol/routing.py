@@ -17,18 +17,27 @@ def route(lon0, lat0, lon1, lat1, beta):
 
     Returns: optimal route as geoJSON
     """
-    # get column corresponding to current date/time
+    # parse arguments
+    if not (beta >= 0 and beta <= 1):
+        raise ValueError('Parameter "beta" must be in the raneg [0, 1]')
+    beta_sun = beta
+    beta_shade = 1 - beta
+
+    # get cost columns corresponding to current date/time
     now = datetime.now()
     delta = timedelta(hours=999)
-    solar_cost_col = None
+    sun_cost = None
+    shade_cost = None
     for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
         hour = math.floor(fhours)
         minute = math.floor((fhours-hour)*60)
         this_time = datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
-        this_name = f'{cfg.OSM_SOLAR_COST_PREFIX}{hour:02d}{minute:02d}'
+        this_sun = f'{cfg.OSM_SUN_COST_PREFIX}{hour:02d}{minute:02d}'
+        this_shade = f'{cfg.OSM_SHADE_COST_PREFIX}{hour:02d}{minute:02d}'
         this_delta = abs(now - this_time)
         if this_delta <= delta:
-            solar_cost_col = this_name
+            sun_cost = this_sun
+            shade_cost = this_shade
             delta = this_delta 
     
     # compute optimal route
@@ -43,7 +52,7 @@ def route(lon0, lat0, lon1, lat1, beta):
         end_id = cur.fetchone()[0]
 
         # compute route, return GeoJSON for edges
-        sql = f'SELECT gid AS id, source, target, length_m * 1000 + {beta}*{solar_cost_col} AS cost, the_geom FROM ways'
+        sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
         cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                     (start_id, end_id))
         geojson = cur.fetchone()[0]

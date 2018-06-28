@@ -167,17 +167,15 @@ def way_insolation(hour, minute, wpts):
     # get the min/max insolation over the scene
     wm2_min = np.nanmin(wm2)
     wm2_max = np.nanmax(wm2)
-    print(wm2_min, wm2_max)
 
     # interpolate values at all way points
     # note: wm2_sun + wm2_shade = constant = wm2_max - wm2_min
-    np.nan_to_num(wm2, copy=False)              
+    wm2[np.isnan(wm2)] = wm2_min
     interp = scipy.interpolate.RectBivariateSpline(xx, yy, wm2, kx=1, ky=1)
     wm2_sun = {}
     wm2_shade = {}
     for gid, xy in wpts.items():
         wm2_pts = interp(xy[:,0], xy[:,1], grid=False)
-        print(wm2_pts)
         wm2_sun[gid] = wm2_pts - wm2_min # W/m2 due to sun
         wm2_shade[gid] = wm2_max - wm2_pts # lost W/m2 due to shade
 

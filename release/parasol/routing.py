@@ -2,6 +2,8 @@ from parasol import cfg, common
 import numpy as np
 import math
 from datetime import datetime, timedelta
+from pdb import set_trace
+from osgeo import ogr, osr
 
 
 def route(lon0, lat0, lon1, lat1, beta):
@@ -41,7 +43,7 @@ def route(lon0, lat0, lon1, lat1, beta):
         end_id = cur.fetchone()[0]
 
         # compute route, return GeoJSON for edges
-        sql = f'SELECT gid AS id, source, target, length + {beta}*{solar_cost_col} AS cost, the_geom FROM ways'
+        sql = f'SELECT gid AS id, source, target, length_m * 1000 + {beta}*{solar_cost_col} AS cost, the_geom FROM ways'
         cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                     (start_id, end_id))
         geojson = cur.fetchone()[0]
@@ -49,13 +51,37 @@ def route(lon0, lat0, lon1, lat1, beta):
     return geojson
 
 
-def route_to_length():
+def route_length(lon0, lat0, lon1, lat1, beta):
     """
     Compute length of input route - used for optimizing beta parameter
 
     Arguments:
-        rt: string, route formatted as geoJSON
-    
-    Returns: route length in meters
+        lat0, lon0 = floats, start point latitude, longitude
+        lat1, lon1 = floats, end point latitude, longitude
+        beta: float, sun/shade preference parameter
+
+    Returns: optimal route length in meters
     """
-    raise NotImplementedError 
+    # get route as geojson
+    rt_json = route(lon0, lat0, lon1, lat1, beta)
+
+    # get coordinate transform to cartesian
+    prj0 = osr.SpatialReference()
+    prj0.ImportFromEPSG(4326) # WGS84, default coord sys for OSM
+    prj1 = osr.SpatialReference()
+    prj1.ImportFromEPSG(cfg.PRJ_SRID)
+    transform = osr.CoordinateTransformation(prj0, prj1)
+    
+    # load and transform route
+    rt_obj = ogr.CreateGeometryFromJson(rt_json)
+    rt_obj.Transform(transform)
+
+    return rt_obj.Length()
+
+
+def plot_beta(lon0, lat0, lon1, lat1):
+    # start with a simple grid to get some intuition, later, might want a real optimizer
+    # betas np.arange(0.5, 1.5, :79
+    pass
+
+    

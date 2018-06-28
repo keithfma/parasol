@@ -47,3 +47,15 @@ def route(lon0, lat0, lon1, lat1, beta):
         geojson = cur.fetchone()[0]
 
     return geojson
+
+
+def route_to_length():
+    """
+    Compute length of input route - used for optimizing beta parameter
+
+    Arguments:
+        rt: string, route formatted as geoJSON
+    
+    Returns: route length in meters
+    """
+    raise NotImplementedError 

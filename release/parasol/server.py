@@ -67,9 +67,9 @@ def route():
 
 
 # DEBUG
-@app.route('/bootstrap', methods=["GET"])
+@app.route('/debug', methods=["GET"])
 def bootstrap():
-    return flask.render_template('bootstrap.html')
+    return flask.render_template('example.html')
 
 
 # command line ---------------------------------------------------------------

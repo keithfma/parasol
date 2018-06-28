@@ -36,6 +36,7 @@ function newSearchControl(text, icon) {
     return search
 }
 
+// TODO: use beta value from the slider, when it exists
 function updateRoute(event) {
     // find marker locations
     var pts = []
@@ -56,6 +57,10 @@ function updateRoute(event) {
                 lat1: pts[1].lat,
                 lon1: pts[1].lng,
                 beta: 0.5
+            },
+            dataType: 'json',
+            success: function(result) {
+                console.log(result);
             }
         });
     }

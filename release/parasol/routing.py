@@ -40,25 +40,33 @@ def route(lon0, lat0, lon1, lat1, beta):
             shade_cost = this_shade
             delta = this_delta 
 
+    # find start/end vertices
+    start_id = nearest_id(lon0, lat0)
+    end_id = nearest_id(lon1, lat1)
+    
     # compute optimal route
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
-    
-        # find start/end vertices
-        cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
-                    (lon0, lat0))
-        start_id = cur.fetchone()[0]
-        cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
-                    (lon1, lat1))
-        end_id = cur.fetchone()[0]
-
-        # compute route, return GeoJSON for edges
         sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
         cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                     (start_id, end_id))
         geojson = cur.fetchone()[0]
-
+    
     return geojson
 
+def nearest_id(lon, lat):
+    """
+    Return record ID for nearest vertex in the OSM database
+    
+    Arguments:
+        lon, lat: floats, longitude and latitude (WGS84) of the query point
+
+    Returns: int, record ID for nearest point
+    """
+    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        cur.execute("SELECT id FROM ways_vertices_pgr ORDER BY the_geom <-> ST_SetSRID(ST_Point(%s, %s), 4326) LIMIT 1;",
+                    (lon, lat))
+        return cur.fetchone()[0]
+    
 
 def route_length(lon0, lat0, lon1, lat1, beta):
     """

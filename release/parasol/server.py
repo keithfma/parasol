@@ -66,6 +66,12 @@ def route():
     return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
+# DEBUG
+@app.route('/bootstrap', methods=["GET"])
+def bootstrap():
+    return flask.render_template('bootstrap.html')
+
+
 # command line ---------------------------------------------------------------
 
 

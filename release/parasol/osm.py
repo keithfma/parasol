@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 # constants
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
-WAYS_FILE = os.path.join(cfg.OSM_DIR, 'ways_pts.pkl')
 WAYS_PTS_FILE = os.path.join(cfg.OSM_DIR, 'ways.pkl')
-COST_PREFIX = 'cost_solar_'
     
 
 def create_db(clobber=False):
@@ -140,7 +138,7 @@ def way_points(bbox=None):
             way_pts[way_id] = np.hstack(line_pts).T
     logger.info(f'Completed way points for {len(ways)} ways')
 
-    return ways, way_pts 
+    return way_pts 
 
 
 def way_insolation(hour, minute, wpts):
@@ -202,7 +200,7 @@ def update_cost_db(wpts):
             cost = way_insolation(hour, minute, wpts)
 
             # prepare column
-            column_name = f'{COST_PREFIX}{hour:02d}{minute:02d}'
+            column_name = f'{cfg.OSM_SOLAR_COST_PREFIX}{hour:02d}{minute:02d}'
             cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {column_name} float8;')
 
             # run batch of sql updates
@@ -227,18 +225,15 @@ def initialize_cli():
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
 
-    # init database    
     create_db(True)
     fetch_data()
     ingest()
 
     # init waypoint lookup table
     # TODO: move this into the database - one less file to worry about
-    ways, pts = way_points() # compute all
-    with open(WAYS_FILE, 'wb') as fp:
-        pickle.dump(ways, fp)
+    wpts = way_points() # compute all
     with open(WAYS_PTS_FILE, 'wb') as fp:
-        pickle.dump(pts, fp)
+        pickle.dump(wpts, fp)
 
 
 def update_cli():

@@ -15,6 +15,7 @@
     "OSM_DB": "parasol_osm",
     "OSM_DIR": "/home/keith/.parasol/osm",
     "OSM_WAYPT_SPACING": 1,
+    "OSM_SOLAR_COST_PREFIX": "cost_solar_",
     "GRASS_GISBASE": "/usr/lib/grass74",
     "GRASS_GISRC": "/home/keith/.parasol/grassrc", 
     "GRASS_GISDBASE": "home/keith/.parasol/.grassdb",

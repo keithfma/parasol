@@ -37,7 +37,6 @@ function newSearchControl(text, icon) {
 }
 
 function updateRoute(event) {
-
     // find marker locations
     var pts = []
     map.eachLayer(function(lyr) {
@@ -46,6 +45,20 @@ function updateRoute(event) {
         }
     });
     console.log(pts);
+    // get route from backend and display route
+    if (pts.length == 2) {
+        $.ajax({
+            url: '/route',
+            type: 'get',
+            data: {
+                lat0: pts[0].lat,
+                lon0: pts[0].lng, 
+                lat1: pts[1].lat,
+                lon1: pts[1].lng,
+                beta: 0.5
+            }
+        });
+    }
 }
 
 window.onload = function () {

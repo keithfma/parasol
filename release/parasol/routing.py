@@ -39,7 +39,7 @@ def route(lon0, lat0, lon1, lat1, beta):
             sun_cost = this_sun
             shade_cost = this_shade
             delta = this_delta 
-    
+
     # compute optimal route
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
     

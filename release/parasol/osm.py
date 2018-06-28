@@ -16,6 +16,10 @@ import matplotlib
 import pickle
 import scipy.interpolate
 import scipy.integrate
+import numpy as np
+import math
+import psycopg2
+import psycopg2.extras
 
 from parasol import common, cfg, shade
 
@@ -27,6 +31,7 @@ logger = logging.getLogger(__name__)
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
 WAYS_FILE = os.path.join(cfg.OSM_DIR, 'ways_pts.pkl')
 WAYS_PTS_FILE = os.path.join(cfg.OSM_DIR, 'ways.pkl')
+COST_PREFIX = 'cost_solar_'
     
 
 def create_db(clobber=False):
@@ -41,6 +46,7 @@ def create_db(clobber=False):
     # TODO: add index, if necessary
     common.new_db(cfg.OSM_DB, clobber)
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        # add extensions
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pgrouting;')
 
@@ -171,10 +177,10 @@ def way_insolation(hour, minute, wpts):
     for gid, ss in spts.items():
         stot[gid] = scipy.integrate.trapz(ss, dx=cfg.OSM_WAYPT_SPACING)
     
-    return spts, stot
+    return stot
 
 
-def update_cost_columns(wpts):
+def update_cost_db(wpts):
     """
     Update insolation cost columns for all way elements in OSM database
 
@@ -184,67 +190,25 @@ def update_cost_columns(wpts):
     
     Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
     """
-    return NotImplementedError
+    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        
+        # loop over all calculated times 
+        for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+            
+            # compute the cost at this time
+            hour = math.floor(fhours)
+            minute = math.floor((fhours-hour)*60)
+            logger.info(f'Updating insolation cost for {hour:02d}:{minute:02d}')
+            cost = way_insolation(hour, minute, wpts)
 
+            # prepare column
+            column_name = f'{COST_PREFIX}{hour:02d}{minute:02d}'
+            cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {column_name} float8;')
 
-# plots ----------------------------------------------------------------------
-
-
-def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, show=True):
-    """
-    Generate simple plot of way points
-    
-    Arguments:
-        pts: dict, output from way_points()
-        downsample: int, downsampling factor, to ease the load
-        show: set True to display plot, else, do nothing to give the user a
-            chance to make modifications first
-
-    Returns: nothing, displays the resulting plot
-    """
-    xx = []; yy = []; zz = []
-    for gid in pts.keys():
-        xx.extend(pts[gid][::downsample, 0])
-        yy.extend(pts[gid][::downsample, 1])
-        zz.extend(pts_sol[gid][::downsample])
-    plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax, marker='.')
-    if show:
-        plt.show()
-
-
-def plot_way_insolation(ways, ways_sol, vmin=1000, vmax=10000, downsample=5, show=True):
-    """
-    Generate simple plot of way integrated insolation
-    
-    Arguments:
-        ways: dict, output from way_pts 
-        way_sol: dict, output from way_insolation()
-        vmin, vmax: color scale limits
-        downsample: int, downsampling factor, to ease the load
-        show: set True to display plot, else, do nothing to give the user a
-            chance to make modifications first
-
-    Returns: nothing, displays the resulting plot
-    """
-    # setup color scale
-    cm = matplotlib.cm.ScalarMappable(
-        norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax),
-        cmap='viridis')
-
-    # build lists of lines and colors
-    lines = [], colors = []
-    for gid in gids:
-        this_way = ways[gid]
-        this_way_sol = ways_sol[gid]
-        this_line = []
-        for ii in range(this_way.shape[0]):
-            this_line.append((this_way[ii,0], this_way[ii,1]))
-        this_color = cm.to_rgba(this_way_sol)
-
-    # TODO: plot at-once using line collection approach
-
-    if show:
-        plt.show()
+            # run batch of sql updates
+            sql = f'UPDATE ways SET {column_name} = %(cost)s WHERE gid = %(gid)s' 
+            params = [{'gid': x[0], 'cost': x[1]} for x in cost.items()]
+            psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
 
 
 # command line utilities -----------------------------------------------------

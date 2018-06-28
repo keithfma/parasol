@@ -2,15 +2,23 @@ html, body {
 	height: 100%;
 	margin: 0;
 }
+
 #map {
 	width: 600px;
 	height: 400px;
 }
+
 body { 
     padding: 0; 
     margin: 0; 
 } 
+
 #map { 
     height: 100%; 
     width: 100vw; 
 }
+
+.leaflet-control-geosearch.bar {
+  width: 90%;
+}
+

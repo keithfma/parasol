@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # constants
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
 WAYS_PTS_FILE = os.path.join(cfg.OSM_DIR, 'ways.pkl')
+WALKING_SPEED = 1.4 # m/s, see: https://en.wikipedia.org/wiki/Preferred_walking_speed
     
 
 def create_db(clobber=False):
@@ -151,31 +152,45 @@ def way_insolation(hour, minute, wpts):
         wpts: dict, output from way_points(), contains way gid as keys, and
             evenly spaced points along way as values
     
-    Returns: spts, stot
-        spts: dict, contains way gid as key, point observations of insolation
-            as values (units are W/m2)
-        stot: dict, contains way gid as key, integrated insolation as
+    Returns: jm2_sun, jm2_shade
+        jm2_sun: dict, contains way gid as key, integrated sun power as
             values (units are J/m2, assuming a constant walking speed)
+        jm2_shade: dict, contains way gid as key, integrated loss in sun power
+            due to shade as values (units are J/m2, assuming a constant walking
+            speed)
     """
     # retrieve shade raster for nearest available time
-    xx, yy, zz = shade.retrieve(hour, minute)
+    xx, yy, wm2 = shade.retrieve(hour, minute)
     yy = yy[::-1] # interpolant requires increasing coords
-    zz = zz[:, ::-1]
-    np.nan_to_num(zz, copy=False)              
+    wm2 = wm2[:, ::-1]
+    
+    # get the min/max insolation over the scene
+    wm2_min = np.nanmin(wm2)
+    wm2_max = np.nanmax(wm2)
+    print(wm2_min, wm2_max)
 
     # interpolate values at all way points
-    interp = scipy.interpolate.RectBivariateSpline(xx, yy, zz, kx=1, ky=1)
-    spts = {}
+    # note: wm2_sun + wm2_shade = constant = wm2_max - wm2_min
+    np.nan_to_num(wm2, copy=False)              
+    interp = scipy.interpolate.RectBivariateSpline(xx, yy, wm2, kx=1, ky=1)
+    wm2_sun = {}
+    wm2_shade = {}
     for gid, xy in wpts.items():
-        spts[gid] = interp(xy[:,0], xy[:,1], grid=False)
+        wm2_pts = interp(xy[:,0], xy[:,1], grid=False)
+        print(wm2_pts)
+        wm2_sun[gid] = wm2_pts - wm2_min # W/m2 due to sun
+        wm2_shade[gid] = wm2_max - wm2_pts # lost W/m2 due to shade
 
-    # integrate along path for each segment
-    # TODO: convert units by dividing out a (constant) walking speed
-    stot = {}
-    for gid, ss in spts.items():
-        stot[gid] = scipy.integrate.trapz(ss, dx=cfg.OSM_WAYPT_SPACING)
+    # integrate sun/shade watts/m2 along path for each segment -> J/m2
+    # note: integration incorporates length into both costs
+    jm2_sun = {}
+    for gid, pts in wm2_sun.items():
+        jm2_sun[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)/WALKING_SPEED
+    jm2_shade = {}
+    for gid, pts in wm2_shade.items():
+        jm2_shade[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)/WALKING_SPEED
     
-    return stot
+    return jm2_sun, jm2_shade
 
 
 def update_cost_db(wpts):

@@ -243,6 +243,18 @@ def initialize_cli():
 
 def update_cli():
     """Command line utiltiy for updating solar cost values in OSM DB"""
-    raise NotImplementedError 
+    ap = argparse.ArgumentParser(
+        description="Update insolation cost in Parasol OSM database",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    args = ap.parse_args()
 
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
+    
+    with open(WAYS_PTS_FILE, 'rb') as fp:
+        wpts = pickle.load(fp)
+    update_cost_db(wpts)
 

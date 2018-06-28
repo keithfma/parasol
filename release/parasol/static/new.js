@@ -4,6 +4,8 @@ var map;
 var startSearch;
 var destSearch;
 
+
+// see: https://github.com/pointhi/leaflet-color-markers 
 var greenIcon = new L.Icon({
     iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -13,15 +15,8 @@ var greenIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-var blueIcon = new L.Icon({
-    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
 
+// see: https://github.com/smeijer/leaflet-geosearch
 function newSearchControl(text, icon) {
     const search = new GeoSearchControl({
         provider: new OpenStreetMapProvider(),
@@ -32,7 +27,10 @@ function newSearchControl(text, icon) {
             icon: icon,
             draggable: false,
         },
-        searchLabel: text
+        searchLabel: text,
+        retainZoomLevel: true,
+        autoClose: true,
+        keepResult: true
     }); 
     return search
 }

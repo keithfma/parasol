@@ -201,25 +201,34 @@ def update_cost_db(wpts):
     
     Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
     """
-    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+    with common.connect_db(cfg.OSM_DB) as conn:
         
         # loop over all calculated times 
         for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+
+            with conn.cursor() as cur:
             
-            # compute the cost at this time
-            hour = math.floor(fhours)
-            minute = math.floor((fhours-hour)*60)
-            logger.info(f'Updating insolation cost for {hour:02d}:{minute:02d}')
-            cost = way_insolation(hour, minute, wpts)
+                # compute the cost at this time
+                hour = math.floor(fhours)
+                minute = math.floor((fhours-hour)*60)
+                logger.info(f'Updating insolation cost for {hour:02d}:{minute:02d}')
+                sun_cost, shade_cost = way_insolation(hour, minute, wpts)
 
-            # prepare column
-            column_name = f'{cfg.OSM_SOLAR_COST_PREFIX}{hour:02d}{minute:02d}'
-            cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {column_name} float8;')
+                # prepare columns
+                sun_column_name = f'{cfg.OSM_SUN_COST_PREFIX}{hour:02d}{minute:02d}'
+                cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {sun_column_name} float8;')
+                
+                shade_column_name = f'{cfg.OSM_SHADE_COST_PREFIX}{hour:02d}{minute:02d}'
+                cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {shade_column_name} float8;')
 
-            # run batch of sql updates
-            sql = f'UPDATE ways SET {column_name} = %(cost)s WHERE gid = %(gid)s' 
-            params = [{'gid': x[0], 'cost': x[1]} for x in cost.items()]
-            psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
+                # run batch of sql updates
+                sql = f'UPDATE ways SET {sun_column_name} = %(cost)s WHERE gid = %(gid)s' 
+                params = [{'gid': x[0], 'cost': x[1]} for x in sun_cost.items()]
+                psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
+                
+                sql = f'UPDATE ways SET {shade_column_name} = %(cost)s WHERE gid = %(gid)s' 
+                params = [{'gid': x[0], 'cost': x[1]} for x in shade_cost.items()]
+                psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
 
 
 # command line utilities -----------------------------------------------------
@@ -239,7 +248,7 @@ def initialize_cli():
     logger.setLevel(log_lvl)
 
     create_db(True)
-    fetch_data()
+    # fetch_data() # temporarily skipping this step
     ingest()
 
     # init waypoint lookup table

@@ -54,9 +54,9 @@ function updateRoute(event) {
             pts.push(lyr.getLatLng());
         }
     });
-    console.log(pts);
-    // get route from backend and display route
+
     if (pts.length == 2) {
+        // get route from backend and display route
         $.ajax({
             url: '/route',
             type: 'get',
@@ -84,22 +84,28 @@ function updateRoute(event) {
                 route.addTo(map);
             }
         });
+    } else {
+        // not enough points, clear route
+        if (route) route.remove();
     }
 }
 
 
 window.onload = function () {
 
+    // create map
     map = L.map('map', {
         center: [42.3481931, -71.0639548],
         zoom: 15,
         zoomControl: false
     });
 
+    // add zoom control
     new L.Control.Zoom({
         position: 'bottomleft' 
     }).addTo(map);
 
+    // add OSM basemap
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
         maxZoom: 18,
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -107,8 +113,9 @@ window.onload = function () {
         id: 'mapbox.streets'
     }).addTo(map);
 
+    // add origin and destination search bars
     searchProvider = new OpenStreetMapProvider();
-
+    
     originSearch = newSearchControl(
         "Enter origin address",
         greenIcon);
@@ -121,6 +128,13 @@ window.onload = function () {
 
     map.on('geosearch/showlocation', updateRoute);
 
+    // update route when search bar "x" is clicked
+    var resetBtns = document.getElementsByClassName("reset");
+    for (var ii = 0; ii < resetBtns.length; ii++) {
+        resetBtns[ii].addEventListener('click', updateRoute, false);
+    }
+
+    // add sun/shade preference slider
     L.control.slider(updateBeta, {
         id: "beta-slider", 
         orientation: 'horizontal',

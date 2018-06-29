@@ -28,7 +28,7 @@ function newSearchControl(text, icon) {
         showMarker: true,
         marker: {
             icon: icon,
-            draggable: false,
+            draggable: true,
         },
         searchLabel: text,
         retainZoomLevel: true,
@@ -115,18 +115,12 @@ window.onload = function () {
 
     // add origin and destination search bars
     searchProvider = new OpenStreetMapProvider();
-    
-    originSearch = newSearchControl(
-        "Enter origin address",
-        greenIcon);
+    originSearch = newSearchControl("Enter origin address", greenIcon);
+    destSearch = newSearchControl("Enter destination address", greenIcon);
     map.addControl(originSearch); 
-
-    destSearch = newSearchControl(
-        "Enter destination address",
-        greenIcon);
     map.addControl(destSearch); 
-
     map.on('geosearch/showlocation', updateRoute);
+    map.on('geosearch/marker/dragend', updateRoute);
 
     // update route when search bar "x" is clicked
     var resetBtns = document.getElementsByClassName("reset");

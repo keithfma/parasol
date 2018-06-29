@@ -46,7 +46,17 @@ def route(lon0, lat0, lon1, lat1, beta):
     
     # compute optimal route
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
-        sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
+
+        # NOTE: both sun and shade cost end members yield terrible results
+
+        # sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
+
+        # sql = f'SELECT gid AS id, source, target, length AS cost, the_geom FROM ways'
+
+        # sql = f'SELECT gid AS id, source, target, {sun_cost} AS cost, the_geom FROM ways'
+        
+        sql = f'SELECT gid AS id, source, target, {shade_cost} AS cost, the_geom FROM ways'
+
         cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                     (start_id, end_id))
         geojson = cur.fetchone()[0]

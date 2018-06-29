@@ -5,6 +5,7 @@ var searchProvider;
 var originSearch;
 var destSearch;
 var route;
+var beta;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -37,6 +38,13 @@ function newSearchControl(text, icon) {
     return search
 }
 
+
+function updateBeta(value) {
+    beta = value;
+    console.log('Beta updated to: ', beta);
+}
+
+
 // TODO: use beta value from the slider, when it exists
 function updateRoute(event) {
     // find marker locations
@@ -57,7 +65,7 @@ function updateRoute(event) {
                 lon0: pts[0].lng, 
                 lat1: pts[1].lat,
                 lon1: pts[1].lng,
-                beta: 0.5
+                beta: beta
             },
             dataType: 'json',
             error: function(result) {
@@ -78,6 +86,7 @@ function updateRoute(event) {
         });
     }
 }
+
 
 window.onload = function () {
 
@@ -112,6 +121,9 @@ window.onload = function () {
 
     map.on('geosearch/showlocation', updateRoute);
 
-    console.log('Loaded')
+    L.control.slider(updateBeta, {
+        id: "slider", 
+        orientation: 'vertical'
+    }).addTo(map);
 
 };

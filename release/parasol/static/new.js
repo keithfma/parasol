@@ -122,8 +122,16 @@ window.onload = function () {
     map.on('geosearch/showlocation', updateRoute);
 
     L.control.slider(updateBeta, {
-        id: "slider", 
-        orientation: 'vertical'
+        id: "beta-slider", 
+        orientation: 'horizontal',
+        postion: 'bottomright',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        value: 0.5,
+        collapsed: false,
+        size: "90%",
+        showValue: false,
     }).addTo(map);
 
 };

@@ -89,6 +89,10 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
+# NOTE: need to take more care with the end points -- many ways are short and
+#   the rouding error matters
+
+
 def way_points(bbox=None):
     """
     Generate evenly-spaced points along all ways in the ROI
@@ -163,32 +167,38 @@ def way_insolation(hour, minute, wpts):
     xx, yy, wm2 = shade.retrieve(hour, minute)
     yy = yy[::-1] # interpolant requires increasing coords
     wm2 = wm2[:, ::-1]
-    
-    # get the min/max insolation over the scene
-    wm2_min = np.nanmin(wm2)
-    wm2_max = np.nanmax(wm2)
+
+    # DEBUG: normalize insolation grid
+    wm2 = wm2 - np.nanmin(wm2)
+    wm2 = wm2/np.nanmax(wm2)
+    wm2[np.isnan(wm2)] = 0.5
 
     # interpolate values at all way points
     # note: wm2_sun + wm2_shade = constant = wm2_max - wm2_min
-    wm2[np.isnan(wm2)] = wm2_min
     interp = scipy.interpolate.RectBivariateSpline(xx, yy, wm2, kx=1, ky=1)
     wm2_sun = {}
     wm2_shade = {}
     for gid, xy in wpts.items():
         wm2_pts = interp(xy[:,0], xy[:,1], grid=False)
-        wm2_sun[gid] = wm2_pts - wm2_min # W/m2 due to sun
-        wm2_shade[gid] = wm2_max - wm2_pts # lost W/m2 due to shade
-
+        wm2_sun[gid] = wm2_pts # W/m2 due to sun
+        wm2_shade[gid] = 1 - wm2_pts # lost W/m2 due to shade
+    
     # integrate sun/shade watts/m2 along path for each segment -> J/m2
     # note: integration incorporates length into both costs
     jm2_sun = {}
     for gid, pts in wm2_sun.items():
-        jm2_sun[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)/WALKING_SPEED
+        jm2_sun[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)
     jm2_shade = {}
     for gid, pts in wm2_shade.items():
-        jm2_shade[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)/WALKING_SPEED
+        jm2_shade[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)
+
+    # # DEBUG: fetch the length of all ways
+    # with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+    #     cur.execute('SELECT gid, length_m from ways;')
+    #     recs = cur.fetchall()
+    # length = {x[0]: x[1] for x in recs}
     
-    return jm2_sun, jm2_shade
+    return jm2_sun, jm2_shade #, length 
 
 
 def update_cost_db(wpts):

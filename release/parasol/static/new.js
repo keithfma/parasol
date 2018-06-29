@@ -125,23 +125,32 @@ window.onload = function () {
     map = L.map('map', {
         center: [42.3481931, -71.0639548],
         zoom: 15,
-        zoomControl: false
+        zoomControl: false,
+        attributionControl: false
     });
+
+    // add OSM basemap
+    osm = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+        maxZoom: 18,
+        id: 'mapbox.streets'
+    }).addTo(map);
+
+    // TODO: add shade layer
+
+    // add layer control
+    var layers = {
+        "OSM": osm
+    };
+    L.control.layers(null, layers, {
+        position: 'bottomleft',
+    }).addTo(map);
 
     // add zoom control
     new L.Control.Zoom({
         position: 'bottomleft' 
     }).addTo(map);
 
-    // add OSM basemap
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-        maxZoom: 18,
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
-        id: 'mapbox.streets'
-    }).addTo(map);
-
-    // add origin and destination search bars
+    // add search bars
     searchProvider = new OpenStreetMapProvider();
     originSearch = newSearchControl("Enter origin address", greenIcon);
     destSearch = newSearchControl("Enter destination address", greenIcon);
@@ -165,6 +174,7 @@ window.onload = function () {
         inputCallback: function(val) {
             beta = val;
             console.log('Beta updated to: ', beta);
+            updateRoute();
         }
     });
     map.addControl(slider);

@@ -66,7 +66,13 @@ function updateRoute(event) {
             success: function(result) {
                 console.log('Successfully fetched route, result:', result);
                 if (route) route.remove();
-                route = L.geoJSON(result);
+                route = L.geoJSON(result, { 
+                    style: { 
+                        "color": "#33B028",
+                        "weight": 5,
+                        "opacity": 0.8
+                    }
+                });
                 route.addTo(map);
             }
         });

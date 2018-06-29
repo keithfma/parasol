@@ -33,20 +33,48 @@ function newSearchControl(text, icon) {
         searchLabel: text,
         retainZoomLevel: true,
         autoClose: true,
-        keepResult: true
+        keepResult: true,
     }); 
     return search
 }
 
 
-function updateBeta(value) {
-    beta = value;
-    console.log('Beta updated to: ', beta);
-}
+// define custom slider control
+// see: https://github.com/Eclipse1979/leaflet-slider
+L.Control.Slider = L.Control.extend({
+    options: {
+        position: 'bottomright',
+        min: 0,
+        max: 250,
+        step: 1,
+        value: 50,
+        inputCallback: function(value) {
+            console.log(value);
+        }
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.container = L.DomUtil.create('div', 'leaflet-slider-container');
+        this.slider = L.DomUtil.create('input', 'leaflet-slider', this.container);
+        this.slider.setAttribute("type", "range");
+        this.slider.setAttribute("min", this.options.min);
+        this.slider.setAttribute("max", this.options.max);
+        this.slider.setAttribute("step", this.options.step);
+        this.slider.setAttribute("value", this.options.value);
+        L.DomEvent.on(this.slider, "input", function (e) {
+            this.options.inputCallback(this.slider.value);
+        }, this);
+        L.DomEvent.disableClickPropagation(this.container);
+        return this.container;
+    }
+});
 
 
 // TODO: use beta value from the slider, when it exists
 function updateRoute(event) {
+        
     // find marker locations
     var pts = []
     map.eachLayer(function(lyr) {
@@ -129,17 +157,16 @@ window.onload = function () {
     }
 
     // add sun/shade preference slider
-    L.control.slider(updateBeta, {
-        id: "beta-slider", 
-        orientation: 'horizontal',
-        postion: 'bottomright',
+    var slider = new L.Control.Slider({
         min: 0,
         max: 1,
         step: 0.01,
         value: 0.5,
-        collapsed: false,
-        size: "90%",
-        showValue: false,
-    }).addTo(map);
+        inputCallback: function(val) {
+            beta = val;
+            console.log('Beta updated to: ', beta);
+        }
+    });
+    map.addControl(slider);
 
 };

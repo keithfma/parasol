@@ -20,7 +20,6 @@ def route(lon0, lat0, lon1, lat1, beta):
     # parse arguments
     if not (beta >= 0 and beta <= 1):
         raise ValueError('Parameter "beta" must be in the range [0, 1]')
-    beta = 0
     beta_sun = beta
     beta_shade = 1 - beta
 

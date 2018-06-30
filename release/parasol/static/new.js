@@ -156,13 +156,7 @@ function updateRoute(event) {
         $.ajax({
             url: '/route',
             type: 'get',
-            data: {
-                lat0: pts[0].lat,
-                lon0: pts[0].lng, 
-                lat1: pts[1].lat,
-                lon1: pts[1].lng,
-                beta: beta
-            },
+            data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng, beta: beta},
             dataType: 'json',
             error: function(result) {
                 console.log('Failed to fetch route, result:', result);
@@ -171,11 +165,7 @@ function updateRoute(event) {
                 console.log('Successfully fetched route, result:', result);
                 if (route) route.remove();
                 route = L.geoJSON(result, { 
-                    style: { 
-                        "color": "#33B028",
-                        "weight": 5,
-                        "opacity": 0.8
-                    }
+                    style: {color: "#33B028", weight: 5, opacity: 0.8}
                 });
                 route.addTo(map);
             }

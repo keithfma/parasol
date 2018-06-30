@@ -29,7 +29,7 @@ def route(lon0, lat0, lon1, lat1, beta):
     delta = timedelta(hours=999)
     sun_cost = None
     shade_cost = None
-    # TODO: use common.shade_times()
+    # TODO: use common.shade_meta()
     for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
         hour = math.floor(fhours)
         minute = math.floor((fhours-hour)*60)

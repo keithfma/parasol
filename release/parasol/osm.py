@@ -208,7 +208,7 @@ def update_cost_db(wpts):
     with common.connect_db(cfg.OSM_DB) as conn:
         
         # loop over all calculated times 
-        # TODO: use common.shade_times()
+        # TODO: use common.shade_meta()
         for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
 
             with conn.cursor() as cur:

@@ -9,7 +9,7 @@ from pkg_resources import resource_filename
 import psycopg2
 from pdb import set_trace
 
-from parasol import cfg, routing
+from parasol import cfg, common, routing
 
 
 # create app
@@ -48,7 +48,7 @@ def route():
 
 
 # @app.route('/layers', methods=['GET'])
-def layers():
+def shade_layers_meta():
     """
     List available shade layer details
 
@@ -58,8 +58,22 @@ def layers():
         hour: int, hour for layer time
         minute: int, minute for layer time
         url: string, URL for tile layer, can be added to leaflet 
+        params: object, URL query parameters
     """
-    raise NotImplementedError
+    layers = []
+    for this in common.shade_meta():
+        layer = {}
+        layer['hour'] = this['hour']
+        layer['minute'] = this['minute']
+        layer['url'] = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/ows'
+        layer['params'] = {
+            'layers': f'{cfg.GEOSERVER_WORKSPACE}{this["top"]}',
+            'opacity': 0.7,
+            }
+        layers.append(layer)
+    return layers
+        
+    
     
 
 

@@ -83,7 +83,7 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
 
     return tiles
 
-def shade_times():
+def shade_meta():
     """
     Return shade layer details, computed from config constants
 
@@ -99,7 +99,8 @@ def shade_times():
         layer = {}
         layer['hour'] = math.floor(fhours)
         layer['minute'] = math.floor((fhours - layer['hour'])*60)
-        layer['suffix'] = '{hour:02d}{minute:02d}'.format(**layer)
+        layer['top'] = f'{cfg.SHADE_TOP_PREFIX}{layer["hour"]:02d}{layer["minute"]:02d}'
+        layer['bottom'] = f'{cfg.SHADE_BOTTOM_PREFIX}{layer["hour"]:02d}{layer["minute"]:02d}'
         layers.append(layer)
     return(layers)
 

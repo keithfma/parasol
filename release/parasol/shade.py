@@ -140,7 +140,7 @@ def update_today():
     """Update insolation frames for whole day in loop"""
 
     # get current day and list of times (interval, etc, are set using config variables)
-    # TODO: use common.shade_times()
+    # TODO: use common.shade_meta()
     day = int(datetime.now().strftime('%j'))
     times = np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR)
     
@@ -148,14 +148,15 @@ def update_today():
     if not os.path.isdir(cfg.SHADE_DIR):
         os.makedirs(cfg.SHADE_DIR)
 
+    # TODO: use common.shade_meta()
     for ii, time in enumerate(times): 
         logger.info(f'Update daily insolation, time step {ii} of {len(times)}')
         time_hour = math.floor(time)
         time_min = round((time - time_hour)*60)
         top_name = os.path.join(cfg.SHADE_DIR,
-            'top_{:02d}{:02d}.tif'.format(time_hour, time_min))
+            f'{cfg.SHADE_TOP_PREFIX}{time_hour:02d}{time_min:02d}.tif')
         bot_name = os.path.join(cfg.SHADE_DIR,
-            'bot_{:02d}{:02d}.tif'.format(time_hour, time_min))
+            f'{cfg.SHADE_BOTTOM_PREFIX}{time_hour:02d}{time_min:02d}.tif')
         insolation(day, time, top_name, bot_name)
 
 

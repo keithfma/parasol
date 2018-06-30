@@ -112,11 +112,44 @@ L.Control.Toggle = L.Control.extend({
 });
 
 
+// // define custom time input control
+// L.Control.Time = L.Control.extend({
+//     options: {
+//         position: 'bottomright',
+//         inputCallback: function(value) {
+//             console.log('Time value is: ' + value);
+//         }
+//     },
+//     initialize: function (options) {
+//         L.setOptions(this, options);
+//     },
+//     onAdd: function (map) {
+//         this.container = L.DomUtil.create('div', 'leaflet-time-container');
+//         this.time = L.DomUtil.create('input', 'leaflet-time', this.container);
+//         this.time.setAttribute("type", "time");
+//         this.time.setAttribute("step", 60);
+//         //L.DomEvent.on(this.toggle, "click", function (e) {
+//         //    var isDown = e.target.classList.contains('leaflet-toggle-down');
+//         //    if (isDown) {
+//         //        e.target.classList.remove('leaflet-toggle-down');
+//         //        isDown = false;
+//         //    } else {
+//         //        e.target.classList.add('leaflet-toggle-down');
+//         //        isDown = true;
+//         //    }
+//         //    this.options.clickCallback(isDown);
+//         //}, this);
+//         L.DomEvent.disableClickPropagation(this.container);
+//         return this.container;
+//     }
+// });
+
 // define custom time input control
 L.Control.Time = L.Control.extend({
     options: {
+        optList: [],
         position: 'bottomright',
-        inputCallback: function(value) {
+        callback: function(value) {
             console.log('Time value is: ' + value);
         }
     },
@@ -125,25 +158,17 @@ L.Control.Time = L.Control.extend({
     },
     onAdd: function (map) {
         this.container = L.DomUtil.create('div', 'leaflet-time-container');
-        this.time = L.DomUtil.create('input', 'leaflet-time', this.container);
-        this.time.setAttribute("type", "time");
-        this.time.setAttribute("step", 60);
-        //L.DomEvent.on(this.toggle, "click", function (e) {
-        //    var isDown = e.target.classList.contains('leaflet-toggle-down');
-        //    if (isDown) {
-        //        e.target.classList.remove('leaflet-toggle-down');
-        //        isDown = false;
-        //    } else {
-        //        e.target.classList.add('leaflet-toggle-down');
-        //        isDown = true;
-        //    }
-        //    this.options.clickCallback(isDown);
-        //}, this);
+        this.time = L.DomUtil.create('select', 'leaflet-time', this.container);
+        for (let ii = 0; ii < this.options.optList.length; ii++) {
+            this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
+        }
+        L.DomEvent.on(this.time, "change", function (e) {
+            this.options.callback(this.time.value);
+        }, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
     }
 });
-
 
 // TODO: use beta value from the slider, when it exists
 function updateRoute(event) {
@@ -219,6 +244,7 @@ window.onload = function () {
 
     // add time input 
     new L.Control.Time({
+        optList: ['C', 'D'],
         position: 'bottomleft' 
     }).addTo(map);
 

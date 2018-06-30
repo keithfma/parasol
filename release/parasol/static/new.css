@@ -69,7 +69,6 @@ body {
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 12px;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
 }
 
 .leaflet-toggle-down {
@@ -80,4 +79,21 @@ body {
     border-right: solid 2px #eaeaea;
 }
 
-    
+.leaflet-time{
+    background-color: #6b5b95;
+    border-top: solid 2px #eaeaea;
+    border-left: solid 2px #eaeaea;
+    border-bottom: solid 2px #777;
+    border-right: solid 2px #777;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 12px;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+}

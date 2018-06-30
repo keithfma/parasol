@@ -5,7 +5,7 @@ var searchProvider;
 var originSearch;
 var destSearch;
 var route;
-var beta;
+var beta=0.5;
 var shadeLayers;
 var shadeLayer;
 
@@ -43,6 +43,8 @@ function newSearchControl(text, icon) {
 
 // define custom slider control
 // see: https://github.com/Eclipse1979/leaflet-slider
+// TODO: set better defaults, then don't use them below
+// TODO: simplify callback def
 L.Control.Slider = L.Control.extend({
     options: {
         position: 'bottomright',

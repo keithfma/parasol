@@ -19,6 +19,12 @@ var greenIcon = new L.Icon({
 });
 
 
+// format layer time as string
+function to_time_str(hour, minute) {
+    return hour.toString().padStart(2, "0") + ':' + minute.toString().padStart(2, "0");
+}
+
+
 // see: https://github.com/smeijer/leaflet-geosearch
 function newSearchControl(text, icon) {
     const search = new GeoSearchControl({
@@ -206,30 +212,37 @@ window.onload = function () {
         url: '/layers',
         type: 'get',
         error: function(result) {
-            console.log('Failed, result:', result);
+            console.log('Failed to fetch layers, result:', result);
         },
-        success: function(result) {
-            console.log('Success, result:', result);
+        success: function(layers) {
+            // get list of layer times as formatted strings
+            // TODO: select current time
+            layer_times = [];
+            for (let ii = 0; ii < layers.length; ii++) {
+                time_str = to_time_str(layers[ii].hour, layers[ii].minute);
+                layer_times.push(time_str);
+            }
+    
+            // add shade layer toggle
+            // TODO: make these options the default, then don't include them
+            new L.Control.Toggle({
+                imgSrc: '/static/sun.png',
+                imgWidth: '20px',
+                position: 'bottomleft' 
+            }).addTo(map);
+
+            // add time input 
+            new L.Control.Time({
+                optList: layer_times,
+                position: 'bottomleft' 
+            }).addTo(map);
+            
+            // add zoom control
+            new L.Control.Zoom({
+                position: 'bottomleft' 
+            }).addTo(map);
         }
     });
-
-    // add shade layer toggle
-    new L.Control.Toggle({
-        imgSrc: '/static/sun.png',
-        imgWidth: '20px',
-        position: 'bottomleft' 
-    }).addTo(map);
-
-    // add time input 
-    new L.Control.Time({
-        optList: ['C', 'D'],
-        position: 'bottomleft' 
-    }).addTo(map);
-
-    // add zoom control
-    new L.Control.Zoom({
-        position: 'bottomleft' 
-    }).addTo(map);
 
     // add search bars
     searchProvider = new OpenStreetMapProvider();

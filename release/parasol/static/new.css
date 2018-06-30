@@ -97,3 +97,7 @@ body {
     -moz-appearance: none;
     -webkit-appearance: none;
 }
+
+.hidden {
+    visibility: hidden;
+}

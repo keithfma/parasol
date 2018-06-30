@@ -79,14 +79,7 @@ L.Control.Toggle = L.Control.extend({
     options: {
         imgSrc: null,
         imgWidth: '20px',
-        position: 'bottomright',
-        clickCallback: function(down) {
-            if (down) {
-                console.log('Toggle is down');
-            } else {
-                console.log('Toggle is up');
-            }
-        }
+        position: 'bottomright'
     },
     initialize: function (options) {
         L.setOptions(this, options);
@@ -101,12 +94,11 @@ L.Control.Toggle = L.Control.extend({
             var isDown = e.target.classList.contains('leaflet-toggle-down');
             if (isDown) {
                 e.target.classList.remove('leaflet-toggle-down');
-                isDown = false;
+                shadeLayer._container.classList.add('hidden');
             } else {
                 e.target.classList.add('leaflet-toggle-down');
-                isDown = true;
+                shadeLayer._container.classList.remove('hidden');
             }
-            this.options.clickCallback(isDown);
         }, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
@@ -186,6 +178,10 @@ function updateShade() {
     var meta = shadeLayers[parseInt(layerSelect.value)];
     if (shadeLayer) shadeLayer.remove();
     shadeLayer = L.tileLayer.wms(meta.url, meta.params).addTo(map);
+    var toggle = document.getElementsByClassName('leaflet-toggle')[0];
+    if (!toggle.classList.contains('leaflet-toggle-down')) {
+        shadeLayer._container.classList.add('hidden');
+    }
 }
 
 
@@ -225,8 +221,7 @@ window.onload = function () {
             }
             
             // select layer index nearest to current time
-            // var now = new Date();
-            var now = new Date(2018, 6, 28, 12, 15); // DEBUG: try some other times
+            var now = new Date();
             var nowMin = 60*now.getHours() + now.getMinutes();
             var bestDiff = 999999;
             var bestIdx = null;

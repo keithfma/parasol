@@ -7,6 +7,7 @@ var destSearch;
 var route;
 var beta;
 var shadeLayers;
+var shadeLayer;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -183,23 +184,9 @@ function updateRoute(event) {
 function updateShade() {
     var layerSelect = document.getElementsByClassName('leaflet-time')[0];
     var meta = shadeLayers[parseInt(layerSelect.value)];
-    // TODO: use this info to update the layer
-    console.log(meta);
-    
-    //// add default shade layer to map, hidden until shade toggle is triggered
-    //var shadeIdx = parseInt($('#timeSlider')[0].value);
-    //// var newShadeLayer = L.tileLayer.wms('http://52.25.188.159:8080/geoserver/ows?', {
-    //var newShadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
-    //    layers: shadeLayers[shadeIdx],
-    //    opacity: 0.70
-    //}).addTo(map);
-    //if (shadeLayer) shadeLayer.remove();
-    //shadeLayer = newShadeLayer;
-    //console.log('Updated shade map to idx: ' + shadeIdx.toString() + ', layer: ', shadeLayers[shadeIdx]); 
-
+    if (shadeLayer) shadeLayer.remove();
+    shadeLayer = L.tileLayer.wms(meta.url, meta.params).addTo(map);
 }
-
-    
 
 
 window.onload = function () {
@@ -238,8 +225,8 @@ window.onload = function () {
             }
             
             // select layer index nearest to current time
-            var now = new Date();
-            // var now = new Date(2018, 6, 28, 12, 15); // DEBUG: try some other times
+            // var now = new Date();
+            var now = new Date(2018, 6, 28, 12, 15); // DEBUG: try some other times
             var nowMin = 60*now.getHours() + now.getMinutes();
             var bestDiff = 999999;
             var bestIdx = null;

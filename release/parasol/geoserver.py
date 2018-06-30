@@ -2,6 +2,22 @@
 Geoserver config automation
 """
 
+import argparse
+import logging
+import requests
+from pkg_resources import resource_filename
+import os
+import glob
+
+from parasol import cfg
+
+
+logger = logging.getLogger(__name__)
+
+
+# local constants
+STYLE_NAME = 'shade'
+
 
 def add_geoserver_workspace():
     """

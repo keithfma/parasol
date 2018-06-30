@@ -14,7 +14,7 @@
           <RasterSymbolizer> 
             <ColorMap>
               <ColorMapEntry color="#357bfd" quantity="50" />
-              <ColorMapEntry color="#fdfd35" quantity="800" />
+              <ColorMapEntry color="#ffffff" quantity="800" />
             </ColorMap>
           </RasterSymbolizer>
         </Rule>

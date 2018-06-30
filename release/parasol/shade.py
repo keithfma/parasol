@@ -21,10 +21,6 @@ from parasol import surface, common, cfg
 logger = logging.getLogger(__name__)
 
 
-# local constants
-STYLE_NAME = 'shade'
-
-
 def init_grass():
     """Jump through all the hoops needed to run GRASS programatically"""
 

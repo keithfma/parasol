@@ -67,7 +67,7 @@ def shade_layers_meta():
         layer['minute'] = this['minute']
         layer['url'] = f'http://{cfg.GEOSERVER_HOST}:{cfg.GEOSERVER_PORT}/geoserver/ows'
         layer['params'] = {
-            'layers': f'{cfg.GEOSERVER_WORKSPACE}{this["top"]}',
+            'layers': f'{cfg.GEOSERVER_WORKSPACE}:{this["top"]}',
             'opacity': 0.7,
             }
         layers.append(layer)

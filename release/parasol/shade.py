@@ -140,6 +140,7 @@ def update_today():
     """Update insolation frames for whole day in loop"""
 
     # get current day and list of times (interval, etc, are set using config variables)
+    # TODO: use common.shade_times()
     day = int(datetime.now().strftime('%j'))
     times = np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR)
     

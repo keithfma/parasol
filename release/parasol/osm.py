@@ -168,7 +168,7 @@ def way_insolation(hour, minute, wpts):
     yy = yy[::-1] # interpolant requires increasing coords
     wm2 = wm2[:, ::-1]
 
-    # DEBUG: normalize insolation grid
+    # normalize insolation grid
     wm2 = wm2 - np.nanmin(wm2)
     wm2 = wm2/np.nanmax(wm2)
     wm2[np.isnan(wm2)] = 0.5
@@ -191,14 +191,8 @@ def way_insolation(hour, minute, wpts):
     jm2_shade = {}
     for gid, pts in wm2_shade.items():
         jm2_shade[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)
-
-    # # DEBUG: fetch the length of all ways
-    # with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
-    #     cur.execute('SELECT gid, length_m from ways;')
-    #     recs = cur.fetchall()
-    # length = {x[0]: x[1] for x in recs}
     
-    return jm2_sun, jm2_shade #, length 
+    return jm2_sun, jm2_shade
 
 
 def update_cost_db(wpts):
@@ -214,6 +208,7 @@ def update_cost_db(wpts):
     with common.connect_db(cfg.OSM_DB) as conn:
         
         # loop over all calculated times 
+        # TODO: use common.shade_times()
         for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
 
             with conn.cursor() as cur:

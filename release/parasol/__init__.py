@@ -23,4 +23,6 @@ from parasol import surface
 from parasol import shade
 from parasol import geoserver
 from parasol import osm
+from parasol import routing
+from parasol import server
 

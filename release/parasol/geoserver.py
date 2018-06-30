@@ -2,6 +2,22 @@
 Geoserver config automation
 """
 
+import argparse
+import logging
+import requests
+from pkg_resources import resource_filename
+import os
+import glob
+
+from parasol import cfg
+
+
+logger = logging.getLogger(__name__)
+
+
+# local constants
+STYLE_NAME = 'shade'
+
 
 def add_geoserver_workspace():
     """
@@ -119,8 +135,12 @@ def init_geoserver():
     """Initialize geoserver workspace, layers, and style"""
     add_geoserver_workspace()
     add_geoserver_style()
-    for fn in glob.glob(os.path.join(cfg.SHADE_DIR, 'today_*.tif')):
+    for fn in glob.glob(os.path.join(cfg.SHADE_DIR, 'bot_*.tif')):
         add_geoserver_layer(fn)
+    for fn in glob.glob(os.path.join(cfg.SHADE_DIR, 'top_*.tif')):
+        add_geoserver_layer(fn)
+
+
 def initialize_geoserver_cli():
     """Command line utility to init geoserver layers"""
     ap = argparse.ArgumentParser(

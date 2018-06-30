@@ -5,6 +5,7 @@ Subroutines shared across multiple modules
 import logging
 import math
 import psycopg2 as pg 
+import numpy as np
 
 from parasol import cfg
 
@@ -81,3 +82,24 @@ def tile_limits(x_min, x_max, y_min, y_max, x_tile, y_tile):
             tiles.append(tile)
 
     return tiles
+
+def shade_times():
+    """
+    Return shade layer details, computed from config constants
+
+    Arguments: None
+
+    Returns: list of dicts, one for each layer, with fields:
+        hour: int, hour for layer time
+        minute: int, minute for layer time
+        suffix: string, layer suffix encoding time
+    """
+    layers = [] 
+    for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+        layer = {}
+        layer['hour'] = math.floor(fhours)
+        layer['minute'] = math.floor((fhours - layer['hour'])*60)
+        layer['suffix'] = '{hour:02d}{minute:02d}'.format(**layer)
+        layers.append(layer)
+    return(layers)
+

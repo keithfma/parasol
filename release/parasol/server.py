@@ -47,6 +47,22 @@ def route():
     return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
+# @app.route('/layers', methods=['GET'])
+def layers():
+    """
+    List available shade layer details
+
+    Arguments: None
+
+    Returns: JSON, list of available shade layers, each an object with fields:
+        hour: int, hour for layer time
+        minute: int, minute for layer time
+        url: string, URL for tile layer, can be added to leaflet 
+    """
+    raise NotImplementedError
+    
+
+
 # command line ---------------------------------------------------------------
 
 

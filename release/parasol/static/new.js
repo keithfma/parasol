@@ -6,6 +6,7 @@ var originSearch;
 var destSearch;
 var route;
 var beta;
+var shadeLayers;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -17,12 +18,6 @@ var greenIcon = new L.Icon({
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
 });
-
-
-// format layer time as string
-function to_time_str(hour, minute) {
-    return hour.toString().padStart(2, "0") + ':' + minute.toString().padStart(2, "0");
-}
 
 
 // see: https://github.com/smeijer/leaflet-geosearch
@@ -123,9 +118,6 @@ L.Control.Time = L.Control.extend({
     options: {
         optList: [],
         position: 'bottomright',
-        callback: function(value) {
-            console.log('Time value is: ' + value);
-        }
     },
     initialize: function (options) {
         L.setOptions(this, options);
@@ -136,15 +128,19 @@ L.Control.Time = L.Control.extend({
         for (let ii = 0; ii < this.options.optList.length; ii++) {
             this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
         }
+        // update shade layer
         L.DomEvent.on(this.time, "change", function (e) {
-            this.options.callback(this.time.value);
+            var meta = shadeLayers[parseInt(this.time.value)];
+            // TODO: use this info to update the layer
+            console.log(meta);
         }, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
     }
 });
 
-// TODO: use beta value from the slider, when it exists
+
+// call server to compute route and display result
 function updateRoute(event) {
         
     // find marker locations
@@ -208,6 +204,7 @@ window.onload = function () {
     }).addTo(map);
 
     // retrieve shade layer details and add related controls
+    // note: all 'bottomleft' controls added here to ensure correct ordering
     $.ajax({
         url: '/layers',
         type: 'get',
@@ -215,13 +212,17 @@ window.onload = function () {
             console.log('Failed to fetch layers, result:', result);
         },
         success: function(layers) {
+            // store layer metadata list
+            shadeLayers = layers;
+            
             // get list of layer times as formatted strings
-            // TODO: select current time
             layer_times = [];
             for (let ii = 0; ii < layers.length; ii++) {
-                time_str = to_time_str(layers[ii].hour, layers[ii].minute);
+                time_str = layers[ii].hour.toString().padStart(2, "0") + ':' + layers[ii].minute.toString().padStart(2, "0");
                 layer_times.push(time_str);
             }
+            
+            // TODO: select current time
     
             // add shade layer toggle
             // TODO: make these options the default, then don't include them

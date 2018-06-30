@@ -132,11 +132,9 @@ L.Control.Time = L.Control.extend({
                 this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
             }
         }
-        // update shade layer
+        // callback to update shade layer
         L.DomEvent.on(this.time, "change", function (e) {
-            var meta = shadeLayers[parseInt(this.time.value)];
-            // TODO: use this info to update the layer
-            console.log(meta);
+            updateShade();
         }, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
@@ -179,6 +177,29 @@ function updateRoute(event) {
         if (route) route.remove();
     }
 }
+
+
+// add/replace shade layer
+function updateShade() {
+    var layerSelect = document.getElementsByClassName('leaflet-time')[0];
+    var meta = shadeLayers[parseInt(layerSelect.value)];
+    // TODO: use this info to update the layer
+    console.log(meta);
+    
+    //// add default shade layer to map, hidden until shade toggle is triggered
+    //var shadeIdx = parseInt($('#timeSlider')[0].value);
+    //// var newShadeLayer = L.tileLayer.wms('http://52.25.188.159:8080/geoserver/ows?', {
+    //var newShadeLayer = L.tileLayer.wms('http://localhost:8080/geoserver/ows?', {
+    //    layers: shadeLayers[shadeIdx],
+    //    opacity: 0.70
+    //}).addTo(map);
+    //if (shadeLayer) shadeLayer.remove();
+    //shadeLayer = newShadeLayer;
+    //console.log('Updated shade map to idx: ' + shadeIdx.toString() + ', layer: ', shadeLayers[shadeIdx]); 
+
+}
+
+    
 
 
 window.onload = function () {
@@ -230,7 +251,7 @@ window.onload = function () {
                     bestDiff = thisDiff;
                 }
             }
-    
+
             // add shade layer toggle
             // TODO: make these options the default, then don't include them
             new L.Control.Toggle({
@@ -245,6 +266,9 @@ window.onload = function () {
                 defaultIdx: bestIdx,
                 position: 'bottomleft' 
             }).addTo(map);
+        
+            // set initial shade layer
+            updateShade(); 
             
             // add zoom control
             new L.Control.Zoom({

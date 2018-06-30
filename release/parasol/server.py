@@ -47,7 +47,7 @@ def route():
     return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
-# @app.route('/layers', methods=['GET'])
+@app.route('/layers', methods=['GET'])
 def shade_layers_meta():
     """
     List available shade layer details
@@ -71,7 +71,7 @@ def shade_layers_meta():
             'opacity': 0.7,
             }
         layers.append(layer)
-    return layers
+    return flask.jsonify(layers)
         
     
     

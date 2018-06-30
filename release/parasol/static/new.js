@@ -6,7 +6,6 @@ var originSearch;
 var destSearch;
 var route;
 var beta;
-var geoserver_url = 'http://localhost:8080/geoserver'; // TODO: is there a better way?
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -113,38 +112,6 @@ L.Control.Toggle = L.Control.extend({
 });
 
 
-// // define custom time input control
-// L.Control.Time = L.Control.extend({
-//     options: {
-//         position: 'bottomright',
-//         inputCallback: function(value) {
-//             console.log('Time value is: ' + value);
-//         }
-//     },
-//     initialize: function (options) {
-//         L.setOptions(this, options);
-//     },
-//     onAdd: function (map) {
-//         this.container = L.DomUtil.create('div', 'leaflet-time-container');
-//         this.time = L.DomUtil.create('input', 'leaflet-time', this.container);
-//         this.time.setAttribute("type", "time");
-//         this.time.setAttribute("step", 60);
-//         //L.DomEvent.on(this.toggle, "click", function (e) {
-//         //    var isDown = e.target.classList.contains('leaflet-toggle-down');
-//         //    if (isDown) {
-//         //        e.target.classList.remove('leaflet-toggle-down');
-//         //        isDown = false;
-//         //    } else {
-//         //        e.target.classList.add('leaflet-toggle-down');
-//         //        isDown = true;
-//         //    }
-//         //    this.options.clickCallback(isDown);
-//         //}, this);
-//         L.DomEvent.disableClickPropagation(this.container);
-//         return this.container;
-//     }
-// });
-
 // define custom time input control
 L.Control.Time = L.Control.extend({
     options: {
@@ -236,17 +203,15 @@ window.onload = function () {
 
     // retrieve shade layer details and add related controls
     $.ajax({
-        url: geoserver_url + '/wms',
+        url: '/layers',
         type: 'get',
-        data: {request: 'GetCapabiliites'},
-        dataType: 'xml',
         error: function(result) {
-            console.log('Failed to fetch route, result:', result);
-            },
+            console.log('Failed, result:', result);
+        },
         success: function(result) {
-            console.log('Successfully fetched route, result:', result);
-            }
-        });
+            console.log('Success, result:', result);
+        }
+    });
 
     // add shade layer toggle
     new L.Control.Toggle({

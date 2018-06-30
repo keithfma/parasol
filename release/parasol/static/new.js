@@ -6,6 +6,7 @@ var originSearch;
 var destSearch;
 var route;
 var beta;
+var geoserver_url = 'http://localhost:8080/geoserver'; // TODO: is there a better way?
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -233,7 +234,19 @@ window.onload = function () {
         id: 'mapbox.streets'
     }).addTo(map);
 
-    // TODO: add shade layer
+    // retrieve shade layer details and add related controls
+    $.ajax({
+        url: geoserver_url + '/wms',
+        type: 'get',
+        data: {request: 'GetCapabiliites'},
+        dataType: 'xml',
+        error: function(result) {
+            console.log('Failed to fetch route, result:', result);
+            },
+        success: function(result) {
+            console.log('Successfully fetched route, result:', result);
+            }
+        });
 
     // add shade layer toggle
     new L.Control.Toggle({

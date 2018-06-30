@@ -126,7 +126,11 @@ L.Control.Time = L.Control.extend({
         this.container = L.DomUtil.create('div', 'leaflet-time-container');
         this.time = L.DomUtil.create('select', 'leaflet-time', this.container);
         for (let ii = 0; ii < this.options.optList.length; ii++) {
-            this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
+            if (ii == this.options.defaultIdx) {
+                this.time.innerHTML += '<option value="' + ii + '" selected>' + this.options.optList[ii] + '</option>';
+            } else {
+                this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
+            }
         }
         // update shade layer
         L.DomEvent.on(this.time, "change", function (e) {
@@ -206,13 +210,26 @@ window.onload = function () {
             shadeLayers = layers;
             
             // get list of layer times as formatted strings
-            layer_times = [];
+            layerTimes = [];
             for (let ii = 0; ii < layers.length; ii++) {
                 time_str = layers[ii].hour.toString().padStart(2, "0") + ':' + layers[ii].minute.toString().padStart(2, "0");
-                layer_times.push(time_str);
+                layerTimes.push(time_str);
             }
             
-            // TODO: select current time
+            // select layer index nearest to current time
+            var now = new Date();
+            // var now = new Date(2018, 6, 28, 12, 15); // DEBUG: try some other times
+            var nowMin = 60*now.getHours() + now.getMinutes();
+            var bestDiff = 999999;
+            var bestIdx = null;
+            for (let ii = 0; ii < layers.length; ii++) {
+                layerMin = 60*layers[ii].hour + layers[ii].minute;
+                thisDiff = Math.abs(nowMin - layerMin);
+                if (thisDiff < bestDiff) {
+                    bestIdx = ii;
+                    bestDiff = thisDiff;
+                }
+            }
     
             // add shade layer toggle
             // TODO: make these options the default, then don't include them
@@ -224,7 +241,8 @@ window.onload = function () {
 
             // add time input 
             new L.Control.Time({
-                optList: layer_times,
+                optList: layerTimes,
+                defaultIdx: bestIdx,
                 position: 'bottomleft' 
             }).addTo(map);
             

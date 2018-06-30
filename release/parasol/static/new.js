@@ -72,6 +72,41 @@ L.Control.Slider = L.Control.extend({
 });
 
 
+// define custom toggle button control
+L.Control.Toggle = L.Control.extend({
+    options: {
+        position: 'bottomright',
+        clickCallback: function(down) { // TODO: pass an arg with the toggle status
+            if (down) {
+                console.log('Toggle is down');
+            } else {
+                console.log('Toggle is up');
+            }
+        }
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.container = L.DomUtil.create('div', 'leaflet-toggle-container');
+        this.toggle = L.DomUtil.create('button', 'leaflet-toggle', this.container);
+        L.DomEvent.on(this.toggle, "click", function (e) {
+            var isDown = e.target.classList.contains('leaflet-toggle-down');
+            if (isDown) {
+                e.target.classList.remove('leaflet-toggle-down');
+                isDown = false;
+            } else {
+                e.target.classList.add('leaflet-toggle-down');
+                isDown = true;
+            }
+            this.options.clickCallback(isDown);
+        }, this);
+        L.DomEvent.disableClickPropagation(this.container);
+        return this.container;
+    }
+});
+
+
 // TODO: use beta value from the slider, when it exists
 function updateRoute(event) {
         
@@ -137,12 +172,9 @@ window.onload = function () {
 
     // TODO: add shade layer
 
-    // add layer control
-    var layers = {
-        "OSM": osm
-    };
-    L.control.layers(null, layers, {
-        position: 'bottomleft',
+    // add shade layer toggle
+    new L.Control.Toggle({
+        position: 'bottomleft' 
     }).addTo(map);
 
     // add zoom control

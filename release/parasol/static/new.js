@@ -75,8 +75,10 @@ L.Control.Slider = L.Control.extend({
 // define custom toggle button control
 L.Control.Toggle = L.Control.extend({
     options: {
+        imgSrc: null,
+        imgWidth: '20px',
         position: 'bottomright',
-        clickCallback: function(down) { // TODO: pass an arg with the toggle status
+        clickCallback: function(down) {
             if (down) {
                 console.log('Toggle is down');
             } else {
@@ -89,7 +91,10 @@ L.Control.Toggle = L.Control.extend({
     },
     onAdd: function (map) {
         this.container = L.DomUtil.create('div', 'leaflet-toggle-container');
-        this.toggle = L.DomUtil.create('button', 'leaflet-toggle', this.container);
+        this.toggle = L.DomUtil.create('input', 'leaflet-toggle', this.container);
+        this.toggle.setAttribute("type", "image");
+        this.toggle.setAttribute("src", this.options.imgSrc);
+        this.toggle.setAttribute("width", this.options.imgWidth);
         L.DomEvent.on(this.toggle, "click", function (e) {
             var isDown = e.target.classList.contains('leaflet-toggle-down');
             if (isDown) {
@@ -101,6 +106,39 @@ L.Control.Toggle = L.Control.extend({
             }
             this.options.clickCallback(isDown);
         }, this);
+        L.DomEvent.disableClickPropagation(this.container);
+        return this.container;
+    }
+});
+
+
+// define custom time input control
+L.Control.Time = L.Control.extend({
+    options: {
+        position: 'bottomright',
+        inputCallback: function(value) {
+            console.log('Time value is: ' + value);
+        }
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.container = L.DomUtil.create('div', 'leaflet-time-container');
+        this.time = L.DomUtil.create('input', 'leaflet-time', this.container);
+        this.time.setAttribute("type", "time");
+        this.time.setAttribute("step", 60);
+        //L.DomEvent.on(this.toggle, "click", function (e) {
+        //    var isDown = e.target.classList.contains('leaflet-toggle-down');
+        //    if (isDown) {
+        //        e.target.classList.remove('leaflet-toggle-down');
+        //        isDown = false;
+        //    } else {
+        //        e.target.classList.add('leaflet-toggle-down');
+        //        isDown = true;
+        //    }
+        //    this.options.clickCallback(isDown);
+        //}, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
     }
@@ -174,6 +212,13 @@ window.onload = function () {
 
     // add shade layer toggle
     new L.Control.Toggle({
+        imgSrc: '/static/sun.png',
+        imgWidth: '20px',
+        position: 'bottomleft' 
+    }).addTo(map);
+
+    // add time input 
+    new L.Control.Time({
         position: 'bottomleft' 
     }).addTo(map);
 

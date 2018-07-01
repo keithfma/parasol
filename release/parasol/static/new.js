@@ -62,8 +62,8 @@ L.Control.Slider = L.Control.extend({
         this.slider.setAttribute("max", this.options.max);
         this.slider.setAttribute("step", this.options.step);
         this.slider.setAttribute("value", this.options.value);
-        L.DomEvent.on(this.slider, "input", function (e) {
-            beta = val;
+        L.DomEvent.on(this.slider, "change", function (e) {
+            beta = parseFloat(this.slider.value);
             console.log('Beta updated to: ', beta);
             updateRoute();
         }, this);
@@ -78,7 +78,7 @@ L.Control.Toggle = L.Control.extend({
     options: {
         imgSrc: '/static/sun.png',
         imgWidth: '20px',
-        position: 'bottomright' 
+        position: 'bottomleft' 
     },
     initialize: function (options) {
         L.setOptions(this, options);
@@ -110,7 +110,7 @@ L.Control.Time = L.Control.extend({
     options: {
         optList: [],      // must be set
         defaultIdx: null, // must be set
-        position: 'bottomright',
+        position: 'bottomleft',
     },
     initialize: function (options) {
         L.setOptions(this, options);
@@ -244,20 +244,20 @@ window.onload = function () {
             }
 
             // add shade layer toggle
-            new L.Control.Toggle().addTo(map);
+            new L.Control.Toggle({position: 'bottomleft'}).addTo(map);
 
             // add time input 
-            new L.Control.Time({optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
+            new L.Control.Time({position: 'bottomleft', optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
         
             // set initial shade layer
             updateShade(); 
             
             // add zoom control
-            new L.Control.Zoom({position: 'topright'}).addTo(map);
+            new L.Control.Zoom({position: 'bottomleft'}).addTo(map);
         }
     });
 
     // add sun/shade preference slider
-    new L.Control.Slider().addTo(map);
+    new L.Control.Slider({position: 'bottomright'}).addTo(map);
 
 };

@@ -20,37 +20,33 @@ body {
 
 .leaflet-control-geosearch.bar {
     width: 80%;
-    margin-top: 10px;
-    margin-right: auto;
-    margin-bottom: 0px;
-    margin-left: 10px;
 }
 
-/* The slider itself */
 .slider {
-    -webkit-appearance: none;  /* Override default CSS styles */
+    -webkit-appearance: none;
     appearance: none;
-    width: 90%; /* Full-width */
-    height: 25px; /* Specified height */
+    width: 30%;
+    height: 25px;
     background: #6b5b95;
-    outline: none; /* Remove outline */
+    outline: none;
+    display: inline-block;
+    vertical-align: middle;
 }
 
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
 .slider::-webkit-slider-thumb {
-    -webkit-appearance: none; /* Override default look */
+    -webkit-appearance: none;
     appearance: none;
-    width: 25px; /* Set a specific slider handle width */
-    height: 25px; /* Slider handle height */
-    background: #ffffff; /* Green background */
-    cursor: pointer; /* Cursor on hover */
+    width: 25px;
+    height: 25px;
+    background: #ffffff;
+    cursor: pointer;
 }
 
 .slider::-moz-range-thumb {
-    width: 25px; /* Set a specific slider handle width */
-    height: 25px; /* Slider handle height */
-    background: #ffffff; /* Green background */
-    cursor: pointer; /* Cursor on hover */
+    width: 25px;
+    height: 25px;
+    background: #ffffff;
+    cursor: pointer;
 }
 
 .toggle {
@@ -78,6 +74,10 @@ body {
     border-right: solid 2px #eaeaea;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 .time {
     background-color: #6b5b95;
     border-top: solid 2px #eaeaea;
@@ -97,17 +97,18 @@ body {
     vertical-align: middle;
 }
 
-.leaflet-control-zoom {
-    vertical-align: middle;
-}
-
-.hidden {
-    visibility: hidden;
-}
-
 .leaflet-control {
     float: none;
     display: inline-block;
+}
+
+.leaflet-bottom {
+    text-align: center;
+    width: 100%;
+}
+
+.leaflet-control-zoom {
+    vertical-align: middle;
 }
   
 .leaflet-bar a, .leaflet-bar a:hover {

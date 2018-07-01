@@ -241,6 +241,7 @@ window.onload = function () {
             }
 
             // add bottom controls
+            new L.Control.Slider({position: 'bottomleft'}).addTo(map);
             new L.Control.Time({position: 'bottomleft', optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
             new L.Control.Toggle({position: 'bottomleft'}).addTo(map);
             new L.Control.Zoom({position: 'bottomleft'}).addTo(map);
@@ -251,6 +252,5 @@ window.onload = function () {
     });
 
     // add sun/shade preference slider
-    new L.Control.Slider({position: 'bottomright'}).addTo(map);
 
 };

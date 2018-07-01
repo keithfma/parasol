@@ -43,32 +43,29 @@ function newSearchControl(text, icon) {
 
 // define custom slider control
 // see: https://github.com/Eclipse1979/leaflet-slider
-// TODO: set better defaults, then don't use them below
-// TODO: simplify callback def
 L.Control.Slider = L.Control.extend({
     options: {
         position: 'bottomright',
         min: 0,
-        max: 250,
-        step: 1,
-        value: 50,
-        inputCallback: function(value) {
-            console.log(value);
-        }
+        max: 1,
+        step: 0.01,
+        value: 0.5,
     },
     initialize: function (options) {
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'leaflet-slider-container');
-        this.slider = L.DomUtil.create('input', 'leaflet-slider', this.container);
+        this.container = L.DomUtil.create('div', 'slider-container');
+        this.slider = L.DomUtil.create('input', 'slider', this.container);
         this.slider.setAttribute("type", "range");
         this.slider.setAttribute("min", this.options.min);
         this.slider.setAttribute("max", this.options.max);
         this.slider.setAttribute("step", this.options.step);
         this.slider.setAttribute("value", this.options.value);
         L.DomEvent.on(this.slider, "input", function (e) {
-            this.options.inputCallback(this.slider.value);
+            beta = val;
+            console.log('Beta updated to: ', beta);
+            updateRoute();
         }, this);
         L.DomEvent.disableClickPropagation(this.container);
         return this.container;
@@ -79,26 +76,26 @@ L.Control.Slider = L.Control.extend({
 // define custom toggle button control
 L.Control.Toggle = L.Control.extend({
     options: {
-        imgSrc: null,
+        imgSrc: '/static/sun.png',
         imgWidth: '20px',
-        position: 'bottomright'
+        position: 'bottomright' 
     },
     initialize: function (options) {
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'leaflet-toggle-container');
-        this.toggle = L.DomUtil.create('input', 'leaflet-toggle', this.container);
+        this.container = L.DomUtil.create('div', 'toggle-container');
+        this.toggle = L.DomUtil.create('input', 'toggle', this.container);
         this.toggle.setAttribute("type", "image");
         this.toggle.setAttribute("src", this.options.imgSrc);
         this.toggle.setAttribute("width", this.options.imgWidth);
         L.DomEvent.on(this.toggle, "click", function (e) {
-            var isDown = e.target.classList.contains('leaflet-toggle-down');
+            var isDown = e.target.classList.contains('toggle-down');
             if (isDown) {
-                e.target.classList.remove('leaflet-toggle-down');
+                e.target.classList.remove('toggle-down');
                 shadeLayer._container.classList.add('hidden');
             } else {
-                e.target.classList.add('leaflet-toggle-down');
+                e.target.classList.add('toggle-down');
                 shadeLayer._container.classList.remove('hidden');
             }
         }, this);
@@ -111,15 +108,16 @@ L.Control.Toggle = L.Control.extend({
 // define custom time input control
 L.Control.Time = L.Control.extend({
     options: {
-        optList: [],
+        optList: [],      // must be set
+        defaultIdx: null, // must be set
         position: 'bottomright',
     },
     initialize: function (options) {
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'leaflet-time-container');
-        this.time = L.DomUtil.create('select', 'leaflet-time', this.container);
+        this.container = L.DomUtil.create('div', 'time-container');
+        this.time = L.DomUtil.create('select', 'time', this.container);
         for (let ii = 0; ii < this.options.optList.length; ii++) {
             if (ii == this.options.defaultIdx) {
                 this.time.innerHTML += '<option value="' + ii + '" selected>' + this.options.optList[ii] + '</option>';
@@ -148,27 +146,21 @@ function updateRoute(event) {
         }
     });
 
-    if (pts.length == 2) {
-        // get route from backend and display route
+    if (pts.length == 2) { // get route from backend and display route
         $.ajax({
             url: '/route',
             type: 'get',
             data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng, beta: beta},
             dataType: 'json',
-            error: function(result) {
-                console.log('Failed to fetch route, result:', result);
-            },
+            error: function(result) {console.log('Failed to fetch route, result:', result);},
             success: function(result) {
                 console.log('Successfully fetched route, result:', result);
                 if (route) route.remove();
-                route = L.geoJSON(result, { 
-                    style: {color: "#33B028", weight: 5, opacity: 0.8}
-                });
+                route = L.geoJSON(result, {style: {color: "#33B028", weight: 5, opacity: 0.8}});
                 route.addTo(map);
             }
         });
-    } else {
-        // not enough points, clear route
+    } else { // not enough points, clear route
         if (route) route.remove();
     }
 }
@@ -176,12 +168,12 @@ function updateRoute(event) {
 
 // add/replace shade layer
 function updateShade() {
-    var layerSelect = document.getElementsByClassName('leaflet-time')[0];
+    var layerSelect = document.getElementsByClassName('time')[0];
     var meta = shadeLayers[parseInt(layerSelect.value)];
     if (shadeLayer) shadeLayer.remove();
     shadeLayer = L.tileLayer.wms(meta.url, meta.params).addTo(map);
-    var toggle = document.getElementsByClassName('leaflet-toggle')[0];
-    if (!toggle.classList.contains('leaflet-toggle-down')) {
+    var toggle = document.getElementsByClassName('toggle')[0];
+    if (!toggle.classList.contains('toggle-down')) {
         shadeLayer._container.classList.add('hidden');
     }
 }
@@ -196,6 +188,21 @@ window.onload = function () {
         zoomControl: false,
         attributionControl: false
     });
+
+    // add search bars
+    searchProvider = new OpenStreetMapProvider();
+    originSearch = newSearchControl("Enter origin address", greenIcon);
+    destSearch = newSearchControl("Enter destination address", greenIcon);
+    map.addControl(originSearch); 
+    map.addControl(destSearch); 
+    map.on('geosearch/showlocation', updateRoute);
+    map.on('geosearch/marker/dragend', updateRoute);
+
+    // update route when search bar "x" is clicked
+    var resetBtns = document.getElementsByClassName("reset");
+    for (var ii = 0; ii < resetBtns.length; ii++) {
+        resetBtns[ii].addEventListener('click', updateRoute, false);
+    }
 
     // add OSM basemap
     osm = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
@@ -237,57 +244,20 @@ window.onload = function () {
             }
 
             // add shade layer toggle
-            // TODO: make these options the default, then don't include them
-            new L.Control.Toggle({
-                imgSrc: '/static/sun.png',
-                imgWidth: '20px',
-                position: 'bottomleft' 
-            }).addTo(map);
+            new L.Control.Toggle().addTo(map);
 
             // add time input 
-            new L.Control.Time({
-                optList: layerTimes,
-                defaultIdx: bestIdx,
-                position: 'bottomleft' 
-            }).addTo(map);
+            new L.Control.Time({optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
         
             // set initial shade layer
             updateShade(); 
             
             // add zoom control
-            new L.Control.Zoom({
-                position: 'bottomleft' 
-            }).addTo(map);
+            new L.Control.Zoom({position: 'topright'}).addTo(map);
         }
     });
-
-    // add search bars
-    searchProvider = new OpenStreetMapProvider();
-    originSearch = newSearchControl("Enter origin address", greenIcon);
-    destSearch = newSearchControl("Enter destination address", greenIcon);
-    map.addControl(originSearch); 
-    map.addControl(destSearch); 
-    map.on('geosearch/showlocation', updateRoute);
-    map.on('geosearch/marker/dragend', updateRoute);
-
-    // update route when search bar "x" is clicked
-    var resetBtns = document.getElementsByClassName("reset");
-    for (var ii = 0; ii < resetBtns.length; ii++) {
-        resetBtns[ii].addEventListener('click', updateRoute, false);
-    }
 
     // add sun/shade preference slider
-    var slider = new L.Control.Slider({
-        min: 0,
-        max: 1,
-        step: 0.01,
-        value: 0.5,
-        inputCallback: function(val) {
-            beta = val;
-            console.log('Beta updated to: ', beta);
-            updateRoute();
-        }
-    });
-    map.addControl(slider);
+    new L.Control.Slider().addTo(map);
 
 };

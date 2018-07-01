@@ -19,42 +19,49 @@ body {
 }
 
 .leaflet-control-geosearch.bar {
-  width: 90%;
+    width: 80%;
+    margin-top: 10px;
+    margin-right: auto;
+    margin-bottom: 0px;
+    margin-left: 10px;
 }
 
-.leaflet-slider-container {
-    width: 90%; /* Width of the outside container */
+.leaflet-bottom {
+    width: 100%;
+}
+
+.slider-container {
+    width: 50%; /* Width of the outside container */
 }
 
 /* The slider itself */
-.leaflet-slider {
+.slider {
     -webkit-appearance: none;  /* Override default CSS styles */
     appearance: none;
     width: 90%; /* Full-width */
     height: 25px; /* Specified height */
-    background: #d3d3d3; /* Grey background */
+    background: #6b5b95;
     outline: none; /* Remove outline */
-    opacity: 0.9; /* Set transparency (for mouse-over effects on hover) */
 }
 
 /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-.leaflet-slider::-webkit-slider-thumb {
+.slider::-webkit-slider-thumb {
     -webkit-appearance: none; /* Override default look */
     appearance: none;
     width: 25px; /* Set a specific slider handle width */
     height: 25px; /* Slider handle height */
-    background: #4CAF50; /* Green background */
+    background: #ffffff; /* Green background */
     cursor: pointer; /* Cursor on hover */
 }
 
-.leaflet-slider::-moz-range-thumb {
+.slider::-moz-range-thumb {
     width: 25px; /* Set a specific slider handle width */
     height: 25px; /* Slider handle height */
-    background: #4CAF50; /* Green background */
+    background: #ffffff; /* Green background */
     cursor: pointer; /* Cursor on hover */
 }
 
-.leaflet-toggle {
+.toggle {
     background-color: #6b5b95;
     border-top: solid 2px #eaeaea;
     border-left: solid 2px #eaeaea;
@@ -71,7 +78,7 @@ body {
     border-radius: 12px;
 }
 
-.leaflet-toggle-down {
+.toggle-down {
     background-color: #453a5f;
     border-top: solid 2px #777;
     border-left: solid 2px #777;
@@ -79,7 +86,7 @@ body {
     border-right: solid 2px #eaeaea;
 }
 
-.leaflet-time{
+.time{
     background-color: #6b5b95;
     border-top: solid 2px #eaeaea;
     border-left: solid 2px #eaeaea;
@@ -101,3 +108,4 @@ body {
 .hidden {
     visibility: hidden;
 }
+

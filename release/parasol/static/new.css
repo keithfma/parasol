@@ -25,8 +25,8 @@ body {
 .slider {
     -webkit-appearance: none;
     appearance: none;
-    width: 30%;
-    height: 25px;
+    width: 70%;
+    height: 35px;
     background: #6b5b95;
     outline: none;
     display: inline-block;
@@ -105,13 +105,23 @@ body {
 .leaflet-bottom {
     text-align: center;
     width: 100%;
+    background-color: #c7c0d8;
 }
 
 .leaflet-control-zoom {
     vertical-align: middle;
 }
+
+.leaflet-control-zoom {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
   
 .leaflet-bar a, .leaflet-bar a:hover {
     background-color: #6b5b95;
     color: white;
+}
+
+.slider-icon {
+    vertical-align: middle
 }

@@ -55,7 +55,11 @@ L.Control.Slider = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.slider = L.DomUtil.create('input', 'slider');
+        this.container = L.DomUtil.create('div');
+        this.leftIcon = L.DomUtil.create('img', 'slider-icon', this.container);
+        this.leftIcon.setAttribute('src', '/static/sun.png');
+        this.leftIcon.setAttribute('width', '15px');
+        this.slider = L.DomUtil.create('input', 'slider', this.container);
         this.slider.setAttribute("type", "range");
         this.slider.setAttribute("min", this.options.min);
         this.slider.setAttribute("max", this.options.max);
@@ -67,7 +71,10 @@ L.Control.Slider = L.Control.extend({
             updateRoute();
         }, this);
         L.DomEvent.disableClickPropagation(this.slider);
-        return this.slider;
+        this.leftIcon = L.DomUtil.create('img', 'slider-icon', this.container);
+        this.leftIcon.setAttribute('src', '/static/sun.png');
+        this.leftIcon.setAttribute('width', '25px');
+        return this.container;
     }
 });
 
@@ -153,7 +160,7 @@ function updateRoute(event) {
             success: function(result) {
                 console.log('Successfully fetched route, result:', result);
                 if (route) route.remove();
-                route = L.geoJSON(result, {style: {color: "#33B028", weight: 5, opacity: 0.8}});
+                route = L.geoJSON(result, {style: {color: "#33B028", weight: 5}});
                 route.addTo(map);
             }
         });

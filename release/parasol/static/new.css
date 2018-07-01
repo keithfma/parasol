@@ -26,14 +26,6 @@ body {
     margin-left: 10px;
 }
 
-.leaflet-bottom {
-    width: 100%;
-}
-
-.slider-container {
-    width: 50%; /* Width of the outside container */
-}
-
 /* The slider itself */
 .slider {
     -webkit-appearance: none;  /* Override default CSS styles */
@@ -71,11 +63,11 @@ body {
     padding: 10px;
     text-align: center;
     text-decoration: none;
-    display: inline-block;
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 12px;
+    vertical-align: middle;
 }
 
 .toggle-down {
@@ -86,7 +78,7 @@ body {
     border-right: solid 2px #eaeaea;
 }
 
-.time{
+.time {
     background-color: #6b5b95;
     border-top: solid 2px #eaeaea;
     border-left: solid 2px #eaeaea;
@@ -96,16 +88,29 @@ body {
     padding: 10px;
     text-align: center;
     text-decoration: none;
-    display: inline-block;
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 12px;
     -moz-appearance: none;
     -webkit-appearance: none;
+    vertical-align: middle;
+}
+
+.leaflet-control-zoom {
+    vertical-align: middle;
 }
 
 .hidden {
     visibility: hidden;
 }
 
+.leaflet-control {
+    float: none;
+    display: inline-block;
+}
+  
+.leaflet-bar a, .leaflet-bar a:hover {
+    background-color: #6b5b95;
+    color: white;
+}

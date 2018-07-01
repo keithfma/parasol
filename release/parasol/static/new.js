@@ -55,8 +55,7 @@ L.Control.Slider = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'slider-container');
-        this.slider = L.DomUtil.create('input', 'slider', this.container);
+        this.slider = L.DomUtil.create('input', 'slider');
         this.slider.setAttribute("type", "range");
         this.slider.setAttribute("min", this.options.min);
         this.slider.setAttribute("max", this.options.max);
@@ -67,8 +66,8 @@ L.Control.Slider = L.Control.extend({
             console.log('Beta updated to: ', beta);
             updateRoute();
         }, this);
-        L.DomEvent.disableClickPropagation(this.container);
-        return this.container;
+        L.DomEvent.disableClickPropagation(this.slider);
+        return this.slider;
     }
 });
 
@@ -84,8 +83,7 @@ L.Control.Toggle = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'toggle-container');
-        this.toggle = L.DomUtil.create('input', 'toggle', this.container);
+        this.toggle = L.DomUtil.create('input', 'toggle');
         this.toggle.setAttribute("type", "image");
         this.toggle.setAttribute("src", this.options.imgSrc);
         this.toggle.setAttribute("width", this.options.imgWidth);
@@ -99,8 +97,8 @@ L.Control.Toggle = L.Control.extend({
                 shadeLayer._container.classList.remove('hidden');
             }
         }, this);
-        L.DomEvent.disableClickPropagation(this.container);
-        return this.container;
+        L.DomEvent.disableClickPropagation(this.toggle);
+        return this.toggle;
     }
 });
 
@@ -116,8 +114,7 @@ L.Control.Time = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.container = L.DomUtil.create('div', 'time-container');
-        this.time = L.DomUtil.create('select', 'time', this.container);
+        this.time = L.DomUtil.create('select', 'time');
         for (let ii = 0; ii < this.options.optList.length; ii++) {
             if (ii == this.options.defaultIdx) {
                 this.time.innerHTML += '<option value="' + ii + '" selected>' + this.options.optList[ii] + '</option>';
@@ -129,8 +126,8 @@ L.Control.Time = L.Control.extend({
         L.DomEvent.on(this.time, "change", function (e) {
             updateShade();
         }, this);
-        L.DomEvent.disableClickPropagation(this.container);
-        return this.container;
+        L.DomEvent.disableClickPropagation(this.time);
+        return this.time;
     }
 });
 
@@ -243,17 +240,13 @@ window.onload = function () {
                 }
             }
 
-            // add shade layer toggle
-            new L.Control.Toggle({position: 'bottomleft'}).addTo(map);
-
-            // add time input 
+            // add bottom controls
             new L.Control.Time({position: 'bottomleft', optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
-        
-            // set initial shade layer
-            updateShade(); 
-            
-            // add zoom control
+            new L.Control.Toggle({position: 'bottomleft'}).addTo(map);
             new L.Control.Zoom({position: 'bottomleft'}).addTo(map);
+            
+            // init shade layer
+            updateShade(); 
         }
     });
 

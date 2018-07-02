@@ -20,10 +20,9 @@ app = flask.Flask('parasol')
 
 
 @app.route('/', methods=["GET"])
-@app.route('/ui', methods=["GET"])
 def main():
     """Main Parasol user interface"""
-    return flask.render_template('new.html')
+    return flask.render_template('index.html')
 
 
 @app.route('/route', methods=['GET'])
@@ -72,9 +71,6 @@ def shade_layers_meta():
             }
         layers.append(layer)
     return flask.jsonify(layers)
-        
-    
-    
 
 
 # command line ---------------------------------------------------------------

@@ -138,7 +138,7 @@ L.Control.Time = L.Control.extend({
         // callback to update shade layer
         L.DomEvent.on(this.time, "change", function (e) {
             updateShade();
-            updateOptimalRoute();
+            updateAllRoutes();
         }, this);
         L.DomEvent.disableClickPropagation(this.time);
         return this.time;
@@ -190,10 +190,6 @@ function updateOptimalRoute() {
                 }
                 optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
                 optimalRoute.addTo(map);
-                // TODO: populate popup text for optimal route
-                var lengthFraction = optimalRouteLength/shortestRouteLength;
-                var sunFraction = optimalRouteSun/shortestRouteSun; 
-                console.log('LENGTH:', lengthFraction, 'SUN:', sunFraction); // DEBUG
                 map.almostOver.addLayer(optimalRoute);
             }
         });
@@ -223,13 +219,8 @@ function updateShortestRoute() {
             success: function(result) {
                 shortestRouteLength = result.length;
                 shortestRouteSun = result.sun;
-                // if (shortestRoute) shortestRoute.remove();
-                // shortestRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 2, dashArray: "4 1"}});
-                // shortestRoute.addTo(map);
             }
         });
-    } else { // not enough points, clear route
-        // if (shortestRoute) shortestRoute.remove();
     }
 }
 
@@ -253,6 +244,19 @@ function updateShade() {
 }
 
 
+// generate contents for route popup
+function popupHtml() {
+    if (optimalRoute) {
+        html = 'Length: ' + optimalRouteLength.toFixed(0) + 'm';
+        html += '<br>' + (optimalRouteLength/shortestRouteLength).toFixed(2) + 'x length' ;
+        html += '<br>' + (optimalRouteSun/shortestRouteSun).toFixed(2) + 'x sun';
+    } else {
+        html = '';
+    }
+    return html
+}
+
+
 window.onload = function () {
 
     // create map
@@ -265,10 +269,7 @@ window.onload = function () {
 
     // enable tooltips when user (nearly) hovers over routes
     map.on('almost:over', function (e) {
-        routePopup = L.popup()
-            .setLatLng(e.latlng)
-            .setContent('<p>Hello world!<br />This is a nice popup.</p>')
-            .openOn(map);
+        routePopup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
     });
     map.on('almost:out', function (e) {
         map.removeLayer(routePopup);
@@ -338,7 +339,5 @@ window.onload = function () {
             updateShade(); 
         }
     });
-
-    // add sun/shade preference slider
 
 };

@@ -183,7 +183,10 @@ function updateOptimalRoute() {
             success: function(result) {
                 optimalRouteLength = result.length;
                 optimalRouteSun = result.sun;
-                console.log(optimalRouteLength, optimalRouteSun); // DEBUG
+                var lengthFraction = optimalRouteLength/shortestRouteLength;
+                var sunFraction = optimalRouteSun/shortestRouteSun; 
+                // TODO: populate popup text for optimal route
+                console.log('LENGTH:', lengthFraction, 'SUN:', sunFraction); // DEBUG
                 if (optimalRoute) optimalRoute.remove();
                 optimalRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
                 optimalRoute.addTo(map);
@@ -212,7 +215,7 @@ function updateShortestRoute() {
             success: function(result) {
                 shortestRouteLength = result.length;
                 shortestRouteSun = result.sun;
-                console.log(shortestRouteLength, shortestRouteSun); // DEBUG
+                // TODO: populate popup text for shortest route
                 if (shortestRoute) shortestRoute.remove();
                 shortestRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
                 shortestRoute.addTo(map);

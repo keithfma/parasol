@@ -9,6 +9,7 @@ from pkg_resources import resource_filename
 import psycopg2
 from pdb import set_trace
 import logging
+from datetime import datetime
 
 from parasol import cfg, common, routing
 
@@ -28,10 +29,10 @@ def main():
     return flask.render_template('index.html')
 
 
-@app.route('/route', methods=['GET'])
-def route():
+@app.route('/route/optimal', methods=['GET'])
+def optimal():
     """
-    Compute route between specified start and end points
+    Compute optimal (wrt sun/shade) route between specified start and end points
 
     Parameters (URL query string):
         lat0, lon0: floats, start point latitude, longitude
@@ -49,14 +50,41 @@ def route():
     hour = int(flask.request.args.get('hour'))
     minute = int(flask.request.args.get('minute'))
 
-    # TODO: shortest path
+    time = datetime.now().replace(
+        hour=hour, minute=minute, second=0, microsecond=0)
+    length, sun, geojson = routing.route_optimal(lon0, lat0, lon1, lat1, time, beta)
 
-    # optimal path
-    opt_length, opt_sun, opt_geojson = routing.route(lon0, lat0, lon1, lat1, beta, hour, minute)
-    
-    # TODO: compute comparison metrics (optimal vs shortest)
+    # TODO: return other outputs
 
-    return flask.Response(status=200, response=opt_geojson, mimetype='application/json')
+    return flask.Response(status=200, response=geojson, mimetype='application/json')
+
+
+@app.route('/route/shortest', methods=['GET'])
+def shortest():
+    """
+    Compute shortest route between specified start and end points
+
+    Parameters (URL query string):
+        lat0, lon0: floats, start point latitude, longitude
+        lat1, lon1: floats, end point latitude, longitude
+        hour, minute: ints, time to compute route for
+
+    Returns: optimal route as geoJSON
+    """
+    lat0 = float(flask.request.args.get('lat0'))
+    lon0 = float(flask.request.args.get('lon0'))
+    lat1 = float(flask.request.args.get('lat1'))
+    lon1 = float(flask.request.args.get('lon1'))
+    hour = int(flask.request.args.get('hour'))
+    minute = int(flask.request.args.get('minute'))
+
+    time = datetime.now().replace(
+        hour=hour, minute=minute, second=0, microsecond=0)
+    length, sun, geojson = routing.route_shortest(lon0, lat0, lon1, lat1, time)
+
+    # TODO: return other outputs
+
+    return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
 @app.route('/layers', methods=['GET'])

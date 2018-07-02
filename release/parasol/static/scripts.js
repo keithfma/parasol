@@ -164,7 +164,7 @@ function updateRoute(event) {
 
     if (pts.length == 2) { // get route from backend and display route
         $.ajax({
-            url: '/route',
+            url: '/route/optimal',
             type: 'get',
             data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
                    beta: beta, hour: now.hour, minute: now.minute},

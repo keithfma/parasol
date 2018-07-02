@@ -137,6 +137,7 @@ L.Control.Time = L.Control.extend({
         // callback to update shade layer
         L.DomEvent.on(this.time, "change", function (e) {
             updateShade();
+            updateOptimalRoute();
         }, this);
         L.DomEvent.disableClickPropagation(this.time);
         return this.time;
@@ -166,7 +167,7 @@ function selectedEndpts() {
 
 
 // call server to compute optimal route and display result
-function updateOptimalRoute(event) {
+function updateOptimalRoute() {
         
     pts = selectedEndpts();
     now = selectedTime();
@@ -194,41 +195,39 @@ function updateOptimalRoute(event) {
 }
 
 
-// // call server to compute shortest route and display result
-// function updateShortestRoute(event) {
-//         
-//     // find marker locations
-//     var pts = []
-//     map.eachLayer(function(lyr) {
-//         if (lyr instanceof L.Marker) {
-//             pts.push(lyr.getLatLng());
-//         }
-//     });
-// 
-//     // get selected time
-//     now = selectedTime();
-// 
-//     if (pts.length == 2) { // get route from backend, store metadata, display route
-//         $.ajax({
-//             url: '/route/optimal',
-//             type: 'get',
-//             data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
-//                    beta: beta, hour: now.hour, minute: now.minute},
-//             dataType: 'json',
-//             error: function(result) {console.log('Failed to fetch route, result:', result);},
-//             success: function(result) {
-//                 optimalRouteLength = result.length;
-//                 optimalRouteSun = result.sun;
-//                 console.log(optimalRouteLength, optimalRouteSun); // DEBUG
-//                 if (optimalRoute) optimalRoute.remove();
-//                 optimalRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
-//                 optimalRoute.addTo(map);
-//             }
-//         });
-//     } else { // not enough points, clear route
-//         if (optimalRoute) optimalRoute.remove();
-//     }
-// }
+// call server to compute shortest route and display result
+function updateShortestRoute() {
+        
+    pts = selectedEndpts();
+    now = selectedTime();
+
+    if (pts.length == 2) { // get route from backend, store metadata, display route
+        $.ajax({
+            url: '/route/shortest',
+            type: 'get',
+            data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
+                   hour: now.hour, minute: now.minute},
+            dataType: 'json',
+            error: function(result) {console.log('Failed to fetch route, result:', result);},
+            success: function(result) {
+                shortestRouteLength = result.length;
+                shortestRouteSun = result.sun;
+                console.log(shortestRouteLength, shortestRouteSun); // DEBUG
+                if (shortestRoute) shortestRoute.remove();
+                shortestRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
+                shortestRoute.addTo(map);
+            }
+        });
+    } else { // not enough points, clear route
+        if (shortestRoute) shortestRoute.remove();
+    }
+}
+
+
+function updateAllRoutes() {
+    updateShortestRoute();
+    updateOptimalRoute();
+}
 
 
 // add/replace shade layer
@@ -260,13 +259,13 @@ window.onload = function () {
     destSearch = newSearchControl("Enter destination address", greenIcon);
     map.addControl(originSearch); 
     map.addControl(destSearch); 
-    map.on('geosearch/showlocation', updateOptimalRoute);
-    map.on('geosearch/marker/dragend', updateOptimalRoute);
+    map.on('geosearch/showlocation', updateAllRoutes);
+    map.on('geosearch/marker/dragend', updateAllRoutes);
 
     // update route when search bar "x" is clicked
     var resetBtns = document.getElementsByClassName("reset");
     for (var ii = 0; ii < resetBtns.length; ii++) {
-        resetBtns[ii].addEventListener('click', updateOptimalRoute, false);
+        resetBtns[ii].addEventListener('click', updateAllRoutes, false);
     }
 
     // add OSM basemap

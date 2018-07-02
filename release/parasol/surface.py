@@ -175,7 +175,7 @@ def retrieve(x_min, x_max, y_min, y_max, which):
         which: string, which raster to retrieve data from, must be one of
             'surface', 'ground'
 
-    Returns: numpy array
+    Returns: x_grd, y_grd, z_grd
     """
     # get raster file name
     if which == 'surface':
@@ -187,11 +187,20 @@ def retrieve(x_min, x_max, y_min, y_max, which):
 
     # get subset as file
     with tempfile.NamedTemporaryFile() as fp:
-        dest_file = fp.name()
+        dest_file = fp.name
         subprocess.run(['gdal_translate', '-of', 'GTiff', '-projwin',
             str(x_min), str(y_max), str(x_max), str(y_min), src_file, dest_file])
 
-    # TODO: read file 
+        ds = gdal.Open(dest_file)
+        z_grd = np.array(ds.GetRasterBand(1).ReadAsArray())
+
+        transform = ds.GetGeoTransform()
+        y_pixel = np.arange(0, z_grd.shape[0]).reshape((z_grd.shape[0], 1))
+        x_pixel = np.arange(0, z_grd.shape[1]).reshape((1, z_grd.shape[1]))
+        x_grd = transform[0] + x_pixel*transform[1] + y_pixel*transform[2]
+        y_grd = transform[3] + x_pixel*transform[4] + y_pixel*transform[5]
+
+    return x_grd, y_grd, z_grd
 
 
 # command line utilities -----------------------------------------------------

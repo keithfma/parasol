@@ -1,107 +1,263 @@
-// SEE: https://sandbox.idre.ucla.edu/sandbox/general/zoomable-image-with-gdal-and-leaflet
-// SEE: http://bl.ocks.org/bentrm/5aaedf8f2bd9361e280d
-
-// script globals
+var GeoSearchControl = window.GeoSearch.GeoSearchControl;
+var OpenStreetMapProvider = window.GeoSearch.OpenStreetMapProvider;
 var map;
-var shadeBbox = [[42.3343660, -71.0825971], [42.3620201, -71.0453125]];
-var shadeLayer;
-var shadeUrls = [];
-var start;
-var end;
-var startMarker;
-var endMarker;
+var searchProvider;
+var originSearch;
+var destSearch;
 var route;
-var animation;
-var shadeLayers = [];
+var beta=0.5;
+var shadeLayers;
+var shadeLayer;
 
-// get route and update map
-function updateRoute() {
-    if (!start || !end) return; // abort if don't have two endpoints
-    $.ajax({
-        url: '/route',
-        method: 'GET',
-        data: {lat0: start.lat, lon0: start.lng, lat1: end.lat, lon1: end.lng},
-        dataType: 'json',
-        error: function(result) {
-            console.log('Failed to fetch route, result:', result);
+
+// see: https://github.com/pointhi/leaflet-color-markers 
+var greenIcon = new L.Icon({
+    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+
+// see: https://github.com/smeijer/leaflet-geosearch
+function newSearchControl(text, icon) {
+    const search = new GeoSearchControl({
+        provider: searchProvider,
+        style: "bar",
+        autoClose: false,
+        showMarker: true,
+        marker: {
+            icon: icon,
+            draggable: true,
         },
-        success: function(result) {
-            console.log('Successfully fetched route, result:', result);
-            if (route) route.remove();
-            route = L.geoJSON(result);
-            route.addTo(map);
+        searchLabel: text,
+        retainZoomLevel: true,
+        autoClose: true,
+        keepResult: true,
+    }); 
+    return search
+}
+
+
+// define custom slider control
+// see: https://github.com/Eclipse1979/leaflet-slider
+L.Control.Slider = L.Control.extend({
+    options: {
+        position: 'bottomright',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        value: 0.5,
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.container = L.DomUtil.create('div');
+        this.leftIcon = L.DomUtil.create('img', 'slider-icon', this.container);
+        this.leftIcon.setAttribute('src', '/static/sun.png');
+        this.leftIcon.setAttribute('width', '15px');
+        this.slider = L.DomUtil.create('input', 'slider', this.container);
+        this.slider.setAttribute("type", "range");
+        this.slider.setAttribute("min", this.options.min);
+        this.slider.setAttribute("max", this.options.max);
+        this.slider.setAttribute("step", this.options.step);
+        this.slider.setAttribute("value", this.options.value);
+        L.DomEvent.on(this.slider, "change", function (e) {
+            beta = parseFloat(this.slider.value);
+            console.log('Beta updated to: ', beta);
+            updateRoute();
+        }, this);
+        L.DomEvent.disableClickPropagation(this.slider);
+        this.leftIcon = L.DomUtil.create('img', 'slider-icon', this.container);
+        this.leftIcon.setAttribute('src', '/static/sun.png');
+        this.leftIcon.setAttribute('width', '25px');
+        return this.container;
+    }
+});
+
+
+// define custom toggle button control
+L.Control.Toggle = L.Control.extend({
+    options: {
+        imgSrc: '/static/sun.png',
+        imgWidth: '20px',
+        position: 'bottomleft' 
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.toggle = L.DomUtil.create('input', 'toggle');
+        this.toggle.setAttribute("type", "image");
+        this.toggle.setAttribute("src", this.options.imgSrc);
+        this.toggle.setAttribute("width", this.options.imgWidth);
+        L.DomEvent.on(this.toggle, "click", function (e) {
+            var isDown = e.target.classList.contains('toggle-down');
+            if (isDown) {
+                e.target.classList.remove('toggle-down');
+                shadeLayer._container.classList.add('hidden');
+            } else {
+                e.target.classList.add('toggle-down');
+                shadeLayer._container.classList.remove('hidden');
+            }
+        }, this);
+        L.DomEvent.disableClickPropagation(this.toggle);
+        return this.toggle;
+    }
+});
+
+
+// define custom time input control
+L.Control.Time = L.Control.extend({
+    options: {
+        optList: [],      // must be set
+        defaultIdx: null, // must be set
+        position: 'bottomleft',
+    },
+    initialize: function (options) {
+        L.setOptions(this, options);
+    },
+    onAdd: function (map) {
+        this.time = L.DomUtil.create('select', 'time');
+        for (let ii = 0; ii < this.options.optList.length; ii++) {
+            if (ii == this.options.defaultIdx) {
+                this.time.innerHTML += '<option value="' + ii + '" selected>' + this.options.optList[ii] + '</option>';
+            } else {
+                this.time.innerHTML += '<option value="' + ii + '">' + this.options.optList[ii] + '</option>';
+            }
+        }
+        // callback to update shade layer
+        L.DomEvent.on(this.time, "change", function (e) {
+            updateShade();
+        }, this);
+        L.DomEvent.disableClickPropagation(this.time);
+        return this.time;
+    }
+});
+
+
+// call server to compute route and display result
+function updateRoute(event) {
+        
+    // find marker locations
+    var pts = []
+    map.eachLayer(function(lyr) {
+        if (lyr instanceof L.Marker) {
+            pts.push(lyr.getLatLng());
         }
     });
-};
+
+    if (pts.length == 2) { // get route from backend and display route
+        $.ajax({
+            url: '/route',
+            type: 'get',
+            data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng, beta: beta},
+            dataType: 'json',
+            error: function(result) {console.log('Failed to fetch route, result:', result);},
+            success: function(result) {
+                console.log('Successfully fetched route, result:', result);
+                if (route) route.remove();
+                route = L.geoJSON(result, {style: {color: "#33B028", weight: 5}});
+                route.addTo(map);
+            }
+        });
+    } else { // not enough points, clear route
+        if (route) route.remove();
+    }
+}
 
 
-//TODO: figure out how to make the geoserver IP more flexible
+// add/replace shade layer
 function updateShade() {
-    var shadeIdx = parseInt($('#timeSlider')[0].value);
-    var newShadeLayer = L.tileLayer.wms('http://52.25.188.159:8080/geoserver/ows?', {
-        layers: shadeLayers[shadeIdx],
-        opacity: 0.70
-    }).addTo(map);
+    var layerSelect = document.getElementsByClassName('time')[0];
+    var meta = shadeLayers[parseInt(layerSelect.value)];
     if (shadeLayer) shadeLayer.remove();
-    shadeLayer = newShadeLayer;
-    console.log('Updated shade map to idx: ' + shadeIdx.toString() + ', layer: ', shadeLayers[shadeIdx]); 
-};
+    shadeLayer = L.tileLayer.wms(meta.url, meta.params).addTo(map);
+    var toggle = document.getElementsByClassName('toggle')[0];
+    if (!toggle.classList.contains('toggle-down')) {
+        shadeLayer._container.classList.add('hidden');
+    }
+}
 
 
-// init - run on page load
-$(document).ready(function() {
-    
-    // generate list of all shade layer names
-    for (let tt = 500; tt <= 2200; tt += 100) {
-        // generate image file path
-        var tstr = tt.toString().padStart(4, "0");
-        shadeLayers.push('parasol:sol_' + tstr.substring(0,2) + '.' +tstr.substring(2));
-    } 
-   
-    // init the map object
-    map = L.map('parasol-map', {
+window.onload = function () {
+
+    // create map
+    map = L.map('map', {
         center: [42.3481931, -71.0639548],
-        zoom: 15
+        zoom: 15,
+        zoomControl: false,
+        attributionControl: false
     });
 
-    // add basemap
-    var osmAttrib = 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors';
-    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // add search bars
+    searchProvider = new OpenStreetMapProvider();
+    originSearch = newSearchControl("Enter origin address", greenIcon);
+    destSearch = newSearchControl("Enter destination address", greenIcon);
+    map.addControl(originSearch); 
+    map.addControl(destSearch); 
+    map.on('geosearch/showlocation', updateRoute);
+    map.on('geosearch/marker/dragend', updateRoute);
+
+    // update route when search bar "x" is clicked
+    var resetBtns = document.getElementsByClassName("reset");
+    for (var ii = 0; ii < resetBtns.length; ii++) {
+        resetBtns[ii].addEventListener('click', updateRoute, false);
+    }
+
+    // add OSM basemap
+    osm = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
         maxZoom: 18,
-        attribution: osmAttrib
-    }).addTo(map); // this will be our active base layer on startup
-    
-    // init a map scale
-    L.control.scale().addTo(map);
+        id: 'mapbox.streets'
+    }).addTo(map);
 
-    // update slider properties
-    var slider = $('#timeSlider')[0];
-    slider.min = "0";
-    slider.max = (shadeLayers.length - 5).toString(); // cut off night hours
-    slider.value = "0";
+    // retrieve shade layer details and add related controls
+    // note: all 'bottomleft' controls added here to ensure correct ordering
+    $.ajax({
+        url: '/layers',
+        type: 'get',
+        error: function(result) {
+            console.log('Failed to fetch layers, result:', result);
+        },
+        success: function(layers) {
+            // store layer metadata list
+            shadeLayers = layers;
+            
+            // get list of layer times as formatted strings
+            layerTimes = [];
+            for (let ii = 0; ii < layers.length; ii++) {
+                time_str = layers[ii].hour.toString().padStart(2, "0") + ':' + layers[ii].minute.toString().padStart(2, "0");
+                layerTimes.push(time_str);
+            }
+            
+            // select layer index nearest to current time
+            var now = new Date();
+            var nowMin = 60*now.getHours() + now.getMinutes();
+            var bestDiff = 999999;
+            var bestIdx = null;
+            for (let ii = 0; ii < layers.length; ii++) {
+                layerMin = 60*layers[ii].hour + layers[ii].minute;
+                thisDiff = Math.abs(nowMin - layerMin);
+                if (thisDiff < bestDiff) {
+                    bestIdx = ii;
+                    bestDiff = thisDiff;
+                }
+            }
 
-    // add event listener for slider
-    slider.oninput = updateShade;
-
-    // update start location (left click)
-    // TODO: make it an umbrella
-    map.on('click', function(e) {
-        start = e.latlng;
-        if (startMarker) startMarker.remove();
-        startMarker = L.marker(start);
-        startMarker.addTo(map);
-        updateRoute();
+            // add bottom controls
+            new L.Control.Slider({position: 'bottomleft'}).addTo(map);
+            new L.Control.Time({position: 'bottomleft', optList: layerTimes, defaultIdx: bestIdx}).addTo(map);
+            new L.Control.Toggle({position: 'bottomleft'}).addTo(map);
+            new L.Control.Zoom({position: 'bottomleft'}).addTo(map);
+            
+            // init shade layer
+            updateShade(); 
+        }
     });
 
-    // update end location (right click)
-    // TODO: make it an umbrella
-    // TODO: apply different color
-    map.on('contextmenu', function(e) {
-        end = e.latlng;
-        if (endMarker) endMarker.remove();
-        endMarker = L.marker(end);
-        endMarker.addTo(map);
-        updateRoute();
-    });
+    // add sun/shade preference slider
 
-});
+};

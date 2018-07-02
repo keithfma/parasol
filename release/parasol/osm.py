@@ -16,6 +16,10 @@ import matplotlib
 import pickle
 import scipy.interpolate
 import scipy.integrate
+import numpy as np
+import math
+import psycopg2
+import psycopg2.extras
 
 from parasol import common, cfg, shade
 
@@ -25,8 +29,8 @@ logger = logging.getLogger(__name__)
 
 # constants
 OSM_FILE = os.path.join(cfg.OSM_DIR, 'domain.osm')
-WAYS_FILE = os.path.join(cfg.OSM_DIR, 'ways_pts.pkl')
 WAYS_PTS_FILE = os.path.join(cfg.OSM_DIR, 'ways.pkl')
+WALKING_SPEED = 1.4 # m/s, see: https://en.wikipedia.org/wiki/Preferred_walking_speed
     
 
 def create_db(clobber=False):
@@ -41,6 +45,7 @@ def create_db(clobber=False):
     # TODO: add index, if necessary
     common.new_db(cfg.OSM_DB, clobber)
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        # add extensions
         cur.execute('CREATE EXTENSION postgis;')
         cur.execute('CREATE EXTENSION pgrouting;')
 
@@ -82,6 +87,10 @@ def ingest():
     subprocess.run(['osm2pgrouting', '-U', cfg.PSQL_USER, '-W', cfg.PSQL_PASS, '-f',
         OSM_FILE, '-d', cfg.OSM_DB,  '--clean'])
     logger.info(f'Completed ingest: {OSM_FILE}')
+
+
+# NOTE: need to take more care with the end points -- many ways are short and
+#   the rouding error matters
 
 
 def way_points(bbox=None):
@@ -134,7 +143,7 @@ def way_points(bbox=None):
             way_pts[way_id] = np.hstack(line_pts).T
     logger.info(f'Completed way points for {len(ways)} ways')
 
-    return ways, way_pts 
+    return way_pts 
 
 
 def way_insolation(hour, minute, wpts):
@@ -147,97 +156,46 @@ def way_insolation(hour, minute, wpts):
         wpts: dict, output from way_points(), contains way gid as keys, and
             evenly spaced points along way as values
     
-    Returns: spts, stot
-        spts: dict, contains way gid as key, point observations of insolation
-            as values (units are W/m2)
-        stot: dict, contains way gid as key, integrated insolation as
+    Returns: jm2_sun, jm2_shade
+        jm2_sun: dict, contains way gid as key, integrated sun power as
             values (units are J/m2, assuming a constant walking speed)
+        jm2_shade: dict, contains way gid as key, integrated loss in sun power
+            due to shade as values (units are J/m2, assuming a constant walking
+            speed)
     """
     # retrieve shade raster for nearest available time
-    xx, yy, zz = shade.retrieve(hour, minute)
+    xx, yy, wm2 = shade.retrieve(hour, minute)
     yy = yy[::-1] # interpolant requires increasing coords
-    zz = zz[:, ::-1]
-    np.nan_to_num(zz, copy=False)              
+    wm2 = wm2[:, ::-1]
+
+    # normalize insolation grid
+    wm2 = wm2 - np.nanmin(wm2)
+    wm2 = wm2/np.nanmax(wm2)
+    wm2[np.isnan(wm2)] = 0.5
 
     # interpolate values at all way points
-    interp = scipy.interpolate.RectBivariateSpline(xx, yy, zz, kx=1, ky=1)
-    spts = {}
+    # note: wm2_sun + wm2_shade = constant = wm2_max - wm2_min
+    interp = scipy.interpolate.RectBivariateSpline(xx, yy, wm2, kx=1, ky=1)
+    wm2_sun = {}
+    wm2_shade = {}
     for gid, xy in wpts.items():
-        spts[gid] = interp(xy[:,0], xy[:,1], grid=False)
-
-    # integrate along path for each segment
-    # TODO: convert units by dividing out a (constant) walking speed
-    stot = {}
-    for gid, ss in spts.items():
-        stot[gid] = scipy.integrate.trapz(ss, dx=cfg.OSM_WAYPT_SPACING)
+        wm2_pts = interp(xy[:,0], xy[:,1], grid=False)
+        wm2_sun[gid] = wm2_pts # W/m2 due to sun
+        wm2_shade[gid] = 1 - wm2_pts # lost W/m2 due to shade
     
-    return spts, stot
-
-
-# NOTE: speed problem is because there are too many plot layers, merge before plotting
-def plot_way_insolation_pts(pts, pts_sol, vmin=100, vmax=1000, downsample=1, show=True):
-    """
-    Generate simple plot of way points
+    # integrate sun/shade watts/m2 along path for each segment -> J/m2
+    # note: integration incorporates length into both costs
+    jm2_sun = {}
+    for gid, pts in wm2_sun.items():
+        jm2_sun[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)
+    jm2_shade = {}
+    for gid, pts in wm2_shade.items():
+        jm2_shade[gid] = scipy.integrate.trapz(pts, dx=cfg.OSM_WAYPT_SPACING)
     
-    Arguments:
-        pts: dict, output from way_points()
-        downsample: int, downsampling factor, to ease the load
-        show: set True to display plot, else, do nothing to give the user a
-            chance to make modifications first
-
-    Returns: nothing, displays the resulting plot
-    """
-    xx = []
-    yy = []
-    zz = []
-    for gid in pts.keys():
-        xx.extend(pts[gid][::downsample, 0])
-        yy.extend(pts[gid][::downsample, 1])
-        zz.extend(pts_sol[gid][::downsample])
-
-    plt.scatter(xx, yy, c=zz, cmap='viridis', vmin=vmin, vmax=vmax, marker='.')
-        
-    if show:
-        plt.show()
+    return jm2_sun, jm2_shade
 
 
-def plot_way_insolation(ways, ways_sol, vmin=1000, vmax=10000, downsample=5, show=True):
-    """
-    Generate simple plot of way integrated insolation
-    
-    Arguments:
-        ways: dict, output from way_pts 
-        way_sol: dict, output from way_insolation()
-        vmin, vmax: color scale limits
-        downsample: int, downsampling factor, to ease the load
-        show: set True to display plot, else, do nothing to give the user a
-            chance to make modifications first
-
-    Returns: nothing, displays the resulting plot
-    """
-    # setup color scale
-    cm = matplotlib.cm.ScalarMappable(
-        norm=matplotlib.colors.Normalize(vmin=vmin, vmax=vmax),
-        cmap='viridis')
-
-    # loop, plot select lines
-    display_interval = 500
-    gids = list(ways.keys())[::downsample]
-
-    for ii, gid in enumerate(gids):
-        this_clr = cm.to_rgba(ways_sol[gid])
-        plt.plot(ways[gid][:,0], ways[gid][:,1], color=this_clr)
-
-        if ii % display_interval == 0:
-            print(f'Plotting way {ii} of {len(gids)}') 
-
-    if show:
-        plt.show()
-        
-    
-
-
-def update_cost_columns(wpts):
+def update_cost_db(wpts):
     """
     Update insolation cost columns for all way elements in OSM database
 
@@ -247,7 +205,35 @@ def update_cost_columns(wpts):
     
     Returns: Nothing, sets values in cost_insolation_HHMM columns of OSM DB
     """
-    return NotImplementedError
+    with common.connect_db(cfg.OSM_DB) as conn:
+        
+        # loop over all calculated times 
+        # TODO: use common.shade_meta()
+        for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+
+            with conn.cursor() as cur:
+            
+                # compute the cost at this time
+                hour = math.floor(fhours)
+                minute = math.floor((fhours-hour)*60)
+                logger.info(f'Updating insolation cost for {hour:02d}:{minute:02d}')
+                sun_cost, shade_cost = way_insolation(hour, minute, wpts)
+
+                # prepare columns
+                sun_column_name = f'{cfg.OSM_SUN_COST_PREFIX}{hour:02d}{minute:02d}'
+                cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {sun_column_name} float8;')
+                
+                shade_column_name = f'{cfg.OSM_SHADE_COST_PREFIX}{hour:02d}{minute:02d}'
+                cur.execute(f'ALTER TABLE ways ADD COLUMN IF NOT EXISTS {shade_column_name} float8;')
+
+                # run batch of sql updates
+                sql = f'UPDATE ways SET {sun_column_name} = %(cost)s WHERE gid = %(gid)s' 
+                params = [{'gid': x[0], 'cost': x[1]} for x in sun_cost.items()]
+                psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
+                
+                sql = f'UPDATE ways SET {shade_column_name} = %(cost)s WHERE gid = %(gid)s' 
+                params = [{'gid': x[0], 'cost': x[1]} for x in shade_cost.items()]
+                psycopg2.extras.execute_batch(cur, sql, params, page_size=1000)
 
 
 # command line utilities -----------------------------------------------------
@@ -266,21 +252,31 @@ def initialize_cli():
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
 
-    # init database    
     create_db(True)
-    fetch_data()
+    # fetch_data() # temporarily skipping this step
     ingest()
 
     # init waypoint lookup table
-    ways, pts = way_points() # compute all
-    with open(WAYS_FILE, 'wb') as fp:
-        pickle.dump(ways, fp)
+    # TODO: move this into the database - one less file to worry about
+    wpts = way_points() # compute all
     with open(WAYS_PTS_FILE, 'wb') as fp:
-        pickle.dump(pts, fp)
+        pickle.dump(wpts, fp)
 
 
 def update_cli():
     """Command line utiltiy for updating solar cost values in OSM DB"""
-    raise NotImplementedError 
+    ap = argparse.ArgumentParser(
+        description="Update insolation cost in Parasol OSM database",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+    args = ap.parse_args()
 
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
+    
+    with open(WAYS_PTS_FILE, 'rb') as fp:
+        wpts = pickle.load(fp)
+    update_cost_db(wpts)
 

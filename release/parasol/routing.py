@@ -20,7 +20,10 @@ def route(lon0, lat0, lon1, lat1, beta, hour, minute):
         beta: float, sun/shade preference parameter
         hour, minute: floats, (solar) time for route calculation
 
-    Returns: optimal route as geoJSON
+    Returns: meters, sun, geojson
+        meters: total length of route in meters
+        sun: total solar cost (normalized units)
+        geojson: optimal route as geoJSON
     """
     # parse arguments
     #...beta
@@ -55,14 +58,14 @@ def route(lon0, lat0, lon1, lat1, beta, hour, minute):
     start_id = nearest_id(lon0, lat0)
     end_id = nearest_id(lon1, lat1)
     
-    # compute optimal route
+    # compute optimal route, return total length, total sun cost, and route
     with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
-        sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
-        cur.execute(f"SELECT ST_AsGeoJSON(ST_UNION(ways.the_geom)) FROM pgr_dijkstra('{sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
+        inner_sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
+        cur.execute(f"SELECT SUM(length_m), SUM({sun_cost}), ST_AsGeoJSON(ST_Union(ways.the_geom)) FROM pgr_dijkstra('{inner_sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
                     (start_id, end_id))
-        geojson = cur.fetchone()[0]
+        meters, sun, geojson = cur.fetchone()
     
-    return geojson
+    return meters, sun, geojson
 
 
 def nearest_id(lon, lat):

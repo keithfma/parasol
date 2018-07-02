@@ -13,6 +13,7 @@ var shortestRouteSun;
 var beta=0.5;
 var shadeLayers;
 var shadeLayer;
+var routePopup;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
@@ -264,10 +265,13 @@ window.onload = function () {
 
     // enable tooltips when user (nearly) hovers over routes
     map.on('almost:over', function (e) {
-        console.log(e);
+        routePopup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent('<p>Hello world!<br />This is a nice popup.</p>')
+            .openOn(map);
     });
     map.on('almost:out', function (e) {
-        console.log(e);
+        map.removeLayer(routePopup);
     });
 
     // add search bars

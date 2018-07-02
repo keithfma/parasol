@@ -10,62 +10,99 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def route(lon0, lat0, lon1, lat1, beta, hour, minute):
+def _route(lon0, lat0, lon1, lat1, time=None, beta=None):
     """
-    Compute route between specified start and end points
+    Shared utility to retrieve route from pgrouting server
+    
+    Arguments: 
+        lat0, lon0 = floats, start point latitude, longitude
+        lat1, lon1 = floats, end point latitude, longitude
+        time: 
+        beta: 
+    
+    Returns: meters, sun, geojson
+        meters: total length of route in meters
+        sun: total solar cost (normalized units)
+        geojson: optimal route as geoJSON
+    """
+    # parse time
+    if time is None:
+        time = datetime.now()
+    if not isinstance(time, datetime):
+        raise TypeError('Argument "time" must be a datetime object')
+
+    # get cost columns corresponding to current date/time
+    delta = timedelta(hours=9999) # arbitrarily large
+    # TODO: use common.shade_meta()
+    for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+        this_hour = math.floor(fhours)
+        this_minute = math.floor((fhours - this_hour)*60)
+        this_time = datetime.now().replace(hour=this_hour, minute=this_minute, second=0, microsecond=0)
+        this_delta = abs(time - this_time)
+        if this_delta <= delta:
+            sun_cost = f'{cfg.OSM_SUN_COST_PREFIX}{this_time.hour:02d}{this_time.minute:02d}'
+            shade_cost = f'{cfg.OSM_SHADE_COST_PREFIX}{this_time.hour:02d}{this_time.minute:02d}'
+            delta = this_delta
+
+    # sql expression for cost (shortest or optimal)
+    if beta is None:
+        # shortest
+        cost_expr = 'length_m'
+    elif beta >= 0 and beta <= 1:
+        # optimal
+        cost_expr = f'{beta} * {sun_cost} + {1 - beta} * {shade_cost}'
+    else:
+        # invalid
+        raise ValueError('"beta" must be either in the range [0, 1] or None')
+    
+    # find start/end vertices
+    start_id = nearest_id(lon0, lat0)
+    end_id = nearest_id(lon1, lat1)
+
+    # compute djikstra path, return total length, total sun cost, and route
+    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
+        inner_sql = f'SELECT gid AS id, source, target, {cost_expr} AS cost, the_geom FROM ways'
+        cur.execute(f"SELECT SUM(length_m), SUM({sun_cost}), ST_AsGeoJSON(ST_Union(the_geom)) "
+                    f"FROM pgr_dijkstra('{inner_sql}', {start_id}, {end_id}, directed := false) "
+                    f"LEFT JOIN ways ON (edge = gid);")
+        return cur.fetchone()
+
+
+def route_shortest(lon0, lat0, lon1, lat1, time):
+    """
+    Compute shortest route between specified start and end points
 
     Parameters (URL query string):
         lat0, lon0 = floats, start point latitude, longitude
         lat1, lon1 = floats, end point latitude, longitude
-        beta: float, sun/shade preference parameter
-        hour, minute: floats, (solar) time for route calculation
+        time: datetime at which to calculate the path, for this function the
+            path is unaffected, but the solar cost returned will change
 
     Returns: meters, sun, geojson
         meters: total length of route in meters
         sun: total solar cost (normalized units)
         geojson: optimal route as geoJSON
     """
-    # parse arguments
-    #...beta
-    if not (beta >= 0 and beta <= 1):
-        raise ValueError('Parameter "beta" must be in the range [0, 1]')
-    beta_sun = beta
-    beta_shade = 1 - beta
-    #... time
-    now = datetime.now()
-    now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    logger.info(f'Route from {lon0}, {lat0} -> {lon1}, {lat1} with beta={beta} at {hour:02d}:{minute:02d}')
+    return _route(lon0, lat0, lon1, lat1, time, beta=None)
 
-    # get cost columns corresponding to current date/time
-    delta = timedelta(hours=999)
-    sun_cost = None
-    shade_cost = None
-    # TODO: use common.shade_meta()
-    for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
-        this_hour = math.floor(fhours)
-        this_minute = math.floor((fhours - this_hour)*60)
-        this_time = datetime.now().replace(hour=this_hour, minute=this_minute, second=0, microsecond=0)
-        this_sun = f'{cfg.OSM_SUN_COST_PREFIX}{hour:02d}{minute:02d}'
-        this_shade = f'{cfg.OSM_SHADE_COST_PREFIX}{hour:02d}{minute:02d}'
-        this_delta = abs(now - this_time)
-        if this_delta <= delta:
-            sun_cost = this_sun
-            shade_cost = this_shade
-            delta = this_delta
-    logger.info(f'Sun cost column: {sun_cost}, shade cost column: {shade_cost}')
 
-    # find start/end vertices
-    start_id = nearest_id(lon0, lat0)
-    end_id = nearest_id(lon1, lat1)
-    
-    # compute optimal route, return total length, total sun cost, and route
-    with common.connect_db(cfg.OSM_DB) as conn, conn.cursor() as cur:
-        inner_sql = f'SELECT gid AS id, source, target, {beta_sun} * {sun_cost} + {beta_shade} * {shade_cost} AS cost, the_geom FROM ways'
-        cur.execute(f"SELECT SUM(length_m), SUM({sun_cost}), ST_AsGeoJSON(ST_Union(ways.the_geom)) FROM pgr_dijkstra('{inner_sql}', %s, %s, directed := false) LEFT JOIN ways ON (edge = gid);",
-                    (start_id, end_id))
-        meters, sun, geojson = cur.fetchone()
-    
-    return meters, sun, geojson
+def route_optimal(lon0, lat0, lon1, lat1, time, beta):
+    """
+    Compute optimal (wrt sun/shade) route between specified start and end points
+
+    Parameters (URL query string):
+        lat0, lon0 = floats, start point latitude, longitude
+        lat1, lon1 = floats, end point latitude, longitude
+        time: datetime at which to calculate the path, for this function the
+            path and solar cost are affected
+        beta: float, sun/shade preference parameter
+
+    Returns: meters, sun, geojson
+        meters: total length of route in meters
+        sun: total solar cost (normalized units)
+        geojson: optimal route as geoJSON
+    """
+    return _route(lon0, lat0, lon1, lat1, time, beta)
 
 
 def nearest_id(lon, lat):

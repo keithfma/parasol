@@ -183,24 +183,29 @@ function updateOptimalRoute() {
             success: function(result) {
                 optimalRouteLength = result.length;
                 optimalRouteSun = result.sun;
+                if (optimalRoute) {
+                    optimalRoute.remove();
+                    map.almostOver.removeLayer(optimalRoute);
+                }
+                optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
+                optimalRoute.addTo(map);
+                // TODO: populate popup text for optimal route
                 var lengthFraction = optimalRouteLength/shortestRouteLength;
                 var sunFraction = optimalRouteSun/shortestRouteSun; 
-                // TODO: populate popup text for optimal route
                 console.log('LENGTH:', lengthFraction, 'SUN:', sunFraction); // DEBUG
-                if (optimalRoute) optimalRoute.remove();
-                optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
-                // optimalRoute.addTo(map);
-                // DEBUG
                 map.almostOver.addLayer(optimalRoute);
             }
         });
     } else { // not enough points, clear route
-        if (optimalRoute) optimalRoute.remove();
+        if (optimalRoute) {
+            map.almostOver.removeLayer(optimalRoute);
+            optimalRoute.remove();
+        }
     }
 }
 
 
-// call server to compute shortest route and display result
+// call server to compute shortest route, but do not display
 function updateShortestRoute() {
         
     pts = selectedEndpts();
@@ -217,14 +222,13 @@ function updateShortestRoute() {
             success: function(result) {
                 shortestRouteLength = result.length;
                 shortestRouteSun = result.sun;
-                // TODO: populate popup text for shortest route
-                if (shortestRoute) shortestRoute.remove();
-                shortestRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 2, dashArray: "4 1"}});
-                shortestRoute.addTo(map);
+                // if (shortestRoute) shortestRoute.remove();
+                // shortestRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 2, dashArray: "4 1"}});
+                // shortestRoute.addTo(map);
             }
         });
     } else { // not enough points, clear route
-        if (shortestRoute) shortestRoute.remove();
+        // if (shortestRoute) shortestRoute.remove();
     }
 }
 

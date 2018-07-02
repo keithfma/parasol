@@ -188,8 +188,15 @@ function updateOptimalRoute() {
                 // TODO: populate popup text for optimal route
                 console.log('LENGTH:', lengthFraction, 'SUN:', sunFraction); // DEBUG
                 if (optimalRoute) optimalRoute.remove();
-                optimalRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
+                optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
                 optimalRoute.addTo(map);
+                // DEBUG
+                optimalRoute.on('mouseover', function(event) {
+                    console.log('OPEN', event.latlng);
+                });
+                optimalRoute.on('mouseout', function(event) {
+                    setTimeout(function() {console.log('CLOSE', event.latlng)}, 500);
+                });
             }
         });
     } else { // not enough points, clear route
@@ -217,7 +224,7 @@ function updateShortestRoute() {
                 shortestRouteSun = result.sun;
                 // TODO: populate popup text for shortest route
                 if (shortestRoute) shortestRoute.remove();
-                shortestRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
+                shortestRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 2, dashArray: "4 1"}});
                 shortestRoute.addTo(map);
             }
         });

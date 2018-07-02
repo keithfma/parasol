@@ -50,7 +50,7 @@ def _route(lon0, lat0, lon1, lat1, time=None, beta=None):
         cost_expr = 'length_m'
     elif beta >= 0 and beta <= 1:
         # optimal
-        cost_expr = f'{beta} * {sun_cost} + {1 - beta} * {shade_cost}'
+        cost_expr = f'{1 - beta} * {sun_cost} + {beta} * {shade_cost}'
     else:
         # invalid
         raise ValueError('"beta" must be either in the range [0, 1] or None')

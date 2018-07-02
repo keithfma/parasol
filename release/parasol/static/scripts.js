@@ -189,14 +189,9 @@ function updateOptimalRoute() {
                 console.log('LENGTH:', lengthFraction, 'SUN:', sunFraction); // DEBUG
                 if (optimalRoute) optimalRoute.remove();
                 optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
-                optimalRoute.addTo(map);
+                // optimalRoute.addTo(map);
                 // DEBUG
-                optimalRoute.on('mouseover', function(event) {
-                    console.log('OPEN', event.latlng);
-                });
-                optimalRoute.on('mouseout', function(event) {
-                    setTimeout(function() {console.log('CLOSE', event.latlng)}, 500);
-                });
+                map.almostOver.addLayer(optimalRoute);
             }
         });
     } else { // not enough points, clear route
@@ -261,6 +256,14 @@ window.onload = function () {
         zoom: 15,
         zoomControl: false,
         attributionControl: false
+    });
+
+    // enable tooltips when user (nearly) hovers over routes
+    map.on('almost:over', function (e) {
+        console.log(e);
+    });
+    map.on('almost:out', function (e) {
+        console.log(e);
     });
 
     // add search bars

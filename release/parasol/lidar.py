@@ -117,8 +117,6 @@ def retrieve(xmin, xmax, ymin, ymax):
                 "connection": f"host={cfg.PSQL_HOST} dbname={cfg.LIDAR_DB} user={cfg.PSQL_USER} password={cfg.PSQL_PASS} port={cfg.PSQL_PORT}",
                 "table": cfg.LIDAR_TABLE,
                 "column": "pa",
-                # TODO: Holy shit! I think that I had the args wrong all along here! Confirm change.
-                # "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {xmax}, {ymin}, {ymax}, {cfg.PRJ_SRID}))",
                 "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {cfg.PRJ_SRID}))",
             }, {
                 "type": "writers.text",

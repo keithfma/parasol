@@ -80,7 +80,6 @@ def prep_inputs():
         f'input=surface@{cfg.GRASS_MAPSET}', '-l', 'output=lon'])              
 
 
-# TODO: save insolation on upper surface and lower surface, the former is better for visualization
 def insolation(day, hour, top_name, bot_name):
     """
     Compute insolation (W/m2) raster within ROI for specified time 
@@ -136,23 +135,18 @@ def update_today():
     """Update insolation frames for whole day in loop"""
 
     # get current day and list of times (interval, etc, are set using config variables)
-    # TODO: use common.shade_meta()
     day = int(datetime.now().strftime('%j'))
-    times = np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR)
     
     # create output directory, if needed
     if not os.path.isdir(cfg.SHADE_DIR):
         os.makedirs(cfg.SHADE_DIR)
 
-    # TODO: use common.shade_meta()
-    for ii, time in enumerate(times): 
-        logger.info(f'Update daily insolation, time step {ii} of {len(times)}')
+    for ii, meta in enumerate(common.shade_meta()): 
+        logger.info(f'Update daily insolation @ {meta["hour"]:02d}:{meta["minute"]:02d}')
         time_hour = math.floor(time)
         time_min = round((time - time_hour)*60)
-        top_name = os.path.join(cfg.SHADE_DIR,
-            f'{cfg.SHADE_TOP_PREFIX}{time_hour:02d}{time_min:02d}.tif')
-        bot_name = os.path.join(cfg.SHADE_DIR,
-            f'{cfg.SHADE_BOTTOM_PREFIX}{time_hour:02d}{time_min:02d}.tif')
+        top_name = os.path.join(cfg.SHADE_DIR, meta["top"])
+        bot_name = os.path.join(cfg.SHADE_DIR, meta["bottom"])
         insolation(day, time, top_name, bot_name)
 
 

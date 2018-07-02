@@ -153,18 +153,22 @@ function selectedTime() {
 }
 
 
-// call server to compute route and display result
-function updateOptimalRoute(event) {
-        
-    // find marker locations
+// return location of (up to 2) endpoint markers
+function selectedEndpts() {
     var pts = []
     map.eachLayer(function(lyr) {
         if (lyr instanceof L.Marker) {
             pts.push(lyr.getLatLng());
         }
     });
+    return pts;
+}
 
-    // get selected time
+
+// call server to compute optimal route and display result
+function updateOptimalRoute(event) {
+        
+    pts = selectedEndpts();
     now = selectedTime();
 
     if (pts.length == 2) { // get route from backend, store metadata, display route
@@ -188,6 +192,43 @@ function updateOptimalRoute(event) {
         if (optimalRoute) optimalRoute.remove();
     }
 }
+
+
+// // call server to compute shortest route and display result
+// function updateShortestRoute(event) {
+//         
+//     // find marker locations
+//     var pts = []
+//     map.eachLayer(function(lyr) {
+//         if (lyr instanceof L.Marker) {
+//             pts.push(lyr.getLatLng());
+//         }
+//     });
+// 
+//     // get selected time
+//     now = selectedTime();
+// 
+//     if (pts.length == 2) { // get route from backend, store metadata, display route
+//         $.ajax({
+//             url: '/route/optimal',
+//             type: 'get',
+//             data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
+//                    beta: beta, hour: now.hour, minute: now.minute},
+//             dataType: 'json',
+//             error: function(result) {console.log('Failed to fetch route, result:', result);},
+//             success: function(result) {
+//                 optimalRouteLength = result.length;
+//                 optimalRouteSun = result.sun;
+//                 console.log(optimalRouteLength, optimalRouteSun); // DEBUG
+//                 if (optimalRoute) optimalRoute.remove();
+//                 optimalRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
+//                 optimalRoute.addTo(map);
+//             }
+//         });
+//     } else { // not enough points, clear route
+//         if (optimalRoute) optimalRoute.remove();
+//     }
+// }
 
 
 // add/replace shade layer

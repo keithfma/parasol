@@ -29,6 +29,12 @@ def main():
     return flask.render_template('index.html')
 
 
+def _route_response(length, sun, geojson):
+    """Shared utility to format route data as JSON without parsing it"""
+    data = f'{{ "length": {length}, "sun": {sun}, "route": {geojson} }}'
+    return flask.Response(status=200, response=data, mimetype='application/json')
+
+
 @app.route('/route/optimal', methods=['GET'])
 def optimal():
     """
@@ -40,7 +46,10 @@ def optimal():
         beta: float, sun/shade preference parameter 
         hour, minute: ints, time to compute route for
 
-    Returns: optimal route as geoJSON
+    Returns: JSON object with fields:
+        length: route length in meters
+        sun: route solar cost in normalized units
+        route: route line as geoJSON
     """
     lat0 = float(flask.request.args.get('lat0'))
     lon0 = float(flask.request.args.get('lon0'))
@@ -54,9 +63,7 @@ def optimal():
         hour=hour, minute=minute, second=0, microsecond=0)
     length, sun, geojson = routing.route_optimal(lon0, lat0, lon1, lat1, time, beta)
 
-    # TODO: return other outputs
-
-    return flask.Response(status=200, response=geojson, mimetype='application/json')
+    return _route_response(length, sun, geojson)
 
 
 @app.route('/route/shortest', methods=['GET'])
@@ -69,7 +76,10 @@ def shortest():
         lat1, lon1: floats, end point latitude, longitude
         hour, minute: ints, time to compute route for
 
-    Returns: optimal route as geoJSON
+    Returns: JSON object with fields:
+        length: route length in meters
+        sun: route solar cost in normalized units
+        route: route line as geoJSON
     """
     lat0 = float(flask.request.args.get('lat0'))
     lon0 = float(flask.request.args.get('lon0'))
@@ -82,9 +92,7 @@ def shortest():
         hour=hour, minute=minute, second=0, microsecond=0)
     length, sun, geojson = routing.route_shortest(lon0, lat0, lon1, lat1, time)
 
-    # TODO: return other outputs
-
-    return flask.Response(status=200, response=geojson, mimetype='application/json')
+    return _route_response(length, sun, geojson)
 
 
 @app.route('/layers', methods=['GET'])

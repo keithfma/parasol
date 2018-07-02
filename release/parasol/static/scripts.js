@@ -4,7 +4,12 @@ var map;
 var searchProvider;
 var originSearch;
 var destSearch;
-var route;
+var optimalRoute;
+var optimalRouteLength;
+var optimalRouteSun;
+var shortestRoute;
+var shortestRouteLength;
+var shortestRouteSun;
 var beta=0.5;
 var shadeLayers;
 var shadeLayer;
@@ -68,7 +73,7 @@ L.Control.Slider = L.Control.extend({
         L.DomEvent.on(this.slider, "change", function (e) {
             beta = parseFloat(this.slider.value);
             console.log('Beta updated to: ', beta);
-            updateRoute();
+            updateOptimalRoute();
         }, this);
         L.DomEvent.disableClickPropagation(this.slider);
         this.leftIcon = L.DomUtil.create('img', 'slider-icon', this.container);
@@ -149,7 +154,7 @@ function selectedTime() {
 
 
 // call server to compute route and display result
-function updateRoute(event) {
+function updateOptimalRoute(event) {
         
     // find marker locations
     var pts = []
@@ -162,7 +167,7 @@ function updateRoute(event) {
     // get selected time
     now = selectedTime();
 
-    if (pts.length == 2) { // get route from backend and display route
+    if (pts.length == 2) { // get route from backend, store metadata, display route
         $.ajax({
             url: '/route/optimal',
             type: 'get',
@@ -171,14 +176,16 @@ function updateRoute(event) {
             dataType: 'json',
             error: function(result) {console.log('Failed to fetch route, result:', result);},
             success: function(result) {
-                console.log('Successfully fetched route, result:', result);
-                if (route) route.remove();
-                route = L.geoJSON(result, {style: {color: "#33B028", weight: 5}});
-                route.addTo(map);
+                optimalRouteLength = result.length;
+                optimalRouteSun = result.sun;
+                console.log(optimalRouteLength, optimalRouteSun); // DEBUG
+                if (optimalRoute) optimalRoute.remove();
+                optimalRoute = L.geoJSON(result.route, {style: {color: "#33B028", weight: 5}});
+                optimalRoute.addTo(map);
             }
         });
     } else { // not enough points, clear route
-        if (route) route.remove();
+        if (optimalRoute) optimalRoute.remove();
     }
 }
 
@@ -212,13 +219,13 @@ window.onload = function () {
     destSearch = newSearchControl("Enter destination address", greenIcon);
     map.addControl(originSearch); 
     map.addControl(destSearch); 
-    map.on('geosearch/showlocation', updateRoute);
-    map.on('geosearch/marker/dragend', updateRoute);
+    map.on('geosearch/showlocation', updateOptimalRoute);
+    map.on('geosearch/marker/dragend', updateOptimalRoute);
 
     // update route when search bar "x" is clicked
     var resetBtns = document.getElementsByClassName("reset");
     for (var ii = 0; ii < resetBtns.length; ii++) {
-        resetBtns[ii].addEventListener('click', updateRoute, false);
+        resetBtns[ii].addEventListener('click', updateOptimalRoute, false);
     }
 
     // add OSM basemap

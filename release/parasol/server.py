@@ -48,8 +48,15 @@ def route():
     beta = float(flask.request.args.get('beta'))
     hour = int(flask.request.args.get('hour'))
     minute = int(flask.request.args.get('minute'))
-    geojson = routing.route(lon0, lat0, lon1, lat1, beta, hour, minute)
-    return flask.Response(status=200, response=geojson, mimetype='application/json')
+
+    # TODO: shortest path
+
+    # optimal path
+    opt_length, opt_sun, opt_geojson = routing.route(lon0, lat0, lon1, lat1, beta, hour, minute)
+    
+    # TODO: compute comparison metrics (optimal vs shortest)
+
+    return flask.Response(status=200, response=opt_geojson, mimetype='application/json')
 
 
 @app.route('/layers', methods=['GET'])

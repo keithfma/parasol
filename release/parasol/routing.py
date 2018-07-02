@@ -4,9 +4,13 @@ import math
 from datetime import datetime, timedelta
 from pdb import set_trace
 from osgeo import ogr, osr
+import logging
 
 
-def route(lon0, lat0, lon1, lat1, beta):
+logger = logging.getLogger(__name__)
+
+
+def route(lon0, lat0, lon1, lat1, beta, hour, minute):
     """
     Compute route between specified start and end points
 
@@ -14,33 +18,38 @@ def route(lon0, lat0, lon1, lat1, beta):
         lat0, lon0 = floats, start point latitude, longitude
         lat1, lon1 = floats, end point latitude, longitude
         beta: float, sun/shade preference parameter
+        hour, minute: floats, (solar) time for route calculation
 
     Returns: optimal route as geoJSON
     """
     # parse arguments
+    #...beta
     if not (beta >= 0 and beta <= 1):
         raise ValueError('Parameter "beta" must be in the range [0, 1]')
     beta_sun = beta
     beta_shade = 1 - beta
+    #... time
+    now = datetime.now()
+    now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    logger.info(f'Route from {lon0}, {lat0} -> {lon1}, {lat1} with beta={beta} at {hour:02d}:{minute:02d}')
 
     # get cost columns corresponding to current date/time
-    # TODO: move time to an input parameter
-    now = datetime.now()
     delta = timedelta(hours=999)
     sun_cost = None
     shade_cost = None
     # TODO: use common.shade_meta()
     for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
-        hour = math.floor(fhours)
-        minute = math.floor((fhours-hour)*60)
-        this_time = datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+        this_hour = math.floor(fhours)
+        this_minute = math.floor((fhours - this_hour)*60)
+        this_time = datetime.now().replace(hour=this_hour, minute=this_minute, second=0, microsecond=0)
         this_sun = f'{cfg.OSM_SUN_COST_PREFIX}{hour:02d}{minute:02d}'
         this_shade = f'{cfg.OSM_SHADE_COST_PREFIX}{hour:02d}{minute:02d}'
         this_delta = abs(now - this_time)
         if this_delta <= delta:
             sun_cost = this_sun
             shade_cost = this_shade
-            delta = this_delta 
+            delta = this_delta
+    logger.info(f'Sun cost column: {sun_cost}, shade cost column: {shade_cost}')
 
     # find start/end vertices
     start_id = nearest_id(lon0, lat0)

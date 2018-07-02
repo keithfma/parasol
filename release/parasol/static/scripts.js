@@ -139,6 +139,15 @@ L.Control.Time = L.Control.extend({
 });
 
 
+// return selected time as {hour: xx, minute: xx}
+function selectedTime() {
+    var idx = parseInt(document.getElementsByClassName('time')[0].value);
+    var txt = layerTimes[idx];
+    var txt_parts = txt.split(':');
+    return {hour: parseInt(txt_parts[0]), minute: parseInt(txt_parts[1])};
+}
+
+
 // call server to compute route and display result
 function updateRoute(event) {
         
@@ -150,11 +159,15 @@ function updateRoute(event) {
         }
     });
 
+    // get selected time
+    now = selectedTime();
+
     if (pts.length == 2) { // get route from backend and display route
         $.ajax({
             url: '/route',
             type: 'get',
-            data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng, beta: beta},
+            data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
+                   beta: beta, hour: now.hour, minute: now.minute},
             dataType: 'json',
             error: function(result) {console.log('Failed to fetch route, result:', result);},
             success: function(result) {

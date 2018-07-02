@@ -8,9 +8,12 @@ import os
 from pkg_resources import resource_filename
 import psycopg2
 from pdb import set_trace
+import logging
 
 from parasol import cfg, common, routing
 
+
+logger = logging.getLogger(__name__)
 
 # create app
 app = flask.Flask('parasol')
@@ -34,6 +37,7 @@ def route():
         lat0, lon0: floats, start point latitude, longitude
         lat1, lon1: floats, end point latitude, longitude
         beta: float, sun/shade preference parameter 
+        hour, minute: ints, time to compute route for
 
     Returns: optimal route as geoJSON
     """
@@ -42,7 +46,9 @@ def route():
     lat1 = float(flask.request.args.get('lat1'))
     lon1 = float(flask.request.args.get('lon1'))
     beta = float(flask.request.args.get('beta'))
-    geojson = routing.route(lon0, lat0, lon1, lat1, beta)
+    hour = int(flask.request.args.get('hour'))
+    minute = int(flask.request.args.get('minute'))
+    geojson = routing.route(lon0, lat0, lon1, lat1, beta, hour, minute)
     return flask.Response(status=200, response=geojson, mimetype='application/json')
 
 
@@ -87,6 +93,13 @@ def cli():
         help='hostname for flask server')
     ap.add_argument('--port', type=int, default=5000,
         help='server port number')
+    ap.add_argument('--log', type=str, default='info', help="select logging level",
+                    choices=['debug', 'info', 'warning', 'error', 'critical'])
     args = ap.parse_args()
 
+    log_lvl = getattr(logging, args.log.upper())
+    logging.basicConfig(level=log_lvl)
+    logger.setLevel(log_lvl)
+
     app.run(host=args.host, port=args.port, debug=args.debug)
+

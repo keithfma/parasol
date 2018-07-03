@@ -33,12 +33,15 @@ def _route(lon0, lat0, lon1, lat1, time=None, beta=None):
 
     # get cost columns corresponding to current date/time
     delta = timedelta(hours=9999) # arbitrarily large
-    for meta in common.shade_meta():
-        this_time = datetime.now().replace(hour=meta['hour'], minute=meta['minute'], second=0, microsecond=0)
+    # TODO: use common.shade_meta()
+    for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
+        this_hour = math.floor(fhours)
+        this_minute = math.floor((fhours - this_hour)*60)
+        this_time = datetime.now().replace(hour=this_hour, minute=this_minute, second=0, microsecond=0)
         this_delta = abs(time - this_time)
         if this_delta <= delta:
-            sun_cost = meta['sun_cost']
-            shade_cost = meta['shade_cost']
+            sun_cost = f'{cfg.OSM_SUN_COST_PREFIX}{this_time.hour:02d}{this_time.minute:02d}'
+            shade_cost = f'{cfg.OSM_SHADE_COST_PREFIX}{this_time.hour:02d}{this_time.minute:02d}'
             delta = this_delta
 
     # sql expression for cost (shortest or optimal)

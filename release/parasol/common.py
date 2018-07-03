@@ -92,18 +92,15 @@ def shade_meta():
     Returns: list of dicts, one for each layer, with fields:
         hour: int, hour for layer time
         minute: int, minute for layer time
-        top: layer name for shade top at each time
-        bottom: layer name for shade bottom at each time
+        suffix: string, layer suffix encoding time
     """
-    metas = [] 
+    layers = [] 
     for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
-        meta = {}
-        meta['hour'] = math.floor(fhours)
-        meta['minute'] = math.floor((fhours - meta['hour'])*60)
-        meta['top'] = f'{cfg.SHADE_TOP_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
-        meta['bottom'] = f'{cfg.SHADE_BOTTOM_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
-        meta['sun_cost'] = f'{cfg.OSM_SHADE_COST_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
-        meta["shade_cost"] = f'{cfg.OSM_SHADE_COST_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
-        metas.append(meta)
-    return(metas)
+        layer = {}
+        layer['hour'] = math.floor(fhours)
+        layer['minute'] = math.floor((fhours - layer['hour'])*60)
+        layer['top'] = f'{cfg.SHADE_TOP_PREFIX}{layer["hour"]:02d}{layer["minute"]:02d}'
+        layer['bottom'] = f'{cfg.SHADE_BOTTOM_PREFIX}{layer["hour"]:02d}{layer["minute"]:02d}'
+        layers.append(layer)
+    return(layers)
 

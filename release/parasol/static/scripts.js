@@ -265,11 +265,13 @@ window.onload = function () {
     });
 
     // enable tooltips when user (nearly) hovers over routes
-    map.on('almost:over', function (e) {
-        routePopup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
-    });
-    map.on('almost:out', function (e) {
-        map.removeLayer(routePopup);
+    map.on('almost:click', function (e) {
+        if (routePopup) {
+            map.removeLayer(routePopup);
+            routePopup = null;
+        } else { 
+            routePopup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
+        }
     });
 
     // add search bars

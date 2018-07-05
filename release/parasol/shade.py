@@ -147,8 +147,8 @@ def update_today():
     # TODO: use common.shade_meta()
     for ii, time in enumerate(times): 
         logger.info(f'Update daily insolation, time step {ii} of {len(times)}')
-        time_hour = math.floor(time)
-        time_min = round((time - time_hour)*60)
+        time_hour = int(math.floor(time))
+        time_min = int(round((time - time_hour)*60))
         top_name = os.path.join(cfg.SHADE_DIR,
             f'{cfg.SHADE_TOP_PREFIX}{time_hour:02d}{time_min:02d}.tif')
         bot_name = os.path.join(cfg.SHADE_DIR,

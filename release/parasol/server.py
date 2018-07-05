@@ -128,7 +128,7 @@ def shade_layers_meta():
 def cli():
     """Run Parasol on localhost with Flask built-in server"""
     ap = argparse.ArgumentParser(
-        description='Parasol Navigation - MVP Edition',
+        description='Parasol Navigation - Debug Server, DO NOT DEPLOY',
         formatter_class= argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument('--debug', action='store_true',
         help='run server in "debug mode"')
@@ -146,3 +146,20 @@ def cli():
 
     app.run(host=args.host, port=args.port, debug=args.debug)
 
+
+def deploy():
+    """Initialize deployed server by creating and copying config files"""
+
+    ap = argparse.ArgumentParser(
+        description='Parasol Navigation: Initialize deployed Apache server',
+        formatter_class= argparse.ArgumentDefaultsHelpFormatter)
+    ap.add_argument('--venv', default=None, 
+        help='Path to virtual environment where "parasol" package is installed')
+    ap.add_argument('--user', default='parasol',
+        help='User that will be used to run the server process')
+    ap.add_argument('--path', default='/var/www/parasol', 
+        help='Path to install WSGI script to')
+ 
+    args = ap.parse_args()
+    
+    print(args)

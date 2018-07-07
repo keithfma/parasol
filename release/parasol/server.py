@@ -10,6 +10,7 @@ import psycopg2
 from pdb import set_trace
 import logging
 from datetime import datetime
+import jinja2
 
 from parasol import cfg, common, routing
 
@@ -157,9 +158,16 @@ def deploy():
         help='Path to virtual environment where "parasol" package is installed')
     ap.add_argument('--user', default='parasol',
         help='User that will be used to run the server process')
-    ap.add_argument('--path', default='/var/www/parasol', 
+    ap.add_argument('--wsgi_path', default='/var/www/parasol', 
         help='Path to install WSGI script to')
  
     args = ap.parse_args()
-    
-    print(args)
+
+    # init Jinja
+    jenv = jinja2.Environment(loader=jinja2.PackageLoader('parasol', 'templates'))
+
+    # generate WSGI script
+    wsgi = jenv.get_template('parasol.wsgi')
+    wsgi_txt = wsgi.render(venv=args.venv)
+    with open(os.path.join(args.wsgi_path, 'parasol.wsgi'), 'w') as fp:
+        fp.write(wsgi_txt)

@@ -11,6 +11,8 @@ from pdb import set_trace
 import logging
 from datetime import datetime
 import jinja2
+import subprocess
+import shutil
 
 from parasol import cfg, common, routing
 
@@ -158,10 +160,25 @@ def deploy():
         help='Path to virtual environment where "parasol" package is installed')
     ap.add_argument('--user', default='parasol',
         help='User that will be used to run the server process')
+    ap.add_argument('--group', default='parasol',
+        help='Group that will be used to run the server process')
     ap.add_argument('--wsgi_path', default='/var/www/parasol', 
         help='Path to install WSGI script to')
+    ap.add_argument('--conf_path', default='/etc/apache2/sites-available/',
+        help='Path to Apache2 sites-available directory')
+    ap.add_argument('--server_name', default=None,
+        help='Server name (e.g. example.com) for Apache conf file')
  
     args = ap.parse_args()
+
+    # create user and group (linux-only)
+    subprocess.run(['useradd', '--system', args.user])
+    subprocess.run(['groupadd', args.group])
+    subprocess.run(['usermod', '-a', '-G', args.group, args.user]) 
+
+    # create folders
+    if not os.path.isdir(args.wsgi_path):
+        os.makedirs(args.wsgi_path)
 
     # init Jinja
     jenv = jinja2.Environment(loader=jinja2.PackageLoader('parasol', 'templates'))
@@ -169,5 +186,20 @@ def deploy():
     # generate WSGI script
     wsgi = jenv.get_template('parasol.wsgi')
     wsgi_txt = wsgi.render(venv=args.venv)
-    with open(os.path.join(args.wsgi_path, 'parasol.wsgi'), 'w') as fp:
+    wsgi_file = os.path.join(args.wsgi_path, 'parasol.wsgi')
+    with open(wsgi_file, 'w') as fp:
         fp.write(wsgi_txt)
+
+    # update ownership and permissions
+    shutil.chown(args.wsgi_path, args.user, args.group)
+    shutil.chown(wsgi_file, args.user, args.group)
+    subprocess.run(['chmod', '755', wsgi_file]) 
+
+    # generate Apache config file
+    conf = jenv.get_template('parasol.conf')
+    conf_txt = conf.render(user=args.user, group=args.group,
+        wsgi_path=args.wsgi_path, wsgi_file=wsgi_file,
+        server_name=args.server_name)
+    conf_file = os.path.join(args.conf_path, 'parasol.conf')
+    with open(conf_file, 'w') as fp:
+        fp.write(conf_txt)

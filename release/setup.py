@@ -16,6 +16,7 @@ setup(
         'pdal',
         'pyproj',
         'numpy',
+        'shapely',
         ],
     entry_points={
         'console_scripts': [

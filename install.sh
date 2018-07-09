@@ -4,8 +4,12 @@
 # #
 
 # install packages
-sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui
+sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui \
+	postgresql-server-dev-10 libxml2-dev libcunit1-dev autoconf
 
 # build and install additional dependencies
 cd deps/laszip
+# ./install.sh
+
+cd ../pgpointcloud
 ./install.sh

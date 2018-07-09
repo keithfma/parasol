@@ -8,9 +8,3 @@ Processing and runner-up for innovative product at INTERGEO 2012, the de-facto
 standard for LiDAR compression.
 
 URL: https://laszip.org/
-
-STEPS:
-+ Unpack dist -> src
-+ create build and go to it
-+ run ccmake from build on src, set install to /usr/local, generate
-+ make ; sudo make install

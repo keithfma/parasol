@@ -44,6 +44,10 @@ def grid_points(x_min, x_max, y_min, y_max):
         z_surf, z_grnd: numpy 2D arrays, elevation grids 
     """
 
+    # Note from LiDAR metadata: ... Default (Class 1), Ground (Class 2), Noise
+    # (Class 7), Water (Class 9), Ignored Ground (Class 10), Overlap Default
+    # (Class 17) and Overlap Ground (Class 18).
+
     # build output grid spanning bbox
     x_vec = np.arange(math.floor(x_min), math.floor(x_max), cfg.SURFACE_RES_M)   
     y_vec = np.arange(math.floor(y_min), math.floor(y_max), cfg.SURFACE_RES_M)   
@@ -55,16 +59,16 @@ def grid_points(x_min, x_max, y_min, y_max):
     # extract ground points
     grnd_idx = []
     for idx, pt in enumerate(pts):
-        if pt[3] == pt[4]  and pt[5] == 2:
-            # last or only return, classified as "ground"
+        if pt[3] == pt[4] and pt[5] in {2, 9, 18}:
+            # last or only return, classified as "ground" or "water"
             grnd_idx.append(idx)
     grnd_pts = pts[grnd_idx, :3]
     
     # extract upper surface points
     surf_idx = []
     for idx, pt in enumerate(pts):
-        if (pt[3] == 1 or pt[4] == 1) and pt[5] == 1:
-            # first or only return, classified as "default"
+        if (pt[3] == 1 or pt[4] == 1) and pt[5] in {1, 2, 9, 17, 18}:
+            # first or only return, classified as "(overlap) default", "(overlap) ground" or "water" 
             surf_idx.append(idx)
     surf_pts = pts[surf_idx, :3]
     del pts

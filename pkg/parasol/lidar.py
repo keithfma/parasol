@@ -14,6 +14,8 @@ import uuid
 import os
 import json
 import subprocess
+from pkg_resources import resource_filename
+import wget
 
 from parasol import cfg, common
 
@@ -143,29 +145,39 @@ def initialize_cli():
     ap = argparse.ArgumentParser(
         description="Initialize Parasol LiDAR database",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
-    ap.add_argument('pattern', type=str, help="glob pattern matching files to ingest")
+    ap.add_argument('--urls', type=str, default=resource_filename('parasol', 'lidar_urls.txt'),
+        help="path to file containing LiDAR data urls to be downloaded")
     ap.add_argument('--log', type=str, default='info', help="select logging level",
                     choices=['debug', 'info', 'warning', 'error', 'critical'])
     ap.add_argument('--clean', action='store_true', help='Clobber existing database')
-    ap.add_argument('--dryrun', action='store_true', help='Set to preview only')
     args = ap.parse_args()
 
     log_lvl = getattr(logging, args.log.upper())
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
+    
+    # create directory if needed 
+    if not os.path.isdir(cfg.LIDAR_DIR):
+        os.makedirs(cfg.LIDAR_DIR)
+    
+    # download any LiDAR files that are not already there 
+    with open(args.urls, 'r') as fp:
+        for line in fp:
+            url = line.strip()
+            if not url:
+                continue
+            filename = os.path.join(cfg.LIDAR_DIR, os.path.basename(url))
+            if os.path.isfile(filename):
+                logger.info(f'File {filename} exists, skipping')
+                continue
+            logger.info(f'Downloading URL {url}')
+            wget.download(url, out=cfg.LIDAR_DIR) 
 
-    input_files = glob(os.path.expanduser(args.pattern))
-    
-    if args.dryrun:
-        print(f'DATABASE: {cfg.LIDAR_DB} @ {cfg.PSQL_HOST}:{cfg.PSQL_PORT}')
-        print(f'CLEAN EXISTING: {args.clean}')
-        print('FILES:')
-        for fn in input_files:
-            print(f'\t{fn}')
-        return
-    
+    # create db, if requested
     if args.clean:
         create_db(True)
-    for fn in input_files:
+    
+    # read data into database
+    for fn in glob(os.path.join(cfg.LIDAR_DIR, '*.laz')):
         ingest(fn)
-        
+

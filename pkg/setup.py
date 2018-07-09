@@ -11,7 +11,9 @@ setup(
         'requests',
         'flask',
         'psycopg2',
-        'numpy',
+        'numpy', # note: pdal requires this be installed first
+        'cython', # ditto
+        'packaging', # ditto 
         'scipy',
         'pdal',
         'pyproj',

@@ -50,7 +50,7 @@ def grid_points(x_min, x_max, y_min, y_max):
     x_grd, y_grd = np.meshgrid(x_vec, y_vec)
 
     # retrieve data, including a pad on all sides
-    pts = lidar.retrieve(x_min-PAD, y_min-PAD, x_max+PAD, y_max+PAD)
+    pts = lidar.retrieve(x_min-PAD, x_max+PAD, y_min-PAD, y_max+PAD)
 
     # extract ground points
     grnd_idx = []

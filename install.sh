@@ -6,7 +6,7 @@
 # install system packages
 sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui \
 	postgresql-server-dev-10 libxml2-dev libcunit1-dev autoconf postgresql-10-postgis-2.4 \
-	postgresql-10-pgrouting gdal-bin libgdal-dev python3-gdal python3-tk
+	postgresql-10-pgrouting gdal-bin libgdal-dev python3-gdal python3-tk grass-dev
 
 # retrieve missing proj4 datum files
 mkdir vdatum

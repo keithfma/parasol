@@ -33,11 +33,26 @@ file to list the correct data sources.
 
 [4] Install the `parasol` package using `pip`. Keep track of where it is
 installed to, so that you can modify the config file to match your
-installation.
+installation. This step installs a suite of command line scripts that you will
+use in the next step.
 
-TODO: Run all parasol init scripts
-TODO: Run the dev server
-TODO: Deploy with Apache
+[5] Make a local copy of the config file in the installation directory (`cp
+config.json.default config.json`). Note that this will be done automatically
+the first time your import the package, if you do not do it manually. Then,
+edit the various values in the file to reflect your local configuration (e.g.,
+PSQL user, etc). See the table below for a description of each config parameter.
+
+TODO: Document config parameters in a table
+
+[6] Run all the first-time setup scripts installed with `parasol`. Each has a
+`--help` options which you should consult for usage details. Run the scripts in
+the order shown below, though your command line options may vary from this
+example.
+```shell
+parasol-init-lidar
+parasol-init-surface
+parasol-init-shade # beware! this step needs a lot of memory (not yet using tiles)
+```
 
 ## Notes for later
 

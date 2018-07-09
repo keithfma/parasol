@@ -9,6 +9,7 @@
     "PRJ_SRID": 32619,
     "LIDAR_DB": "parasol_lidar",
     "LIDAR_TABLE": "lidar",
+    "LIDAR_CHIP": 400,
     "SURFACE_DIR": "/home/keith/.parasol/surf",
     "SURFACE_RES_M": 1,
     "SHADE_DIR": "/home/keith/.parasol/shade",

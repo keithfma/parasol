@@ -67,7 +67,7 @@ def ingest(laz_file):
                 "out_srs": f"EPSG:{cfg.PRJ_SRID}",
             }, {
                 "type": "filters.chipper",
-                "capacity": 400,
+                "capacity": cfg.LIDAR_CHIP,
             }, {
                 "type": "writers.pgpointcloud",
                 "connection": f"host={cfg.PSQL_HOST} dbname={cfg.LIDAR_DB} user={cfg.PSQL_USER} password={cfg.PSQL_PASS} port={cfg.PSQL_PORT}",

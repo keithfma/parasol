@@ -88,13 +88,6 @@ def ingest(laz_file):
     logger.info(f'Completed ingest: {laz_file}')
 
 
-# NOTE: some problem with my DB query caused the direct query version of
-#   retrieve() to get waaay to many points. Reverted to the clunky text version
-#   to keep forward momentum.
-# NOTE: original version used PDAL to return numpy array, but this had some
-#   internal memory leak
-
-
 def retrieve(xmin, xmax, ymin, ymax):
     """
     Retrieve all points within a bounding box
@@ -105,11 +98,41 @@ def retrieve(xmin, xmax, ymin, ymax):
     Returns: numpy array with columns
         X, Y, Z, ReturnNumber, NumberOfReturns, Classification
     """
-    with common.connect_db(cfg.LIDAR_DB) as conn, conn.cursor() as cur:
-        cur.execute(f'SELECT PC_AsText(PC_Union(pa)) FROM lidar WHERE PC_Intersects('
-            f'pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {cfg.PRJ_SRID}))')
-        data = np.array(json.loads(cur.fetchone()[0])['pts']) # ordered as ReturnNumber,NumberOfReturns,Classification,X,Y,Z
-    return np.roll(data, 3) # ordered as X,Y,Z,ReturnNumber,NumberOfReturns,Classification
+    # # DISABLED: direct query returns points with reduced precision (AsText) or
+    # #   without non-spatial dimensions (AsBinary). Alternative is to write
+    # #   custom code to parse the binary directly, which is not currently worth
+    # #   the effort
+    # with common.connect_db(cfg.LIDAR_DB) as conn, conn.cursor() as cur:
+    #     cur.execute(f'SELECT PC_AsText(PC_Union(pa)) FROM lidar WHERE PC_Intersects('
+    #         f'pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {cfg.PRJ_SRID}))')
+    #     data = np.array(json.loads(cur.fetchone()[0])['pts']) # ordered as ReturnNumber,NumberOfReturns,Classification,X,Y,Z
+    # return np.roll(data, 3) # ordered as X,Y,Z,ReturnNumber,NumberOfReturns,Classification
+
+    # build pipeline definition and execute
+    filename = uuid.uuid4().hex
+    pipeline_json= json.dumps({
+        "pipeline":[
+            {
+                "type": "readers.pgpointcloud",
+                "connection": f"host={cfg.PSQL_HOST} dbname={cfg.LIDAR_DB} user={cfg.PSQL_USER} password={cfg.PSQL_PASS} port={cfg.PSQL_PORT}",
+                "table": cfg.LIDAR_TABLE,
+                "column": "pa",
+                "where": f"PC_Intersects(pa, ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {cfg.PRJ_SRID}))",
+            }, {
+                "type": "writers.text",
+                "format": "csv",
+                "filename": filename,
+            }
+          ]
+        })
+    subprocess.run(['pdal', 'pipeline', '--stdin'], input=pipeline_json.encode('utf-8'))
+    
+    # read resulting file to numpy, then delete it
+    array = np.loadtxt(filename, delimiter=',', dtype=float, skiprows=1)
+    os.remove(filename)
+    
+    logger.info(f'Received {array.shape[0]} points')
+    return array
 
 
 # command line utilities -----------------------------------------------------

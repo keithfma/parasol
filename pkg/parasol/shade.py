@@ -14,6 +14,7 @@ import requests
 from pkg_resources import resource_filename
 import glob
 from osgeo import gdal
+import concurrent.futures
 
 from parasol import surface, common, cfg
 
@@ -93,6 +94,8 @@ def insolation(day, hour, top_name, bot_name):
         top_name: string, path to save retults as geotiff
         bot_name: string, path to save retults as geotiff
     """
+    logger.info(f'Update insolation @ {hour}')
+    
     # get name for GRASS layer
     top_layer = os.path.splitext(os.path.basename(top_name))[0]
     bot_layer = os.path.splitext(os.path.basename(bot_name))[0]
@@ -133,8 +136,7 @@ def insolation(day, hour, top_name, bot_name):
         f'pattern="{bot_layer}"'])
 
 
-# TODO: explore multiprocessing
-def update_today():
+def update_today(nproc=1):
     """Update insolation frames for whole day in loop"""
 
     # get current day and list of times (interval, etc, are set using config variables)
@@ -144,12 +146,14 @@ def update_today():
     if not os.path.isdir(cfg.SHADE_DIR):
         os.makedirs(cfg.SHADE_DIR)
 
+    # create parallel executor
+    pool = concurrent.futures.ThreadPoolExecutor(nproc)
     for ii, meta in enumerate(common.shade_meta()): 
-        logger.info(f'Update daily insolation @ {meta["hour"]:02d}:{meta["minute"]:02d}')
         time = meta['hour'] + meta['minute']/60
         top_name = os.path.join(cfg.SHADE_DIR, meta["top"])
         bot_name = os.path.join(cfg.SHADE_DIR, meta["bottom"])
-        insolation(day, time, meta['top'], meta['bottom'])
+        pool.submit(insolation, day, time, meta['top'], meta['bottom'])
+    pool.shutdown(wait=True)
 
 
 def retrieve(hour, minute, bbox=None):
@@ -222,16 +226,15 @@ def update_cli():
         description="Update daily insolation rasters - clobbers existing!",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter) 
     ap.add_argument('--log', type=str, default='info', help="select logging level",
-                    choices=['debug', 'info', 'warning', 'error', 'critical'])
+        choices=['debug', 'info', 'warning', 'error', 'critical'])
+    ap.add_argument('--nproc', type=int, default=1,
+        help='Number of concurrent processes to run')
     args = ap.parse_args()
 
     log_lvl = getattr(logging, args.log.upper())
     logging.basicConfig(level=log_lvl)
     logger.setLevel(log_lvl)
 
-    update_today()
-
-
-# TODO: CLI for computing a validation scene
+    update_today(nproc=args.nproc)
 
 

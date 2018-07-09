@@ -119,6 +119,7 @@ def create_geotiff(filename, x_vec, y_vec, z_grd):
     driver = outRaster = outband = None
 
 
+# TODO: make this concurrent
 def create_surfaces(x_min, x_max, y_min, y_max, x_tile, y_tile):
     """
     Generate rasters and upload to database, tile-by-tile

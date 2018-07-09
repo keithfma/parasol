@@ -59,18 +59,16 @@ def grid_points(x_min, x_max, y_min, y_max):
     # extract ground points
     grnd_idx = []
     for idx, pt in enumerate(pts):
-        # if pt[3] == pt[4] and pt[5] in {2, 9, 18}:
-        #     # last or only return, classified as "ground" or "water"
-        if pt[5] in {2, 9, 10, 18}:
-            # classified as "(overlap, ignored) ground" or "water"
+        if pt[3] == pt[4] and pt[5] in {1, 2, 9}:
+            # last or only return, classified as "default", "ground" or "water"
             grnd_idx.append(idx)
     grnd_pts = pts[grnd_idx, :3]
     
     # extract upper surface points
     surf_idx = []
     for idx, pt in enumerate(pts):
-        if (pt[3] == 1 or pt[4] == 1) and pt[5] in {1, 9, 17}:
-            # first or only return, classified as "(overlap) default", or "water" 
+        if (pt[3] == 1 or pt[4] == 1) and pt[5] in {1, 2, 9}:
+            # first or only return, classified as "default", "ground", or "water" 
             surf_idx.append(idx)
     surf_pts = pts[surf_idx, :3]
     del pts

@@ -102,7 +102,7 @@ def shade_meta():
         meta['minute'] = math.floor((fhours - meta['hour'])*60)
         meta['top'] = f'{cfg.SHADE_TOP_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
         meta['bottom'] = f'{cfg.SHADE_BOTTOM_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
-        meta['sun_cost'] = f'{cfg.OSM_SHADE_COST_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
+        meta['sun_cost'] = f'{cfg.OSM_SUN_COST_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
         meta["shade_cost"] = f'{cfg.OSM_SHADE_COST_PREFIX}{meta["hour"]:02d}{meta["minute"]:02d}'
         metas.append(meta)
     return(metas)

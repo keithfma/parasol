@@ -98,7 +98,7 @@ def insolation(day, hour, top_name, bot_name):
     bot_layer = os.path.splitext(os.path.basename(bot_name))[0]
 
     # set compute region -- very important!
-    subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
+    subprocess.run(['grass', '--exec', 'g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
 
     # solar calculation
     logger.info(f'Computing insolation for day={day}, time={hour}')
@@ -146,11 +146,10 @@ def update_today():
 
     for ii, meta in enumerate(common.shade_meta()): 
         logger.info(f'Update daily insolation @ {meta["hour"]:02d}:{meta["minute"]:02d}')
-        time_hour = math.floor(time)
-        time_min = round((time - time_hour)*60)
+        time = meta['hour'] + meta['minute']/60
         top_name = os.path.join(cfg.SHADE_DIR, meta["top"])
         bot_name = os.path.join(cfg.SHADE_DIR, meta["bottom"])
-        insolation(day, time, top_name, bot_name)
+        insolation(day, time, meta['top'], meta['bottom'])
 
 
 def retrieve(hour, minute, bbox=None):

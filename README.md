@@ -5,7 +5,8 @@
 + **pkg**: Final version for release
 + **data**: Supporting datasets 
 + **dev**: Various development scripts
-+ **deps.sh**: Install dependencies (Ubuntu Linux only)
++ **deps**: Various dependencies that must be built/installed manually
++ **install.sh**: Install dependencies (Ubuntu Linux only)
 
 ## Getting Started
 
@@ -14,17 +15,26 @@ configuration. I have tried to automate where practical, and to document the
 remaining steps. That said, be warned: this is not an easy package to get up
 and running.
 
-Run the `deps.sh` script as root to most of the packages you will need. 
+[1] Run the `install.sh` script, which takes care of installing many of the
+dependencies.
 
-Configure a postgresql user. Run the following lines, replacing 'USER' with
-your preferred postgresql user name. You will be prompted to set up a password.
-The username and password should go in your parasol config file.
+[2] Configure a postgresql user. Run the following lines, replacing 'USER'
+with your preferred postgresql user name. You will be prompted to set up a
+password.  The username and password should go in your parasol config file.
 ```shell
 sudo -i -u postgres
 createuser --createdb --createrole --pwprompt USER 
 ```
 
-TODO: Download data
+[3] Download the original LiDAR data by running the `download.sh` script in
+the `data/noaa_lidar` folder. This script reads off the URLs from the file
+`url_list.txt`. If you want to change the domain, you will need to modify this
+file to list the correct data sources.
+
+[4] Install the `parasol` package using `pip`. Keep track of where it is
+installed to, so that you can modify the config file to match your
+installation.
+
 TODO: Run all parasol init scripts
 TODO: Run the dev server
 TODO: Deploy with Apache

@@ -1,8 +1,11 @@
 #!/bin/bash
-# Install parasol dependencies using apt -- tested with Ubuntu 18.04 LTS
+# Install parasol dependencies using apt -- tested with fresh Ubuntu 18.04 LTS installation
 # Run as root.
 # #
 
-apt install postgresql
-apt install postgresql-client-common
-apt install python3-pip
+# install packages
+sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui
+
+# build and install additional dependencies
+cd deps/laszip
+./install.sh

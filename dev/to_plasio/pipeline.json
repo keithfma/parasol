@@ -1,0 +1,24 @@
+{
+    "pipeline": [
+        {
+            "type": "readers.las",
+            "filename": "input.laz"
+        },  
+        {
+            "type": "filters.reprojection",
+            "out_srs": "EPSG:32619"
+        },
+        {
+            "type": "writers.las", 
+            "filename": "output.laz",
+            "a_srs": "EPSG:32619", 
+            "scale_x": "auto",
+            "scale_y": "auto",
+            "scale_z": "auto",
+            "offset_x": "auto",
+            "offset_y": "auto",
+            "offset_z": "auto",
+            "compression": "laszip"
+        }
+    ]
+}

@@ -6,3 +6,4 @@ include parasol/templates/*.sld
 include parasol/templates/*.wsgi
 include parasol/static/*.css
 include parasol/static/*.js
+include parasol/lidar_urls.txt

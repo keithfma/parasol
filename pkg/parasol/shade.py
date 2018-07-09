@@ -68,7 +68,7 @@ def prep_inputs():
     subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
     
     # compute constant shade component (e.g., under trees, within buildings
-    mapcalc_expression = f'"shade-mask@{cfg.GRASS_MAPSET}" = ("surface@{cfg.GRASS_MAPSET}"-"ground@{cfg.GRASS_MAPSET}")>3'
+    mapcalc_expression = f'"shade-mask@{cfg.GRASS_MAPSET}" = ("surface@{cfg.GRASS_MAPSET}"-"ground@{cfg.GRASS_MAPSET}")>1'
     subprocess.run(['r.mapcalc', f'expression={mapcalc_expression}', '--overwrite'])
 
     # generate ancillary inputs needed for solar calc

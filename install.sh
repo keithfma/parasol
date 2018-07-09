@@ -6,7 +6,7 @@
 # install system packages
 sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui \
 	postgresql-server-dev-10 libxml2-dev libcunit1-dev autoconf postgresql-10-postgis-2.4 \
-	postgresql-10-pgrouting gdal-bin libgdal-dev 
+	postgresql-10-pgrouting gdal-bin libgdal-dev python3-gdal python3-tk
 
 # install python packages
 # note: most dependencies are install in setup.py, but building PDAL requires a few be pre-installed

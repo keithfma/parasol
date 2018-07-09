@@ -23,7 +23,7 @@ with your preferred postgresql user name. You will be prompted to set up a
 password.  The username and password should go in your parasol config file.
 ```shell
 sudo -i -u postgres
-createuser --createdb --createrole --pwprompt USER 
+createuser --createdb --createrole --pwprompt --superuser USER 
 ```
 
 [3] Download the original LiDAR data by running the `download.sh` script in

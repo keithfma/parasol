@@ -15,10 +15,11 @@ setup(
         'cython', # ditto
         'packaging', # ditto 
         'scipy',
-        'pdal',
         'pyproj',
         'numpy',
         'shapely',
+        'psycopg2',
+        'matplotlib',
         ],
     entry_points={
         'console_scripts': [

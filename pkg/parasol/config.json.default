@@ -21,9 +21,9 @@
     "OSM_SHADE_COST_PREFIX": "shade_",
     "GRASS_GISBASE": "/usr/lib/grass74",
     "GRASS_GISRC": "/home/keith/.parasol/grassrc", 
-    "GRASS_GISDBASE": "home/keith/.parasol/.grassdb",
+    "GRASS_GISDBASE": "/home/keith/.parasol/.grassdb",
     "GRASS_LOCATION": "parasol-shade",
-    "GRASS_MAPSET": "parasol-shade"
+    "GRASS_MAPSET": "parasol-shade",
     "SHADE_START_HOUR": 5,
     "SHADE_STOP_HOUR": 22,  
     "SHADE_INTERVAL_HOUR": 1, 

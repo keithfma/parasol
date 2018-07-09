@@ -45,6 +45,9 @@ def init_grass():
     map_dir = f'{cfg.GRASS_GISDBASE}/{cfg.GRASS_LOCATION}/{cfg.GRASS_MAPSET}'
     subprocess.run(['grass74', '-c', f'EPSG:{cfg.PRJ_SRID}', '-e', map_dir])
 
+    # switch to newly created mapset
+    subprocess.run(['grass74', '-c', 'g.mapset', f'mapset={cfg.GRASS_MAPSET}'])
+
 
 def clear_grass():
     """Remove all working files from the GRASS database"""
@@ -65,11 +68,11 @@ def prep_inputs():
         f'input={grnd_file}', f'output=ground@{cfg.GRASS_MAPSET}']) 
 
     # set compute region -- very important!
-    subprocess.run(['g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
+    subprocess.run(['grass', '--exec', 'g.region', f'raster=surface@{cfg.GRASS_MAPSET}']) 
     
     # compute constant shade component (e.g., under trees, within buildings
     mapcalc_expression = f'"shade-mask@{cfg.GRASS_MAPSET}" = ("surface@{cfg.GRASS_MAPSET}"-"ground@{cfg.GRASS_MAPSET}")>1'
-    subprocess.run(['r.mapcalc', f'expression={mapcalc_expression}', '--overwrite'])
+    subprocess.run(['grass', '--exec', 'r.mapcalc', f'expression={mapcalc_expression}', '--overwrite'])
 
     # generate ancillary inputs needed for solar calc
     subprocess.run(['grass', '--exec', 'r.slope.aspect', '--overwrite',

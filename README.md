@@ -26,10 +26,10 @@ sudo -i -u postgres
 createuser --createdb --createrole --pwprompt --superuser USER 
 ```
 
-[3] Download the original LiDAR data by running the `download.sh` script in
-the `data/noaa_lidar` folder. This script reads off the URLs from the file
-`url_list.txt`. If you want to change the domain, you will need to modify this
-file to list the correct data sources.
+[3] Annoyingly, GRASS GIS appears to require an interactive first-time setup
+(prove me wrong, please!). Open the GRASS GUI from the command line (`grass`),
+and create a new database and location. The names and coordinate systems must
+match the values in your `config.json` (see below), so make sure they do.
 
 [4] Install the `parasol` package using `pip`. Keep track of where it is
 installed to, so that you can modify the config file to match your
@@ -51,11 +51,6 @@ example.
 ```shell
 parasol-init-lidar
 parasol-init-surface
-parasol-init-shade # beware! this step needs a lot of memory (not yet using tiles)
+parasol-init-shade
 ```
 
-## Notes for later
-
-+ installing wxpython: https://uwpce-pythoncert.github.io/Py300/notes/Installing_wxPython.html
-+ https://wxpython.org/pages/downloads/
-+ https://stackoverflow.com/questions/720806/wxpython-for-python-3

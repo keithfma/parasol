@@ -1,17 +1,35 @@
 # Parasol: Shade model and routing algorithm for comfortable travel outdoors 
 
-# Contents
+## Contents
 
-+ **pitch**: Idea pitch materials
++ **pkg**: Final version for release
++ **data**: Supporting datasets 
 + **dev**: Various development scripts
-+ **mvp**: Minimal Viable Program 
-+ **release**: Final version for release
++ **deps.sh**: Install dependencies (Ubuntu Linux only)
+
+## Getting Started
+
+There are quite a few dependencies, and some require a bit of manual
+configuration. I have tried to automate where practical, and to document the
+remaining steps. That said, be warned: this is not an easy package to get up
+and running.
+
+Run the `deps.sh` script as root to most of the packages you will need. 
+
+Configure a postgresql user. Run the following lines, replacing 'USER' with
+your preferred postgresql user name. You will be prompted to set up a password.
+The username and password should go in your parasol config file.
+```shell
+sudo -i -u postgres
+createuser --createdb --createrole --pwprompt USER 
+```
+
+TODO: Download data
+TODO: Run all parasol init scripts
+TODO: Run the dev server
+TODO: Deploy with Apache
 
 ## Notes for later
-
-+ Have to set a special env variable to enable GTiff output from Postgres. See
-  https://postgis.net/docs/postgis_installation.html . Add the following to
-  /etc/postgresql/10/main/enviroment: `POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL`
 
 + installing wxpython: https://uwpce-pythoncert.github.io/Py300/notes/Installing_wxPython.html
 + https://wxpython.org/pages/downloads/

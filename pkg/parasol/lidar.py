@@ -159,19 +159,27 @@ def initialize_cli():
     # create directory if needed 
     if not os.path.isdir(cfg.LIDAR_DIR):
         os.makedirs(cfg.LIDAR_DIR)
-    
-    # download any LiDAR files that are not already there 
+
+    # get list of urls
+    urls = []
     with open(args.urls, 'r') as fp:
         for line in fp:
-            url = line.strip()
-            if not url:
+            line = line.strip()
+            if not line:
                 continue
-            filename = os.path.join(cfg.LIDAR_DIR, os.path.basename(url))
-            if os.path.isfile(filename):
-                logger.info(f'File {filename} exists, skipping')
+            elif line[0] == '#':
                 continue
-            logger.info(f'Downloading URL {url}')
-            wget.download(url, out=cfg.LIDAR_DIR) 
+            else:
+                urls.append(line)
+    
+    # download any LiDAR files that are not already there 
+    for url in urls:
+        filename = os.path.join(cfg.LIDAR_DIR, os.path.basename(url))
+        if os.path.isfile(filename):
+            logger.info(f'File {filename} exists, skipping')
+            continue
+        logger.info(f'Downloading URL {url}')
+        wget.download(url, out=cfg.LIDAR_DIR) 
 
     # create db, if requested
     if args.clean:

@@ -11,8 +11,6 @@ import argparse
 from pdb import set_trace
 import shapely.wkb
 import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib
 import pickle
 import scipy.interpolate
 import scipy.integrate

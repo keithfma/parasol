@@ -19,7 +19,6 @@ setup(
         'numpy',
         'shapely',
         'psycopg2',
-        'matplotlib',
         ],
     entry_points={
         'console_scripts': [

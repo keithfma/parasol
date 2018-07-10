@@ -12,8 +12,6 @@ import osr
 import subprocess
 from pdb import set_trace
 import tempfile
-import matplotlib
-from matplotlib import pyplot as plt
 import argparse
 import os 
 from glob import glob

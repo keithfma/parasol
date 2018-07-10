@@ -1,0 +1,12 @@
+include parasol/config.json.default
+include parasol/lidar.json
+include parasol/osm.json
+include parasol/templates/*.html
+include parasol/templates/*.sld
+include parasol/templates/*.wsgi
+include parasol/static/*.css
+include parasol/static/*.js
+include parasol/static/*.png
+include parasol/static/*.svg
+include parasol/static/LICENSE-*
+include parasol/lidar_urls.txt

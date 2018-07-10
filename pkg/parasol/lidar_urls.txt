@@ -1,0 +1,28 @@
+# MA LiDAR Data
+# 
+# The raw data used to make the (crappy) MA LiDAR maps is made available by NOAA.
+# 
+# The data explorer app gives access to everything:
+# https://coast.noaa.gov/dataviewer/#/
+# 
+# The specific dataset for Boston and environs and some documentation about it is
+# available at: https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/
+# README.md (END)
+
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG315920.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG315890.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG300935.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG300920.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG300905.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG300890.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG270935.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy19TCG315905.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG270920.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG270905.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG270890.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG285935.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG285920.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG285905.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20131208_usgspostsandy_19TCG285890.laz 
+https://coast.noaa.gov/htdata/lidar1_z/geoid12b/data/4914/20140407_usgspostsandy_19TCG315935.laz 
+

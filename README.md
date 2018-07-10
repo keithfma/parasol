@@ -31,12 +31,18 @@ createuser --createdb --createrole --pwprompt --superuser USER
 and create a new database and location. The names and coordinate systems must
 match the values in your `config.json` (see below), so make sure they do.
 
-[4] Install the `parasol` package using `pip`. Keep track of where it is
+[4] Change the default password for your geoserver user. Go to
+`http://<your-ip-here>:8080/geoserver` and login with the default username
+`admin` and password `geoserver`. Navigate to the "Users, Groups, Roles"
+section, and update your password. Keep the new password handy to add to the
+parasol config file (see below).
+
+[5] Install the `parasol` package using `pip`. Keep track of where it is
 installed to, so that you can modify the config file to match your
 installation. This step installs a suite of command line scripts that you will
 use in the next step.
 
-[5] Make a local copy of the config file in the installation directory (`cp
+[6] Make a local copy of the config file in the installation directory (`cp
 config.json.default config.json`). Note that this will be done automatically
 the first time your import the package, if you do not do it manually. Then,
 edit the various values in the file to reflect your local configuration (e.g.,
@@ -44,7 +50,7 @@ PSQL user, etc). See the table below for a description of each config parameter.
 
 TODO: Document config parameters in a table
 
-[6] Run all the first-time setup scripts installed with `parasol`. Each has a
+[7] Run all the first-time setup scripts installed with `parasol`. Each has a
 `--help` options which you should consult for usage details. Run the scripts in
 the order shown below, though your command line options may vary from this
 example.
@@ -52,5 +58,6 @@ example.
 parasol-init-lidar
 parasol-init-surface
 parasol-init-shade
+parasol-update-shade
 ```
 

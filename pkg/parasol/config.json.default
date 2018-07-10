@@ -31,7 +31,7 @@
     "SHADE_INTERVAL_HOUR": 1, 
     "GEOSERVER_HOST": "localhost", 
     "GEOSERVER_PORT": 8080,
-    "GEOSERVER_USER": null,
-    "GEOSERVER_PASS": "geoserver", 
+    "GEOSERVER_USER": "admin",
+    "GEOSERVER_PASS": null, 
     "GEOSERVER_WORKSPACE": "parasol"
 }  

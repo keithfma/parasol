@@ -1,5 +1,0 @@
-include parasol_mvp/lidar.json
-include parasol_mvp/osm.json
-include parasol_mvp/templates/*.html
-include parasol_mvp/static/*.css
-include parasol_mvp/static/*.js

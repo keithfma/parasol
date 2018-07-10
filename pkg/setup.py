@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='parasol',
-    version='0.3.0',
+    version='0.3.1',
     description='Parasol - Optimizing navigation for comfortable outdoor travel',
     packages=find_packages(),
     include_package_data=True,

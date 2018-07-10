@@ -177,7 +177,13 @@ function updateOptimalRoute() {
             data: {lat0: pts[0].lat, lon0: pts[0].lng, lat1: pts[1].lat, lon1: pts[1].lng,
                    beta: beta, hour: now.hour, minute: now.minute},
             dataType: 'json',
-            error: function(result) {console.log('Failed to fetch route, result:', result);},
+            error: function(result) {
+		if (result.status == 403) { // endpoint out-of-bounds
+	            alert("One or more endpoint is outside the Parasol domain. Please try again.");
+	        } else {
+                    console.log('Failed to fetch route, result:', result);
+	        }
+	    },
             success: function(result) {
                 optimalRouteLength = result.length;
                 optimalRouteSun = result.sun;

@@ -50,24 +50,13 @@ def create_db(clobber=False):
 
 def fetch_data():
     """Download OpenStreetMaps data for the Parasol study area"""
-    # get OSM bounding box (geographic)
-    prj0 = pyproj.Proj(init=f'epsg:{cfg.PRJ_SRID}')
-    prj1 = pyproj.Proj(init=f'epsg:{cfg.GEO_SRID}')
-    ll = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[0], cfg.DOMAIN_YLIM[0])
-    lr = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[1], cfg.DOMAIN_YLIM[0])
-    ul = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[0], cfg.DOMAIN_YLIM[1])
-    ur = pyproj.transform(prj0, prj1, cfg.DOMAIN_XLIM[1], cfg.DOMAIN_YLIM[1])
-    lons = [ll[0], lr[0], ur[0], ul[0]]
-    lats = [ll[1], lr[1], ur[1], ul[1]]
-    
     # create output folder if needed
     if not os.path.isdir(cfg.OSM_DIR):
         logger.info(f'Created directory {cfg.OSM_DIR}')
         os.makedirs(cfg.OSM_DIR)
-
     # fetch data from OSM overpass API
     # ...cribbed example from: https://github.com/pgRouting/osm2pgrouting/issues/44
-    bbox_str = f'{min(lons)},{min(lats)},{max(lons)},{max(lats)}'
+    bbox_str = f'{cfg.DOMAIN_XLIM_GEO[0]},{cfg.DOMAIN_YLIM_GEO[0]},{cfg.DOMAIN_XLIM_GEO[1]},{cfg.DOMAIN_YLIM_GEO[1]}'
     url = f'http://www.overpass-api.de/api/xapi?*[bbox={bbox_str}][@meta]'
     logger.info(f'Downloading OSM data from: {url}')
     wget.download(url, out=OSM_FILE)

@@ -147,10 +147,3 @@ def route_length(lon0, lat0, lon1, lat1, beta):
 
     return rt_obj.Length()
 
-
-def plot_beta(lon0, lat0, lon1, lat1):
-    # start with a simple grid to get some intuition, later, might want a real optimizer
-    # betas np.arange(0.5, 1.5, :79
-    pass
-
-    

@@ -59,5 +59,10 @@ parasol-init-lidar
 parasol-init-surface
 parasol-init-shade
 parasol-update-shade
+parasol-init-geoserver
+parasol-init-osm
+parasol-update-osm
 ```
+Note that the two `parsol-update-*` functions can be called again to update the
+shade rasters and costs for the current day.
 

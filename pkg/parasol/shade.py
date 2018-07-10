@@ -156,7 +156,7 @@ def update_today(nproc=1):
     pool.shutdown(wait=True)
 
 
-def retrieve(hour, minute, bbox=None):
+def retrieve(hour, minute, bbox=None, kind='top'):
     """
     Retrieve (subset of) insolation raster closest to the specified time
 
@@ -166,26 +166,30 @@ def retrieve(hour, minute, bbox=None):
             returned
         bbox: length-5 tuple/list, [x_min, x_max, y_min, y_max, srid], bounding
             box used to clip raster, output may not match limits exactly 
+        kind: string, one of {'top', 'bottom'}, select upper or lower surface
+            insolation raster
     
     Returns: x_vec, y_vec, z_grd
         x_vec, y_vec: numpy 1D arrays, coordinate vectors
         z_grd: numpy 2D array, insolation
     """
+    # check argument sanity
+    if kind not in {'top', 'bottom'}: 
+        raise ValueError('Invalid choice for argument "kind"')
+
     # handle bbox
     if bbox:
         raise NotImplementedError('Raster subsets are not yet supported')
 
     # select insolation raster file
     out_time = hour + minute/60
-    shade_file = None
     shade_time = 99999
-    for this_file in glob.glob(os.path.join(cfg.SHADE_DIR, 'today_*.tif')):
-        tmp = os.path.basename(this_file)[6:-4]
-        this_time = float(tmp[:2]) + float(tmp[2:])/60
+    for meta in common.shade_meta():
+        this_time = meta['hour'] + meta['minute']/60
         if abs(out_time - this_time) < abs(out_time - shade_time):
             shade_time = this_time
-            shade_file = this_file 
-
+            shade_file = os.path.join(cfg.SHADE_DIR, f'{meta[kind]}.tif')
+    
     # read in raster (subset) and coordinate vectors
     # TODO: implement subset using bounding box
     ds = gdal.Open(shade_file)

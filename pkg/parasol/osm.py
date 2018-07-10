@@ -89,7 +89,7 @@ def ingest():
     logger.info(f'Completed ingest: {OSM_FILE}')
 
 
-# NOTE: need to take more care with the end points -- many ways are short and
+# TODO: need to take more care with the end points -- many ways are short and
 #   the rouding error matters
 
 
@@ -164,7 +164,7 @@ def way_insolation(hour, minute, wpts):
             speed)
     """
     # retrieve shade raster for nearest available time
-    xx, yy, wm2 = shade.retrieve(hour, minute)
+    xx, yy, wm2 = shade.retrieve(hour, minute, kind='bottom')
     yy = yy[::-1] # interpolant requires increasing coords
     wm2 = wm2[:, ::-1]
 
@@ -212,7 +212,7 @@ def update_cost_db(wpts):
             with conn.cursor() as cur:
             
                 # compute the cost at this time
-                logger.info(f'Updating insolation cost for {meta["hour"]}:{meta["minute"]}')
+                logger.info(f'Updating insolation cost for {meta["hour"]:02d}:{meta["minute"]:02d}')
                 sun_cost, shade_cost = way_insolation(meta["hour"], meta["minute"], wpts)
 
                 # prepare columns
@@ -246,7 +246,7 @@ def initialize_cli():
     logger.setLevel(log_lvl)
 
     create_db(True)
-    # fetch_data() # temporarily skipping this step
+    fetch_data()
     ingest()
 
     # init waypoint lookup table

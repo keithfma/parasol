@@ -66,3 +66,11 @@ parasol-update-osm
 Note that the two `parsol-update-*` functions can be called again to update the
 shade rasters and costs for the current day.
 
+## Run Parasol application with Flask development server
+
+It's easy! Just run the command line script `parasol-server`. Add the `--help`
+flag to see the various available options.
+
+## Setup and run deployed application with Apache and mod\_wsgi
+
+TODO

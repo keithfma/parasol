@@ -94,7 +94,7 @@ def shade_meta():
         minute: int, minute for layer time
         suffix: string, layer suffix encoding time
     """
-    layers = [] 
+    metas = [] 
     for fhours in np.arange(cfg.SHADE_START_HOUR, cfg.SHADE_STOP_HOUR, cfg.SHADE_INTERVAL_HOUR):
         meta = {}
         meta['hour'] = math.floor(fhours)

@@ -93,7 +93,9 @@ L.Control.Toggle = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function (map) {
-        this.toggle = L.DomUtil.create('input', 'toggle');
+        this.toggleDiv = L.DomUtil.create('div')
+        // create the button
+        this.toggle = L.DomUtil.create('input', 'toggle', this.toggleDiv);
         this.toggle.setAttribute("type", "image");
         this.toggle.setAttribute("src", this.options.imgSrc);
         this.toggle.setAttribute("width", this.options.imgWidth);
@@ -108,7 +110,11 @@ L.Control.Toggle = L.Control.extend({
             }
         }, this);
         L.DomEvent.disableClickPropagation(this.toggle);
-        return this.toggle;
+        // create the tool tip
+        this.tooltipDiv = L.DomUtil.create('div', 'tooltip', this.toggleDiv);
+        this.tooltip = L.DomUtil.create('span', 'tooltiptext', this.tooltipDiv);
+        this.tooltip.innerHTML = 'THIS IS A TOOLTIP';
+        return this.toggleDiv;
     }
 });
 

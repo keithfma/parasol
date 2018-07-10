@@ -184,6 +184,7 @@ function updateOptimalRoute() {
             success: function(result) {
                 optimalRouteLength = result.length;
                 optimalRouteSun = result.sun;
+		console.log('Retrieved route. Length: ', optimalRouteLength, 'Route: ', optimalRoute);
                 if (optimalRoute) {
                     optimalRoute.remove();
                     map.almostOver.removeLayer(optimalRoute);

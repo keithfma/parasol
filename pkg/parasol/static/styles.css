@@ -171,3 +171,11 @@ h3 {
     text-decoration: none;
     cursor: pointer;
 }
+
+#help-table {
+    border: 3px solid #6b5b95;
+}
+
+.sidebar {
+    color: #4c4c4c;
+}

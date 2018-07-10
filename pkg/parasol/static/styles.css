@@ -11,7 +11,12 @@ html, body {
 body { 
     padding: 0; 
     margin: 0; 
+    font-family: Tahoma, Geneva, sans-serif;
 } 
+
+h3 {
+    text-align: center;
+}
 
 #map { 
     height: 100%; 

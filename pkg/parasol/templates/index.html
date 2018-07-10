@@ -2,18 +2,18 @@
 <html>
 <head>
 	
-<title>Parasol Navigation - v0.3.1</title>
+<title>Parasol Navigation - v0.3.2</title>
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
-<link  href="https://unpkg.com/leaflet-geosearch@latest/assets/css/leaflet.css" rel="stylesheet" />
+<link rel="stylesheet" href={{ url_for('static', filename='leaflet-1.3.1.css') }}>
+<link rel="stylesheet" href={{ url_for('static', filename='leaflet-geosearch-2.6.0.css') }}>
 <link rel="stylesheet" href={{ url_for('static', filename='styles.css') }}>
 
-<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-geosearch@latest/dist/bundle.min.js"></script>
+<script src={{ url_for('static', filename='jquery-3.3.1.min.js') }}></script>
+<script src={{ url_for('static', filename='leaflet-1.3.1.js') }}></script>
+<script src={{ url_for('static', filename='leaflet-geosearch-2.6.0.js') }}></script>
 <script src={{ url_for('static', filename='leaflet.geometryutil.js') }}></script>
 <script src={{ url_for('static', filename='leaflet.almostover.js') }}></script>
 <script src={{ url_for('static', filename='svg-icon.js') }}></script>
@@ -24,6 +24,57 @@
 <body>
 
 <div id='map'></div>
+
+<div id='help'>
+    <div id='help-content'>
+        <span id="help-close">&times;</span>
+        <h3>Welcome to Parasol Navigation!</h1>
+        <p>
+            Parasol helps you to stay comfortable when travelling outdoors by
+            simulating sun and shade along your route and choosing a path that
+            balances distance and your shade preference.
+        </p>
+        <table id="help-table">
+            <tr>
+                <td align="center"><img src="static/address.png" width=150></td>
+                <td>Enter origin and destination addresses here. A marker will appear when you enter the first, and a route when you enter the second</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/marker.png" height=50></td>
+                <td>Marks your origin and destination &ndash; drag to adjust as needed.</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/route.png" height=50></td>
+                <td>Marks the optimal route &ndash; click to get some additional details.</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/toggle.png" height=50></td>
+                <td>Toggles the simulated sun/shade layer for the current time</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/time.png" height=50></td>
+                <td>Sets the current time, which impacts the optimal route</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/slider.png" height=50></td>
+                <td>Sets your sun/shade preference &ndash; slide left if your prefer shade, and right if you prefer sun</td>
+            </tr>
+            <tr>
+                <td align="center"><img src="static/zoom.png" height=75></td>
+                <td>Zooms the view in/out</td>
+            </tr>
+        </table>
+        <p class=sidebar>
+            For the interested, Parasol works by [1] building a high-resolution
+            3D model of the urban landscape from airborne LiDAR survey data,
+            [2] simulating insolation on that surface based on solar position
+            for the current day and time, [3] interpolating the insolation
+            results to the OpenStreetMaps transportation network, [4] computing
+            a custom cost function given the user's selected shade preference,
+            and [5] computing an optimal path given that cost function.
+        </p>  
+    </div>
+</div>
 
 </body>
 </html>

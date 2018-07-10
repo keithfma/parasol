@@ -11,7 +11,12 @@ html, body {
 body { 
     padding: 0; 
     margin: 0; 
+    font-family: Tahoma, Geneva, sans-serif;
 } 
+
+h3 {
+    text-align: center;
+}
 
 #map { 
     height: 100%; 
@@ -124,4 +129,53 @@ body {
 
 .slider-icon {
     vertical-align: middle
+}
+
+/* DEVELOPMENT */
+
+/* The Modal (background) */
+#help {
+    display: block; /* Visible by default */
+    position: fixed; /* Stay in place */
+    z-index: 10000; /* Sit on top */
+    padding-top: 20px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    overflow-y: scroll;
+}
+
+/* Modal Content */
+#help-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    overflow-y: scroll;
+}
+
+/* The Close Button */
+#help-close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#help-close:hover, #help-close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#help-table {
+    border: 3px solid #6b5b95;
+}
+
+.sidebar {
+    color: #4c4c4c;
 }

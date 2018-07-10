@@ -345,4 +345,18 @@ window.onload = function () {
         }
     });
 
+    // display help modal on startup
+    var help = document.getElementById('help');
+    var closeHelp = document.getElementById("help-close");
+    // when the user clicks on <span> (x), close the modal
+    closeHelp.onclick = function() {
+        help.style.display = "none";
+    }
+    // when the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == help) {
+            help.style.display = "none";
+        }
+    } 
+
 };

@@ -8,10 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
-<link  href="https://unpkg.com/leaflet-geosearch@latest/assets/css/leaflet.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@latest/assets/css/leaflet.css" />
 <link rel="stylesheet" href={{ url_for('static', filename='styles.css') }}>
 
-<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src={{ url_for('static', filename='jquery-3.3.1.min.js') }}></script>
 <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-geosearch@latest/dist/bundle.min.js"></script>
 <script src={{ url_for('static', filename='leaflet.geometryutil.js') }}></script>
@@ -34,6 +34,36 @@
             simulating sun and shade along your route and choosing a path that
             balances distance and your shade preference.
         </p>
+        <table>
+            <tr>
+                <td>ADDRESS</td>
+                <td>Enter origin and destination addresses here. A marker will appear when you enter the first, and a route when you enter the second</td>
+            </tr>
+            <tr>
+                <td>MARKER</td>
+                <td>Marks your origin and destination &ndash; drag to adjust as needed.</td>
+            </tr>
+            <tr>
+                <td>ROUTE</td>
+                <td>Marks the optimal route &ndash; click to get some additional details.</td>
+            </tr>
+            <tr>
+                <td>ZOOM</td>
+                <td>Zooms the view in/out</td>
+            </tr>
+            <tr>
+                <td>SUN</td>
+                <td>Toggles the simulated sun/shade layer for the current time</td>
+            </tr>
+            <tr>
+                <td>TIME</td>
+                <td>Sets the current time, which impacts the optimal route</td>
+            </tr>
+            <tr>
+                <td>BETA</td>
+                <td>Sets your sun/shade preference &endash; slide left if your prefer shade, and right if you prefer sun</td>
+            </tr>
+        </table>
         <p>
             For the interested, Parasol works by [1] building a high-resolution
             3D model of the urban landscape from airborne LiDAR survey data,

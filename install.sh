@@ -40,3 +40,6 @@ cd ../pgpointcloud
 
 cd ../pdal
 ./install.sh
+
+cd ../geoserver
+./install.sh

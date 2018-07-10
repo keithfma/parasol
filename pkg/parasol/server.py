@@ -158,9 +158,9 @@ def deploy():
         formatter_class= argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument('--venv', default=None, 
         help='Path to virtual environment where "parasol" package is installed')
-    ap.add_argument('--user', default='parasol',
+    ap.add_argument('--user', default=cfg.APACHE_USER,
         help='User that will be used to run the server process')
-    ap.add_argument('--group', default='parasol',
+    ap.add_argument('--group', default=cfg.APACHE_USER,
         help='Group that will be used to run the server process')
     ap.add_argument('--wsgi_path', default='/var/www/parasol', 
         help='Path to install WSGI script to')
@@ -170,11 +170,6 @@ def deploy():
         help='Server name (e.g. example.com) for Apache conf file')
  
     args = ap.parse_args()
-
-    # create user and group (linux-only)
-    subprocess.run(['useradd', '--system', args.user])
-    subprocess.run(['groupadd', args.group])
-    subprocess.run(['usermod', '-a', '-G', args.group, args.user]) 
 
     # create folders
     if not os.path.isdir(args.wsgi_path):

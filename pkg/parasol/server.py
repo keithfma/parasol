@@ -38,6 +38,16 @@ def _route_response(length, sun, geojson):
     return flask.Response(status=200, response=data, mimetype='application/json')
 
 
+def _validate_endpoint(lon, lat):
+    """Confirm that endpoint is in the domain limits"""
+    valid = True
+    if lon < cfg.DOMAIN_XLIM_GEO[0] or lon > cfg.DOMAIN_XLIM_GEO[1]:
+        valid = False
+    elif lat < cfg.DOMAIN_YLIM_GEO[0] or lat > cfg.DOMAIN_YLIM_GEO[1]:
+        valid = False
+    return valid
+
+
 @app.route('/route/optimal', methods=['GET'])
 def optimal():
     """
@@ -61,6 +71,10 @@ def optimal():
     beta = float(flask.request.args.get('beta'))
     hour = int(flask.request.args.get('hour'))
     minute = int(flask.request.args.get('minute'))
+
+    # return status if outside domain
+    if not _validate_endpoint(lon0, lat0) or not _validate_endpoint(lon1, lat1):
+        return flask.Response(status=403)
 
     time = datetime.now().replace(
         hour=hour, minute=minute, second=0, microsecond=0)
@@ -90,6 +104,10 @@ def shortest():
     lon1 = float(flask.request.args.get('lon1'))
     hour = int(flask.request.args.get('hour'))
     minute = int(flask.request.args.get('minute'))
+
+    # return status if outside domain
+    if not _validate_endpoint(lon0, lat0) or not _validate_endpoint(lon1, lat1):
+        return flask.Response(status=403)
 
     time = datetime.now().replace(
         hour=hour, minute=minute, second=0, microsecond=0)

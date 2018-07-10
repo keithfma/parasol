@@ -17,25 +17,22 @@ var routePopup;
 
 
 // see: https://github.com/pointhi/leaflet-color-markers 
-var greenIcon = new L.Icon({
-    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+var endptIcon = new L.DivIcon.SVGIcon({
+    circleRatio: 0.3,
+    color: "#6b5b95",
+    fillOpacity: 0.9
 });
 
 
 // see: https://github.com/smeijer/leaflet-geosearch
-function newSearchControl(text, icon) {
+function newSearchControl(text) {
     const search = new GeoSearchControl({
         provider: searchProvider,
         style: "bar",
         autoClose: false,
         showMarker: true,
         marker: {
-            icon: icon,
+            icon: endptIcon,
             draggable: true,
         },
         searchLabel: text,
@@ -184,12 +181,11 @@ function updateOptimalRoute() {
             success: function(result) {
                 optimalRouteLength = result.length;
                 optimalRouteSun = result.sun;
-		console.log('Retrieved route. Length: ', optimalRouteLength, 'Route: ', optimalRoute);
                 if (optimalRoute) {
                     optimalRoute.remove();
                     map.almostOver.removeLayer(optimalRoute);
                 }
-                optimalRoute = L.geoJSON(result.route, {style: {color: "#453a5f", weight: 5}});
+                optimalRoute = L.geoJSON(result.route, {style: {color: "#6b5b95", weight: 5}});
                 optimalRoute.addTo(map);
                 map.almostOver.addLayer(optimalRoute);
             }
@@ -269,17 +265,19 @@ window.onload = function () {
     });
 
     // enable tooltips when user (nearly) hovers over routes
-    map.on('almost:over', function (e) {
-        routePopup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
-    });
-    map.on('almost:out', function (e) {
-        map.removeLayer(routePopup);
+    map.on('almost:click', function (e) {
+        if (routePopup) {
+            map.removeLayer(routePopup);
+            routePopup = null;
+        } else { 
+            routePopup = L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
+        }
     });
 
     // add search bars
     searchProvider = new OpenStreetMapProvider();
-    originSearch = newSearchControl("Enter origin address", greenIcon);
-    destSearch = newSearchControl("Enter destination address", greenIcon);
+    originSearch = newSearchControl("Enter origin address");
+    destSearch = newSearchControl("Enter destination address");
     map.addControl(originSearch); 
     map.addControl(destSearch); 
     map.on('geosearch/showlocation', updateAllRoutes);

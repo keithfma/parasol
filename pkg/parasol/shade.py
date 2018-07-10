@@ -152,7 +152,7 @@ def update_today(nproc=1):
         time = meta['hour'] + meta['minute']/60
         top_name = os.path.join(cfg.SHADE_DIR, meta["top"])
         bot_name = os.path.join(cfg.SHADE_DIR, meta["bottom"])
-        pool.submit(insolation, day, time, meta['top'], meta['bottom'])
+        pool.submit(insolation, day, time, top_name, bot_name)
     pool.shutdown(wait=True)
 
 

@@ -1,13 +1,12 @@
 #!/bin/bash
 # Install parasol dependencies using apt -- tested with fresh Ubuntu 18.04 LTS installation
-# Run as root.
 # #
 
 # install system packages
 sudo apt -y install postgresql postgresql-client-common python3-pip unzip cmake-curses-gui \
 	postgresql-server-dev-10 libxml2-dev libcunit1-dev autoconf postgresql-10-postgis-2.4 \
 	postgresql-10-pgrouting gdal-bin libgdal-dev python3-gdal python3-tk grass-dev \
-	python-gdal x11-apps grass-gui openjdk-8-jre osm2pgrouting
+	python-gdal x11-apps grass-gui openjdk-8-jre osm2pgrouting apache2
 
 # retrieve missing proj4 datum files
 mkdir vdatum
@@ -43,3 +42,12 @@ cd ../pdal
 
 cd ../geoserver
 ./install.sh
+
+# create user to run the Apache mod_wsgi script
+user=parasol
+sudo adduser --system $user
+sudo addgroup $user
+sudo usermod -a -G $user $user
+sudo mkdir -p /home/$user
+sudo chown -R $user /home/$user
+

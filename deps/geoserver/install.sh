@@ -9,7 +9,7 @@ mv geoserver-2.13.1 build
 install_dir=/usr/share/geoserver
 sudo cp -r build $install_dir
  
-# # configure to run as daemon with non-privledged user
+# configure to run as daemon with non-privledged user
 user=geoserver
 sudo adduser --system $user
 sudo addgroup $user

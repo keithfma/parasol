@@ -133,7 +133,7 @@ def way_points(bbox=None):
     return way_pts 
 
 
-def way_insolation(hour, minute, wpts):
+def way_insolation(hour, minute, wpts, pts_out=False):
     """
     Compute path-integrated insolation for all ways
 
@@ -142,13 +142,19 @@ def way_insolation(hour, minute, wpts):
             exact match
         wpts: dict, output from way_points(), contains way gid as keys, and
             evenly spaced points along way as values
+        pts_out: set True to return dict of insolation at *points* along all
+            paths, instead of the path-integrated totals
     
-    Returns: jm2_sun, jm2_shade
+    Returns: jm2_sun, jm2_shade OR wm2_sun, wm2_shade if pts_out is True
         jm2_sun: dict, contains way gid as key, integrated sun power as
             values (units are J/m2, assuming a constant walking speed)
         jm2_shade: dict, contains way gid as key, integrated loss in sun power
             due to shade as values (units are J/m2, assuming a constant walking
             speed)
+        wm2_sun: dict, contains way gid as key, sun power at evenly spaced
+            points as values
+        wm2_shade: dict, contains way gid as key, loss in sun power due to
+            shade at evenly spaced points as values
     """
     # retrieve shade raster for nearest available time
     xx, yy, wm2 = shade.retrieve(hour, minute, kind='bottom')
@@ -169,6 +175,10 @@ def way_insolation(hour, minute, wpts):
         wm2_pts = interp(xy[:,0], xy[:,1], grid=False)
         wm2_sun[gid] = wm2_pts # W/m2 due to sun
         wm2_shade[gid] = 1 - wm2_pts # lost W/m2 due to shade
+
+    # return points if requested (terminates here)
+    if pts_out:
+        return wm2_sun, wm2_shade
     
     # integrate sun/shade watts/m2 along path for each segment -> J/m2
     # note: integration incorporates length into both costs

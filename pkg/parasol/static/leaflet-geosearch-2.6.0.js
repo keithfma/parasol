@@ -62,7 +62,7 @@
                             return r = e.query, o = ~location.protocol.indexOf("http") ? location.protocol : "https:", i = this.endpoint({
                                 query: r,
                                 protocol: o
-                            }), fetch(i).then(function(e) {
+                            }), fetch(i, {mode: 'cors'}).then(function(e) {
                                 return a = e, a.json().then(function(e) {
                                     return u = e, t(this.parse({
                                         data: u

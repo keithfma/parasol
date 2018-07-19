@@ -1067,7 +1067,7 @@
                     value: function() {
                         var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {},
                             t = e.query,
-                            n = e.protocol,
+                            n = "https:", // e.protocol, // KEITH: hack to force use of https
                             r = this.options.params,
                             o = this.getParamString(u({}, r, {
                                 format: "json",
